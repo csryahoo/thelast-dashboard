@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>손익 대시보드 | 더라스트</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap');
+:root{--bg:#f8fafc;--card:#fff;--border:rgba(0,0,0,0.08);--text:#1e293b;--muted:#64748b;
+  --ind:#6366f1;--grn:#10b981;--amb:#f59e0b;--red:#ef4444;--pur:#8b5cf6;--cyn:#06b6d4;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;line-height:1.6;min-height:100vh;}
+
+/* Header */
+.hd{background:var(--card);border-bottom:2px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;}
+.hd-title{font-size:1rem;font-weight:700;letter-spacing:-.02em;}
+.hd-right{display:flex;align-items:center;gap:10px;}
+.load-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:var(--ind);color:#fff;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;}
+.load-btn:hover{background:#4f46e5;}
+.load-btn input{display:none;}
+.nav-period{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);padding:3px 10px;border-radius:4px;}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;padding:12px 24px;background:var(--card);border-bottom:1px solid var(--border);}
+.tab{padding:7px 18px;font-size:12px;font-family:'Noto Sans KR',sans-serif;border-radius:6px;cursor:pointer;border:1px solid var(--border);color:var(--muted);background:#fff;transition:all .2s;white-space:nowrap;font-weight:500;}
+.tab.active{background:var(--ind);border-color:var(--ind);color:#fff;}
+.tab:hover:not(.active){border-color:rgba(99,102,241,.35);color:var(--ind);}
+.panel{display:none;padding:1.5rem 1.5rem;}.panel.active{display:block;}
+
+/* KPI */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1rem;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1rem;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.2rem 1.4rem;position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi.ind::before{background:var(--ind);}.kpi.grn::before{background:var(--grn);}
+.kpi.amb::before{background:var(--amb);}.kpi.red::before{background:var(--red);}
+.kpi .klabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.kpi .kval{font-family:'DM Mono',monospace;font-size:1.4rem;font-weight:500;}
+.kpi.ind .kval{color:var(--ind);}.kpi.grn .kval{color:#059669;}
+.kpi.amb .kval{color:#d97706;}.kpi.red .kval{color:var(--red);}
+.kpi .ksub{font-size:11px;color:var(--muted);margin-top:3px;}
+.kpi .kdiff{font-family:'DM Mono',monospace;font-size:11px;margin-top:5px;display:inline-block;padding:2px 8px;border-radius:3px;}
+.kdiff.up{background:rgba(16,185,129,.12);color:#059669;}.kdiff.dn{background:rgba(239,68,68,.10);color:var(--red);}
+
+/* Card */
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.3rem;box-shadow:0 1px 4px rgba(0,0,0,.05);margin-bottom:1rem;}
+.card-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:1rem;}
+.chart-wrap canvas{max-height:240px;}
+.chart-wrap.h300 canvas{max-height:300px;}
+
+/* Table */
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl th{text-align:right;color:var(--muted);font-weight:600;padding:7px 10px;border-bottom:2px solid var(--border);font-size:11px;background:#f8fafc;}
+.tbl th:first-child{text-align:left;}
+.tbl td{padding:7px 10px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;border-bottom:1px solid rgba(0,0,0,.04);}
+.tbl td:first-child{text-align:left;font-family:'Noto Sans KR',sans-serif;}
+.tbl tr:hover td{background:rgba(99,102,241,.03);}
+.tbl .up{color:#059669;}.tbl .dn{color:var(--red);}
+.tbl .tr-total td{font-weight:700;border-top:2px solid var(--border);background:#f8fafc;}
+.tbl .tr-sub td{font-size:11px;color:var(--muted);}
+.tbl .tr-sub td:first-child{padding-left:18px;}
+.tbl .tr-hi td{font-weight:700;}
+
+/* Comment */
+.comment-area{width:100%;border:1px solid var(--border);border-radius:8px;padding:.9rem 1rem;font-family:'Noto Sans KR',sans-serif;font-size:13px;line-height:1.9;color:var(--text);background:#fff;resize:vertical;min-height:140px;outline:none;transition:border-color .2s;}
+.comment-area:focus{border-color:var(--ind);box-shadow:0 0 0 3px rgba(99,102,241,.1);}
+.save-bar{display:flex;align-items:center;justify-content:flex-end;gap:.6rem;margin-bottom:1rem;}
+.btn-save{display:inline-flex;align-items:center;gap:6px;padding:7px 18px;background:var(--ind);color:#fff;border:none;border-radius:7px;font-size:12px;font-family:'Noto Sans KR',sans-serif;font-weight:600;cursor:pointer;transition:all .2s;}
+.btn-save:hover{background:#4f46e5;}
+.save-notice{font-size:11px;color:var(--muted);}
+.sec-label{font-size:11px;font-weight:700;color:var(--ind);text-transform:uppercase;letter-spacing:.08em;margin:1.5rem 0 .7rem;padding-left:8px;border-left:3px solid var(--ind);}
+
+/* Empty state */
+#empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;gap:16px;color:var(--muted);}
+.es-icon{font-size:48px;opacity:.4;}
+.es-title{font-size:18px;font-weight:700;color:#475569;}
+.es-desc{font-size:13px;text-align:center;line-height:1.8;}
+.es-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;background:var(--ind);color:#fff;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px;}
+.es-btn:hover{background:#4f46e5;}
+.es-btn input{display:none;}
+</style>
+<script>window.__PD__={"months":["1월","2월","3월"],"pl":{"매출액":[1443196234,1668915281,1803845773],"매출원가":[1098179203,980812561,489038112],"매출원가율":[0.7609354688767848,0.5876946374487657,0.2711086054694544],"기말재고":[1998174880,1630280596,2018382114],"매출총이익":[345017031,688102720,1314807661],"판관비":[720459507,692109033,731479835],"임원급여":[80000000,80000000,80000000],"직원급여":[144462410,162896372,177245695],"상여금":[0,9600000,2000000],"잡급":[8675294,6279510,6996640],"퇴직급여":[3933372,0,3745170],"복리후생비":[12248030,14087160,13195228],"여비교통비":[7609287,1735351,7914606],"접대비":[0,0,816000],"통신비":[703772,654516,654867],"수도광열비":[2740,28540,2740],"전력비":[842217,1316722,1059733],"세금과공과":[9566510,8535450,8000180],"지급임차료":[51107123,51243675,52419932],"보험료":[3361110,0,589800],"차량유지비":[727182,380455,740365],"운반비":[25211405,32572686,25612090],"소모품비":[17888186,15926570,17482667],"지급수수료":[74231784,81937408,109907797],"광고선전비":[91754449,64530246,47019553],"판매수수료":[59708478,46103861,53642123],"리스료":[4485250,4485250,2786940],"인적용역비":[21836217,9882977,14888316],"견본비":[100587321,99912284,104759393],"판매촉진비":[1517370,0,0],"영업이익":[-375442476,-4006313,583327826],"당기순이익":[-374582515,-7086576,579094339]},"inv":[2109609363,1998174880,1630280596,2018382114],"revDetail":[{"name":"(주)케이지이니시스","vals":[531392030,794596955,795984117,0,0,0,0,0,0,0,0,0],"total":2121973102},{"name":"네이버페이","vals":[179784555,264563181,234920734,0,0,0,0,0,0,0,0,0],"total":679268470},{"name":"현금영수증","vals":[181351092,93424436,172871227,0,0,0,0,0,0,0,0,0],"total":447646755},{"name":"삼성물산(주)패션부문","vals":[134078220,11802383,243632159,0,0,0,0,0,0,0,0,0],"total":389512762},{"name":"(주)현대백화점 본점","vals":[70411039,148011630,73329260,0,0,0,0,0,0,0,0,0],"total":291751929},{"name":"네이버페이(주문형)","vals":[100973919,51556492,88127274,0,0,0,0,0,0,0,0,0],"total":240657685},{"name":"주식회사 카카오페이","vals":[22685119,30542968,32728601,0,0,0,0,0,0,0,0,0],"total":85956688},{"name":"지점카드(롯데)","vals":[31268606,27689910,22260117,0,0,0,0,0,0,0,0,0],"total":81218633},{"name":"(주)케이에스넷","vals":[30576591,23636364,15640819,0,0,0,0,0,0,0,0,0],"total":69853774},{"name":"지점카드(삼성)","vals":[26487063,21934940,18689224,0,0,0,0,0,0,0,0,0],"total":67111227},{"name":"PRINTEMPS","vals":[0,46832201,9602914,0,0,0,0,0,0,0,0,0],"total":56435115},{"name":"지점카드(현대)","vals":[19743387,20930557,13016432,0,0,0,0,0,0,0,0,0],"total":53690376},{"name":"지점카드(비씨)","vals":[17333780,13786583,10706730,0,0,0,0,0,0,0,0,0],"total":41827093},{"name":"지점카드(신한)","vals":[16596630,9445576,12183551,0,0,0,0,0,0,0,0,0],"total":38225757},{"name":"한남지점 현금영수증","vals":[17824875,9359907,8912160,0,0,0,0,0,0,0,0,0],"total":36096942},{"name":"MAGAZINE ZUM GLOBUS AG","vals":[0,32510143,0,0,0,0,0,0,0,0,0,0],"total":32510143},{"name":"BAYCREWS","vals":[966435,25358172,0,0,0,0,0,0,0,0,0,0],"total":26324607},{"name":"지점카드(하나)","vals":[5798555,8575641,8881718,0,0,0,0,0,0,0,0,0],"total":23255914},{"name":"지점카드(국민)","vals":[6350990,5656224,10211928,0,0,0,0,0,0,0,0,0],"total":22219142},{"name":"DI VINCENZO","vals":[19366687,0,0,0,0,0,0,0,0,0,0,0],"total":19366687},{"name":"NORRGATAN","vals":[18205440,0,0,0,0,0,0,0,0,0,0,0],"total":18205440},{"name":"CABINET","vals":[0,0,16635478,0,0,0,0,0,0,0,0,0],"total":16635478},{"name":"GESKO SERVICE","vals":[15921659,0,0,0,0,0,0,0,0,0,0,0],"total":15921659},{"name":"RCD S R L","vals":[0,7311292,4027678,0,0,0,0,0,0,0,0,0],"total":11338970},{"name":"BOC NYC","vals":[0,10787971,0,0,0,0,0,0,0,0,0,0],"total":10787971},{"name":"지점카드(농협)","vals":[1873982,7305305,264637,0,0,0,0,0,0,0,0,0],"total":9443924},{"name":"Murkudis Andreas","vals":[0,0,8309775,0,0,0,0,0,0,0,0,0],"total":8309775},{"name":"ITEMS PARIS","vals":[7042230,0,0,0,0,0,0,0,0,0,0,0],"total":7042230},{"name":"A-UNEFILLE","vals":[0,473957,2571057,0,0,0,0,0,0,0,0,0],"total":3045014},{"name":"현금매출(택배비)","vals":[670000,507091,861455,0,0,0,0,0,0,0,0,0],"total":2038546},{"name":"글로벌텍스프리","vals":[579947,0,0,0,0,0,0,0,0,0,0,0],"total":579947},{"name":"케이지이니시스(EACread095)","vals":[261164,74546,0,0,0,0,0,0,0,0,0,0],"total":335710},{"name":"이지민","vals":[0,252537,0,0,0,0,0,0,0,0,0,0],"total":252537},{"name":"이미영","vals":[0,215664,0,0,0,0,0,0,0,0,0,0],"total":215664},{"name":"현금영수증 환불","vals":[0,-224728,0,0,0,0,0,0,0,0,0,0],"total":-224728},{"name":"주식회사 컬리","vals":[-3842536,2265383,-523272,0,0,0,0,0,0,0,0,0],"total":-2100425},{"name":"(주)케이지이니시스 환불","vals":[-10505225,-268000,0,0,0,0,0,0,0,0,0,0],"total":-10773225}],"matDetail":[{"name":"주식회사 더골드마운틴","vals":[360982500,264325500,344058226,0,0,0,0,0,0,0,0,0],"total":969366226},{"name":"직원급여(대표자 제외) / 상여포함","vals":[144462410,172496372,179245695,0,0,0,0,0,0,0,0,0],"total":496204477},{"name":"오리지널 샘플","vals":[100587321,99912284,104759393,0,0,0,0,0,0,0,0,0],"total":305258998},{"name":"SHIJIAZAHUNG WOOL WORLD","vals":[17049005,0,173725658,0,0,0,0,0,0,0,0,0],"total":190774663},{"name":"주식회사 빅터코퍼레이션 / 해외 세일즈 수수료","vals":[40509205,39509415,59102615,0,0,0,0,0,0,0,0,0],"total":139121235},{"name":"주식회사 혜성컴퍼니","vals":[32806000,35456000,68033000,0,0,0,0,0,0,0,0,0],"total":136295000},{"name":"에린(ERIN)","vals":[36363636,41275091,35356636,0,0,0,0,0,0,0,0,0],"total":112995363},{"name":"이정어패럴","vals":[49856000,50461000,7829000,0,0,0,0,0,0,0,0,0],"total":108146000},{"name":"아인","vals":[30500039,30721581,30266098,0,0,0,0,0,0,0,0,0],"total":91487718},{"name":"(주)케이지이니시스","vals":[19027658,27900251,27706310,0,0,0,0,0,0,0,0,0],"total":74634219},{"name":"더 율 컴퍼니(The yul company)","vals":[57600000,0,0,0,0,0,0,0,0,0,0,0],"total":57600000},{"name":"미도파TEX","vals":[44044000,9730000,72000,0,0,0,0,0,0,0,0,0],"total":53846000},{"name":"주식회사 프랭크메일","vals":[50707584,0,0,0,0,0,0,0,0,0,0,0],"total":50707584},{"name":"모들 니트","vals":[36471183,11537500,0,0,0,0,0,0,0,0,0,0],"total":48008683},{"name":"사업소득","vals":[21836217,9882977,14888316,0,0,0,0,0,0,0,0,0],"total":46607510},{"name":"(주)더블유아이콘","vals":[16266100,9023464,11329500,0,0,0,0,0,0,0,0,0],"total":36619064},{"name":"선인빌딩","vals":[11300000,11300000,13300000,0,0,0,0,0,0,0,0,0],"total":35900000},{"name":"씨엘티아트 주식회사 / R2W 촬영","vals":[22900000,11750000,0,0,0,0,0,0,0,0,0,0],"total":34650000},{"name":"예림사","vals":[34105000,0,0,0,0,0,0,0,0,0,0,0],"total":34105000},{"name":"주식회사 프라이데이투선데이 / 지나정 X R2W","vals":[29000000,0,5000000,0,0,0,0,0,0,0,0,0],"total":34000000},{"name":"핫바이","vals":[32645000,0,0,0,0,0,0,0,0,0,0,0],"total":32645000},{"name":"에이커","vals":[7279000,3724000,18854000,0,0,0,0,0,0,0,0,0],"total":29857000},{"name":"삼성물산(주)패션부문","vals":[17671673,982376,9627470,0,0,0,0,0,0,0,0,0],"total":28281519},{"name":"월드-K","vals":[10844000,2160000,14851000,0,0,0,0,0,0,0,0,0],"total":27855000},{"name":"주식회사 샵라이브코리아 / 라이브, 숏폼","vals":[9000000,9000000,9000000,0,0,0,0,0,0,0,0,0],"total":27000000},{"name":"씨제이대한통운 ㈜","vals":[8430272,10714090,7782272,0,0,0,0,0,0,0,0,0],"total":26926634},{"name":"스튜디오노트(studio knot) / 팝업, 스튜디오 인테리어","vals":[7654545,5895455,12863636,0,0,0,0,0,0,0,0,0],"total":26413636},{"name":"건강보험","vals":[8904580,9404950,7881850,0,0,0,0,0,0,0,0,0],"total":26191380},{"name":"페이스북 광고","vals":[9380604,9854195,6488253,0,0,0,0,0,0,0,0,0],"total":25723052},{"name":"네이버페이","vals":[6664205,9849241,8748586,0,0,0,0,0,0,0,0,0],"total":25262032},{"name":"본사","vals":[7394566,9057980,7617926,0,0,0,0,0,0,0,0,0],"total":24070472},{"name":"주)태우텍스타일","vals":[0,19055400,4178720,0,0,0,0,0,0,0,0,0],"total":23234120},{"name":"로타리컴.평화기업","vals":[7811630,7731640,7381380,0,0,0,0,0,0,0,0,0],"total":22924650},{"name":"GL컴퍼니","vals":[22727272,0,0,0,0,0,0,0,0,0,0,0],"total":22727272},{"name":"(주)오브젝트컴퍼니","vals":[12860165,794832,8586991,0,0,0,0,0,0,0,0,0],"total":22241988},{"name":"디엔텍스(DN TEX)","vals":[10502500,3376500,8145400,0,0,0,0,0,0,0,0,0],"total":22024400},{"name":"일용직","vals":[8675294,6279510,6996640,0,0,0,0,0,0,0,0,0],"total":21951444},{"name":"울프(WoolF)","vals":[346500,9879000,11229000,0,0,0,0,0,0,0,0,0],"total":21454500},{"name":"(주)알케이무역","vals":[2139000,7538000,11774100,0,0,0,0,0,0,0,0,0],"total":21451100},{"name":"주식회사 장미물류","vals":[6037900,7689580,7249100,0,0,0,0,0,0,0,0,0],"total":20976580},{"name":"국민연금","vals":[6953700,6502060,6397350,0,0,0,0,0,0,0,0,0],"total":19853110},{"name":"스타이렘코리아 주식회사","vals":[2255300,15938960,1053000,0,0,0,0,0,0,0,0,0],"total":19247260},{"name":"플라이스(PLYS) / 디자인컨설팅","vals":[6000000,6000000,6000000,0,0,0,0,0,0,0,0,0],"total":18000000},{"name":"주식회사 신이상사","vals":[2355250,7298150,8182500,0,0,0,0,0,0,0,0,0],"total":17835900},{"name":"주식회사 영진라벨","vals":[6530000,3200000,7780000,0,0,0,0,0,0,0,0,0],"total":17510000},{"name":"소담텍스타일","vals":[0,17134400,0,0,0,0,0,0,0,0,0,0],"total":17134400},{"name":"퍼스","vals":[15332030,1424700,334900,0,0,0,0,0,0,0,0,0],"total":17091630},{"name":"B&B","vals":[36000,0,16982400,0,0,0,0,0,0,0,0,0],"total":17018400},{"name":"일안사","vals":[0,0,16700000,0,0,0,0,0,0,0,0,0],"total":16700000},{"name":"지우기획","vals":[6850000,5210000,4380000,0,0,0,0,0,0,0,0,0],"total":16440000},{"name":"이미지패턴연구실","vals":[4595000,4190000,7090000,0,0,0,0,0,0,0,0,0],"total":15875000},{"name":"수호기획","vals":[6117390,2492790,6527645,0,0,0,0,0,0,0,0,0],"total":15137825},{"name":"주식회사봅텍스타일(동대문지점)","vals":[2967000,170000,10877000,0,0,0,0,0,0,0,0,0],"total":14014000},{"name":"한종욱세무회계사무소 / 세무서비스","vals":[600000,600000,12400000,0,0,0,0,0,0,0,0,0],"total":13600000},{"name":"(주)암미","vals":[1279850,6159830,6134750,0,0,0,0,0,0,0,0,0],"total":13574430},{"name":"주식회사 세마실크컴퍼니","vals":[12753000,616000,0,0,0,0,0,0,0,0,0,0],"total":13369000},{"name":"출장","vals":[6890374,156000,5805202,0,0,0,0,0,0,0,0,0],"total":12851576},{"name":"주식회사 자이코리아","vals":[0,12797500,0,0,0,0,0,0,0,0,0,0],"total":12797500},{"name":"주식회사 딜핏","vals":[3990000,2414700,5062800,0,0,0,0,0,0,0,0,0],"total":11467500},{"name":"본사(사무실)","vals":[2697880,4034770,4661628,0,0,0,0,0,0,0,0,0],"total":11394278},{"name":"(주)더블엠코퍼레이션","vals":[1909100,6187400,3193600,0,0,0,0,0,0,0,0,0],"total":11290100},{"name":"더 핸즈(THE HANDS)","vals":[11120000,0,0,0,0,0,0,0,0,0,0,0],"total":11120000},{"name":"뷰티","vals":[1070000,6180000,3491200,0,0,0,0,0,0,0,0,0],"total":10741200},{"name":"제이엠텍스타일 주식회사","vals":[0,0,10718400,0,0,0,0,0,0,0,0,0],"total":10718400},{"name":"주식회사 단우로지스틱스","vals":[3761000,3032000,3880000,0,0,0,0,0,0,0,0,0],"total":10673000},{"name":"주식회사 더 퍼스트플로어","vals":[10590000,0,30000,0,0,0,0,0,0,0,0,0],"total":10620000},{"name":"클로브2호 유한회사/ 자금조달 수수료","vals":[0,5259194,5259194,0,0,0,0,0,0,0,0,0],"total":10518388},{"name":"탑팩(상하싸바리)","vals":[4690000,2300000,3500000,0,0,0,0,0,0,0,0,0],"total":10490000},{"name":"미주화학","vals":[1800000,3300000,5210000,0,0,0,0,0,0,0,0,0],"total":10310000},{"name":"주식회사 에이셋(A.SSET Co.,Ltd.) / 모델료","vals":[0,5800000,4350000,0,0,0,0,0,0,0,0,0],"total":10150000},{"name":"비제이 인터내셔날","vals":[5162000,4644000,0,0,0,0,0,0,0,0,0,0],"total":9806000},{"name":"해외배송비","vals":[1814580,7761652,92546,0,0,0,0,0,0,0,0,0],"total":9668778},{"name":"주식회사 신우인터내셔널","vals":[9502000,0,0,0,0,0,0,0,0,0,0,0],"total":9502000},{"name":"(주)위드트레이딩","vals":[0,0,9422568,0,0,0,0,0,0,0,0,0],"total":9422568},{"name":"주식회사 컬리","vals":[8105270,1072340,168637,0,0,0,0,0,0,0,0,0],"total":9346247},{"name":"네이버페이(주문형)","vals":[3800972,1951710,3424481,0,0,0,0,0,0,0,0,0],"total":9177163},{"name":"주식회사 카카오 / 플러스 충전","vals":[2173845,4076960,2731300,0,0,0,0,0,0,0,0,0],"total":8982105},{"name":"(주) 에이엠컴퍼니","vals":[5767500,3203700,0,0,0,0,0,0,0,0,0,0],"total":8971200},{"name":"한길패키지(택배박스)","vals":[1805000,4230000,2800950,0,0,0,0,0,0,0,0,0],"total":8835950},{"name":"주식회사 싱커드 / 택시쉘터 광고","vals":[2880000,2880000,2880000,0,0,0,0,0,0,0,0,0],"total":8640000},{"name":"지점카드매출","vals":[3094477,2808061,2465772,0,0,0,0,0,0,0,0,0],"total":8368310},{"name":"아산모드(주)","vals":[0,8139500,0,0,0,0,0,0,0,0,0,0],"total":8139500},{"name":"K&P(케이엔피)","vals":[0,7543500,461800,0,0,0,0,0,0,0,0,0],"total":8005300},{"name":"(주) 야드인","vals":[1592200,6117000,34500,0,0,0,0,0,0,0,0,0],"total":7743700},{"name":"퇴직금","vals":[3933372,0,3745170,0,0,0,0,0,0,0,0,0],"total":7678542},{"name":"주식회사 퍼스트엠지엠티 / 촬영 모델료","vals":[0,5700000,1800000,0,0,0,0,0,0,0,0,0],"total":7500000},{"name":"엠케이","vals":[4070000,3050000,0,0,0,0,0,0,0,0,0,0],"total":7120000},{"name":"아라한(arhahan) / 한남지점 VMD","vals":[1500000,2500000,2500000,0,0,0,0,0,0,0,0,0],"total":6500000},{"name":"제이앤제이","vals":[2234000,2717500,1214000,0,0,0,0,0,0,0,0,0],"total":6165500},{"name":"이안","vals":[611100,1175250,3797750,0,0,0,0,0,0,0,0,0],"total":5584100},{"name":"지엔","vals":[3280000,1470000,720000,0,0,0,0,0,0,0,0,0],"total":5470000},{"name":"보광직물","vals":[3915000,1440000,0,0,0,0,0,0,0,0,0,0],"total":5355000},{"name":"각종 세금","vals":[2336810,1713390,1300800,0,0,0,0,0,0,0,0,0],"total":5351000},{"name":"주식회사 정원텍스타일","vals":[5340000,0,0,0,0,0,0,0,0,0,0,0],"total":5340000},{"name":"에이인원 주식회사(Ain1 Inc.) / 에이엘 레윈 모델료","vals":[5300000,0,0,0,0,0,0,0,0,0,0,0],"total":5300000},{"name":"주식회사 모델디렉터스 / 모델에이전시(지나)","vals":[1500000,2000000,1700000,0,0,0,0,0,0,0,0,0],"total":5200000},{"name":"주느세콰인터내셔널(주)(JE NE SAIS QUOI I","vals":[0,0,5100000,0,0,0,0,0,0,0,0,0],"total":5100000},{"name":"라라디자인컴퍼니/ 한남매장 공사","vals":[0,5000000,0,0,0,0,0,0,0,0,0,0],"total":5000000},{"name":"제이에스뷰티랩","vals":[1400000,1700000,1800000,0,0,0,0,0,0,0,0,0],"total":4900000},{"name":"셀렉션(selection)","vals":[1011000,1787000,2050000,0,0,0,0,0,0,0,0,0],"total":4848000},{"name":"(주)맥플러스/ Creative Cloud for teams All Apps","vals":[0,4800000,0,0,0,0,0,0,0,0,0,0],"total":4800000},{"name":"주식회사 와이케이케이오 / 촬영 헤어, 메이크업","vals":[2100000,2300000,0,0,0,0,0,0,0,0,0,0],"total":4400000},{"name":"초이프로서비스 / 회계 자문","vals":[0,3750000,600000,0,0,0,0,0,0,0,0,0],"total":4350000},{"name":"업무교통 / 주차 등 (사무실)","vals":[718913,1523251,2088704,0,0,0,0,0,0,0,0,0],"total":4330868},{"name":"신한카드㈜ / 101서1868","vals":[1428320,1428320,1428320,0,0,0,0,0,0,0,0,0],"total":4284960},{"name":"우림","vals":[1570000,740000,1860000,0,0,0,0,0,0,0,0,0],"total":4170000},{"name":"플로우","vals":[3840000,0,160000,0,0,0,0,0,0,0,0,0],"total":4000000},{"name":"케어존 / 청소비","vals":[1320000,1320000,1320000,0,0,0,0,0,0,0,0,0],"total":3960000},{"name":"엘버튼팩토리주식회사","vals":[3387037,155790,235920,0,0,0,0,0,0,0,0,0],"total":3778747},{"name":"카페24 / 문자충전 외","vals":[909091,2170976,627165,0,0,0,0,0,0,0,0,0],"total":3707232},{"name":"다우피혁","vals":[197440,197700,3188480,0,0,0,0,0,0,0,0,0],"total":3583620},{"name":"주식회사 대일텍스","vals":[117000,3453000,0,0,0,0,0,0,0,0,0,0],"total":3570000},{"name":"문성민 / 헤어 메이크업","vals":[0,0,3550000,0,0,0,0,0,0,0,0,0],"total":3550000},{"name":"기타","vals":[278714,173848,3092129,0,0,0,0,0,0,0,0,0],"total":3544691},{"name":"미르","vals":[0,152000,3306540,0,0,0,0,0,0,0,0,0],"total":3458540},{"name":"하나캐피탈㈜ / 325가32191 / 2월까지","vals":[1698300,1698300,0,0,0,0,0,0,0,0,0,0],"total":3396600},{"name":"엔디아이(NDI)","vals":[141250,3085500,156800,0,0,0,0,0,0,0,0,0],"total":3383550},{"name":"근로복지공단","vals":[3361110,0,0,0,0,0,0,0,0,0,0,0],"total":3361110},{"name":"주식회사 카카오페이","vals":[873344,1175885,1260000,0,0,0,0,0,0,0,0,0],"total":3309229},{"name":"그마음 / 룩북, 팝업 영상제작","vals":[1200000,2000000,0,0,0,0,0,0,0,0,0,0],"total":3200000},{"name":"매일","vals":[0,0,3152000,0,0,0,0,0,0,0,0,0],"total":3152000},{"name":"주식회사 디트레코즈","vals":[3145100,0,0,0,0,0,0,0,0,0,0,0],"total":3145100},{"name":"이룸(테이프)","vals":[3124800,0,0,0,0,0,0,0,0,0,0,0],"total":3124800},{"name":"(주)리더컬렉션","vals":[1284750,0,1800000,0,0,0,0,0,0,0,0,0],"total":3084750},{"name":"한국전력공사","vals":[807437,1063393,1033613,0,0,0,0,0,0,0,0,0],"total":2904443},{"name":"라미스","vals":[2880000,0,0,0,0,0,0,0,0,0,0,0],"total":2880000},{"name":"주식회사 모드매니지먼트 / 모델에이전시","vals":[2800000,0,0,0,0,0,0,0,0,0,0,0],"total":2800000},{"name":"㈜에이디티캡스 동부지점","vals":[930000,930000,930000,0,0,0,0,0,0,0,0,0],"total":2790000},{"name":"인터내셔널브이에이치 / 촬영장비","vals":[575000,0,2212728,0,0,0,0,0,0,0,0,0],"total":2787728},{"name":"김석주","vals":[900000,900000,900000,0,0,0,0,0,0,0,0,0],"total":2700000},{"name":"비아크(vi.A.que)    (구.바이엠씨)","vals":[2670000,0,0,0,0,0,0,0,0,0,0,0],"total":2670000},{"name":"에스케이렌터카 주식회사 / 190허8394","vals":[835500,835500,835490,0,0,0,0,0,0,0,0,0],"total":2506490},{"name":"주식회사 킨에이전시 / 모델에이전시","vals":[0,2500000,0,0,0,0,0,0,0,0,0,0],"total":2500000},{"name":"㈜선우인터라이닝","vals":[647040,768700,1012550,0,0,0,0,0,0,0,0,0],"total":2428290},{"name":"주식회사 롸잇 (원포인트 서비스) / 마케터고용서비스","vals":[2400000,0,0,0,0,0,0,0,0,0,0,0],"total":2400000},{"name":"블리츠씰(Blitz SEAL) / 온라인마케팅 대행","vals":[0,0,2400000,0,0,0,0,0,0,0,0,0],"total":2400000},{"name":"주식회사 제이모델매니지먼트 / 모델에이전시","vals":[0,0,2200000,0,0,0,0,0,0,0,0,0],"total":2200000},{"name":"Google Digital Inc. / G메일","vals":[720757,717288,716793,0,0,0,0,0,0,0,0,0],"total":2154838},{"name":"리리코리아(riri Korea)","vals":[0,0,2108000,0,0,0,0,0,0,0,0,0],"total":2108000},{"name":"크린몬 / 청소","vals":[700000,700000,700000,0,0,0,0,0,0,0,0,0],"total":2100000},{"name":"주식회사 로젠택배성동","vals":[707045,584045,729545,0,0,0,0,0,0,0,0,0],"total":2020635},{"name":"케이티","vals":[661202,611946,612077,0,0,0,0,0,0,0,0,0],"total":1885225},{"name":"씨이시스템 / 향기마케팅","vals":[620000,620000,620000,0,0,0,0,0,0,0,0,0],"total":1860000},{"name":"(주)더존비즈온 / 회계프로그램 사용료","vals":[777735,839281,200000,0,0,0,0,0,0,0,0,0],"total":1817016},{"name":"편집프로그램 / FIGMA, VMO 등","vals":[1101302,219720,426725,0,0,0,0,0,0,0,0,0],"total":1747747},{"name":"그린넷","vals":[570000,0,1150000,0,0,0,0,0,0,0,0,0],"total":1720000},{"name":"인천세관","vals":[0,0,1647560,0,0,0,0,0,0,0,0,0],"total":1647560},{"name":"롯데캐피탈","vals":[523130,523130,523130,0,0,0,0,0,0,0,0,0],"total":1569390},{"name":"은행수수료","vals":[494192,422584,588621,0,0,0,0,0,0,0,0,0],"total":1505397},{"name":"김희진메이크업","vals":[0,1500000,0,0,0,0,0,0,0,0,0,0],"total":1500000},{"name":"(주)일신모닝택배","vals":[424000,415000,621000,0,0,0,0,0,0,0,0,0],"total":1460000},{"name":"A.M크린 / 청소","vals":[450000,450000,450000,0,0,0,0,0,0,0,0,0],"total":1350000},{"name":"원","vals":[507000,226000,589000,0,0,0,0,0,0,0,0,0],"total":1322000},{"name":"셀메이트","vals":[0,517500,795000,0,0,0,0,0,0,0,0,0],"total":1312500},{"name":"플렉스","vals":[435600,432000,432000,0,0,0,0,0,0,0,0,0],"total":1299600},{"name":"인천공항세관","vals":[1238957,0,0,0,0,0,0,0,0,0,0,0],"total":1238957},{"name":"(주)월드물류보관서비스/팝업 집기 보관","vals":[410000,410000,410000,0,0,0,0,0,0,0,0,0],"total":1230000},{"name":"물류/CS","vals":[0,107500,1110059,0,0,0,0,0,0,0,0,0],"total":1217559},{"name":"(주)주노컴퍼니","vals":[0,0,1180800,0,0,0,0,0,0,0,0,0],"total":1180800},{"name":"인력채용서비스","vals":[330400,0,795637,0,0,0,0,0,0,0,0,0],"total":1126037},{"name":"촬영 / 용현","vals":[394000,295000,415000,0,0,0,0,0,0,0,0,0],"total":1104000},{"name":"(주)케이에스넷","vals":[470879,363997,240867,0,0,0,0,0,0,0,0,0],"total":1075743},{"name":"㈜에이디티캡스 용산지점","vals":[338000,338000,338000,0,0,0,0,0,0,0,0,0],"total":1014000},{"name":"세탁서비스","vals":[167944,123220,673300,0,0,0,0,0,0,0,0,0],"total":964464},{"name":"상표출원","vals":[921582,0,0,0,0,0,0,0,0,0,0,0],"total":921582},{"name":"한국패션협회 / 연회비","vals":[900000,0,0,0,0,0,0,0,0,0,0,0],"total":900000},{"name":"주식회사　씨드파 (바이앱스)","vals":[900000,0,0,0,0,0,0,0,0,0,0,0],"total":900000},{"name":"과태료","vals":[276000,320000,302030,0,0,0,0,0,0,0,0,0],"total":898030},{"name":"한남지점","vals":[298550,299600,288670,0,0,0,0,0,0,0,0,0],"total":886820},{"name":"(주)삼성엠피에스","vals":[299000,294000,276000,0,0,0,0,0,0,0,0,0],"total":869000},{"name":"(주)위브서울컴퍼니","vals":[868637,0,0,0,0,0,0,0,0,0,0,0],"total":868637},{"name":"삼흥어패럴","vals":[500000,320000,0,0,0,0,0,0,0,0,0,0],"total":820000},{"name":"압구정지점","vals":[347020,150240,291080,0,0,0,0,0,0,0,0,0],"total":788340},{"name":"대표님","vals":[0,0,731000,0,0,0,0,0,0,0,0,0],"total":731000},{"name":"주식회사 고위드","vals":[215272,215272,215272,0,0,0,0,0,0,0,0,0],"total":645816},{"name":"(주)세스코","vals":[205000,205000,205000,0,0,0,0,0,0,0,0,0],"total":615000},{"name":"더봄 노무법인 / 노무서비스","vals":[200000,200000,200000,0,0,0,0,0,0,0,0,0],"total":600000},{"name":"한국무역보험공사","vals":[0,0,589800,0,0,0,0,0,0,0,0,0],"total":589800},{"name":"주식회사 제일커머스","vals":[91500,234000,263760,0,0,0,0,0,0,0,0,0],"total":589260},{"name":"(주)옹디느","vals":[0,177000,345000,0,0,0,0,0,0,0,0,0],"total":522000},{"name":"피씨와맥 / 서버정기백업","vals":[0,500000,0,0,0,0,0,0,0,0,0,0],"total":500000},{"name":"물류팀","vals":[168182,85455,213365,0,0,0,0,0,0,0,0,0],"total":467002},{"name":"한남지점","vals":[94920,199590,109484,0,0,0,0,0,0,0,0,0],"total":403994},{"name":"사무실 청소","vals":[139600,143400,104700,0,0,0,0,0,0,0,0,0],"total":387700},{"name":"제이에이치 TEX(J.H TEX)","vals":[372000,0,0,0,0,0,0,0,0,0,0,0],"total":372000},{"name":"압구정지점","vals":[203900,31500,131520,0,0,0,0,0,0,0,0,0],"total":366920},{"name":"크리마팩토리 / 리뷰마케팅","vals":[0,349091,0,0,0,0,0,0,0,0,0,0],"total":349091},{"name":"매직엘지(LG)워싱","vals":[220000,0,120000,0,0,0,0,0,0,0,0,0],"total":340000},{"name":"아인","vals":[34780,253329,26120,0,0,0,0,0,0,0,0,0],"total":314229},{"name":"(주)웰퍼스트","vals":[0,300000,0,0,0,0,0,0,0,0,0,0],"total":300000},{"name":"대표님","vals":[165000,0,112000,0,0,0,0,0,0,0,0,0],"total":277000},{"name":"물류/CS","vals":[0,197600,72000,0,0,0,0,0,0,0,0,0],"total":269600},{"name":"주식회사 태원인터내셔날","vals":[0,45000,199500,0,0,0,0,0,0,0,0,0],"total":244500},{"name":"코웨이(주)","vals":[81182,81182,81182,0,0,0,0,0,0,0,0,0],"total":243546},{"name":"한길합동법무사사무소 / 등기 변경","vals":[0,0,237000,0,0,0,0,0,0,0,0,0],"total":237000},{"name":"경기용달","vals":[110000,40000,75000,0,0,0,0,0,0,0,0,0],"total":225000},{"name":"루나소프트 / 고객상담 메신저","vals":[224626,0,0,0,0,0,0,0,0,0,0,0],"total":224626},{"name":"어도비 정기결제","vals":[93885,75900,45350,0,0,0,0,0,0,0,0,0],"total":215135},{"name":"디오비(DOB)people","vals":[0,211500,0,0,0,0,0,0,0,0,0,0],"total":211500},{"name":"에스케이쉴더스(주) 논현지점","vals":[70000,70000,70000,0,0,0,0,0,0,0,0,0],"total":210000},{"name":"채널톡","vals":[84008,55749,42609,0,0,0,0,0,0,0,0,0],"total":182366},{"name":"(주)두루모아","vals":[38000,91200,51000,0,0,0,0,0,0,0,0,0],"total":180200},{"name":"제일상사","vals":[0,180000,0,0,0,0,0,0,0,0,0,0],"total":180000},{"name":"(주)케이지이니시스","vals":[0,0,168000,0,0,0,0,0,0,0,0,0],"total":168000},{"name":"서우텍스","vals":[0,0,167000,0,0,0,0,0,0,0,0,0],"total":167000},{"name":"엘지전자(주)/ 구독료","vals":[50728,50728,64273,0,0,0,0,0,0,0,0,0],"total":165729},{"name":"무트크리에이션(무트실크)","vals":[0,0,156000,0,0,0,0,0,0,0,0,0],"total":156000},{"name":"(주)케이티 에이치씨엔 동작방송","vals":[55070,48250,49050,0,0,0,0,0,0,0,0,0],"total":152370},{"name":"4TEN（포텐）","vals":[53400,0,97900,0,0,0,0,0,0,0,0,0],"total":151300},{"name":"티엘관세사무소","vals":[30000,0,120000,0,0,0,0,0,0,0,0,0],"total":150000},{"name":"지큐라스트","vals":[0,0,150000,0,0,0,0,0,0,0,0,0],"total":150000},{"name":"(주)신우텍스","vals":[0,66000,76046,0,0,0,0,0,0,0,0,0],"total":142046},{"name":"에스케이텔레콤(주)","vals":[42570,42570,42790,0,0,0,0,0,0,0,0,0],"total":127930},{"name":"주식회사 이원텍스（EWONTEX CO.,LTD.)","vals":[28500,82500,0,0,0,0,0,0,0,0,0,0],"total":111000},{"name":"㈜삼원양산공장","vals":[0,0,110000,0,0,0,0,0,0,0,0,0],"total":110000},{"name":"주식회사 더블유미션(W Mission.,Co.Ltd)","vals":[0,0,92000,0,0,0,0,0,0,0,0,0],"total":92000},{"name":"본사","vals":[0,0,85000,0,0,0,0,0,0,0,0,0],"total":85000},{"name":"업무교통 / 주차 등 (물류/CS)","vals":[0,56100,20700,0,0,0,0,0,0,0,0,0],"total":76800},{"name":"(주)다원섬유(TEXTILE)","vals":[67700,0,0,0,0,0,0,0,0,0,0,0],"total":67700},{"name":"쿠(KOO)","vals":[0,0,60000,0,0,0,0,0,0,0,0,0],"total":60000},{"name":"주식회사 라이크텍스타일","vals":[0,0,57500,0,0,0,0,0,0,0,0,0],"total":57500},{"name":"골뱅이","vals":[0,0,57000,0,0,0,0,0,0,0,0,0],"total":57000},{"name":"칠성피혁","vals":[0,0,52000,0,0,0,0,0,0,0,0,0],"total":52000},{"name":"(주)후로지스틱","vals":[30000,0,0,0,0,0,0,0,0,0,0,0],"total":30000},{"name":"모두싸인","vals":[9900,9900,9000,0,0,0,0,0,0,0,0,0],"total":28800},{"name":"서울아리수(수도)","vals":[0,25800,0,0,0,0,0,0,0,0,0,0],"total":25800},{"name":"주식회사다양","vals":[20500,0,0,0,0,0,0,0,0,0,0,0],"total":20500},{"name":"(주)엘앤와이컴퍼니（L&Y COMPANY CO．， Lt","vals":[0,20000,0,0,0,0,0,0,0,0,0,0],"total":20000},{"name":"SF Express Korea Co.,Ltd.","vals":[18000,0,0,0,0,0,0,0,0,0,0,0],"total":18000},{"name":"A.B.C","vals":[18000,0,0,0,0,0,0,0,0,0,0,0],"total":18000},{"name":"실크이야기","vals":[16000,0,0,0,0,0,0,0,0,0,0,0],"total":16000},{"name":"예스폼","vals":[9900,0,0,0,0,0,0,0,0,0,0,0],"total":9900},{"name":"서흥금속","vals":[9000,0,0,0,0,0,0,0,0,0,0,0],"total":9000},{"name":"예스코(가스)","vals":[2740,2740,2740,0,0,0,0,0,0,0,0,0],"total":8220},{"name":"정한상사","vals":[0,7500,0,0,0,0,0,0,0,0,0,0],"total":7500},{"name":"환불택배비 외","vals":[-63392,-78381,119827,0,0,0,0,0,0,0,0,0],"total":-21946}]};</script>
+</head>
+<body>
+
+<div class="hd">
+  <div>
+    <div class="hd-title">📊 손익계산서 대시보드</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:2px" id="sub-txt">주식회사 더라스트 · 파일을 불러오면 자동으로 업데이트됩니다</div>
+  </div>
+  <div class="hd-right">
+    <span class="nav-period" id="period-badge">파일 없음</span>
+    <label class="load-btn">
+      📂 엑셀 불러오기
+      <input type="file" accept=".xlsx,.xls" onchange="loadFile(event)">
+    </label>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab(0)">대표자 보고용</button>
+  <button class="tab" onclick="switchTab(1)">세부항목 비교</button>
+  <button class="tab" onclick="switchTab(2)">관리 및 개선방향</button>
+</div>
+
+<div id="empty-state">
+  <div class="es-icon">📂</div>
+  <div class="es-title">엑셀 파일을 불러오세요</div>
+  <div class="es-desc"><b>★월별 손익보고.xlsx</b> 파일을 선택하면<br>손익 대시보드가 자동으로 업데이트됩니다.</div>
+  <label class="es-btn">📂 파일 선택<input type="file" accept=".xlsx,.xls" onchange="loadFile(event)"></label>
+</div>
+
+<div id="main-wrap" style="display:none">
+
+<!-- ══ Panel 0: 대표자 보고용 ══ -->
+<div class="panel active" id="panel-0">
+  <div class="g4" id="kpi-main"></div>
+  <div class="card">
+    <div class="card-title">주요 지표 월별 추이</div>
+    <div class="chart-wrap h300"><canvas id="c-main"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-title">제품 재고금액 변동 (기말 기준)</div>
+    <div class="chart-wrap"><canvas id="c-inv"></canvas></div>
+  </div>
+</div>
+
+<!-- ══ Panel 1: 세부항목 비교 ══ -->
+<div class="panel" id="panel-1">
+  <div class="sec-label">① 매출 채널별 금액</div>
+  <div class="card"><div class="card-title">채널별 매출 비교</div><div class="chart-wrap h300"><canvas id="c-ch"></canvas></div></div>
+  <div class="sec-label">② 원재료 매입처별 금액 (상위)</div>
+  <div class="card"><div class="card-title">매입처별 원재료 비교</div><div class="chart-wrap h300"><canvas id="c-mat"></canvas></div></div>
+  <div class="sec-label">③ 주요 판관비 항목</div>
+  <div class="g3">
+    <div class="card"><div class="card-title">지급수수료</div><div class="chart-wrap"><canvas id="c-svfee"></canvas></div></div>
+    <div class="card"><div class="card-title">광고선전비</div><div class="chart-wrap"><canvas id="c-ad"></canvas></div></div>
+    <div class="card"><div class="card-title">견본비</div><div class="chart-wrap"><canvas id="c-sample"></canvas></div></div>
+  </div>
+  <div class="g3">
+    <div class="card"><div class="card-title">운반비</div><div class="chart-wrap"><canvas id="c-del"></canvas></div></div>
+    <div class="card"><div class="card-title">판매수수료</div><div class="chart-wrap"><canvas id="c-sfee"></canvas></div></div>
+    <div class="card"><div class="card-title">지급임차료</div><div class="chart-wrap"><canvas id="c-rent"></canvas></div></div>
+  </div>
+</div>
+
+<!-- ══ Panel 2: 관리 및 개선방향 ══ -->
+<div class="panel" id="panel-2">
+  <div class="g4" id="kpi-mgmt"></div>
+  <div class="save-bar">
+    <span class="save-notice" id="save-notice"></span>
+    <button class="btn-save" onclick="saveComments()">💾 코멘트 저장</button>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div style="font-size:12px;font-weight:600;margin-bottom:.5rem">📝 해당월 손익 코멘트</div>
+      <textarea class="comment-area" id="txt-current" placeholder="이번달 주요 손익 내용을 입력하세요..."></textarea>
+    </div>
+    <div class="card">
+      <div style="font-size:12px;font-weight:600;margin-bottom:.5rem">📊 전월 비교 특이사항 · 개선사항</div>
+      <textarea class="comment-area" id="txt-compare" placeholder="전월과 비교하여 특이사항이나 개선사항을 입력하세요..."></textarea>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">월별 주요 지표 비교</div>
+    <table class="tbl" id="t-mgmt"></table>
+  </div>
+</div>
+
+</div><!-- main-wrap -->
+
+<script>
+// ─── 전역 상태 ───────────────────────────────────────────
+const G = { months:[], pl:{}, inv:[], revDetail:[], matDetail:[] };
+const charts = {};
+const SAVED = { current:'', compare:'' };
+
+// ─── 포맷 ────────────────────────────────────────────────
+const K = v => {
+  if(v===null||v===undefined||isNaN(v)) return '-';
+  const a=Math.abs(v);
+  const r=a>=1e8?(a/1e8).toFixed(1)+'억':a>=1e4?Math.round(a/1e4).toLocaleString()+'만':a.toLocaleString();
+  return (v<0?'-':'')+r;
+};
+const pctStr = (v,base) => base?(v/Math.abs(base)*100).toFixed(1)+'%':'-';
+Chart.defaults.color='#64748b'; Chart.defaults.font.family="'DM Mono',monospace"; Chart.defaults.font.size=11;
+const GRID='rgba(0,0,0,0.06)', TICK='#94a3b8';
+const LC=['#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899','#84cc16','#14b8a6'];
+
+// ─── 파일 로드 ────────────────────────────────────────────
+function loadFile(evt) {
+  const file = evt.target.files[0]; if(!file) return;
+  document.getElementById('period-badge').textContent = '⏳ 로딩중...';
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array', cellDates:true});
+      parseWorkbook(wb);
+      renderAll();
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('main-wrap').style.display = 'block';
+      document.getElementById('period-badge').textContent = `${G.months.join(' / ')} 기준`;
+      document.getElementById('sub-txt').textContent = `주식회사 더라스트 · ${file.name} · ${new Date().toLocaleDateString('ko-KR')} 업데이트`;
+      restoreComments();
+    } catch(err) { alert('파싱 오류: '+err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// ─── 파싱 ─────────────────────────────────────────────────
+function parseWorkbook(wb) {
+  // ── 1. '전체' 시트 파싱 ──
+  const ws = wb.Sheets['전체'];
+  if(!ws) throw new Error("'전체' 시트 없음");
+  const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+
+  // 헤더 행(row 0)에서 월 컬럼 찾기: col4부터 2칸 간격으로 금액
+  const hdr = raw[0];
+  G.months = [];
+  G.monthCols = []; // [col_idx, ...]
+  for(let c=4; c<(hdr?.length||0); c+=2) {
+    const v = hdr[c];
+    if(typeof v==='string' && v.includes('년') && v.includes('월')) {
+      const m = v.replace('2026년','').replace('년','').replace(/^0/,'');
+      G.months.push(m);
+      G.monthCols.push(c);
+    }
+  }
+
+  // 각 과목 행에서 월별 금액 추출
+  const getItem = (rowIdx) => {
+    const r = raw[rowIdx];
+    if(!r) return G.monthCols.map(()=>0);
+    return G.monthCols.map(c => typeof r[c]==='number' ? r[c] : 0);
+  };
+  const getItemRatio = (rowIdx) => {
+    const r = raw[rowIdx];
+    if(!r) return G.monthCols.map(()=>null);
+    return G.monthCols.map(c => typeof r[c+1]==='number' ? r[c+1] : null);
+  };
+
+  // P&L 과목 (0-indexed 행 번호)
+  G.pl = {
+    매출액: getItem(1),
+    매출원가: getItem(3),
+    매출원가율: getItemRatio(3),
+    기말재고: getItem(7),
+    매출총이익: getItem(8),
+    판관비: getItem(9),
+    임원급여: getItem(10),
+    직원급여: getItem(11),
+    상여금: getItem(12),
+    잡급: getItem(13),
+    퇴직급여: getItem(14),
+    복리후생비: getItem(15),
+    여비교통비: getItem(16),
+    접대비: getItem(17),
+    통신비: getItem(18),
+    수도광열비: getItem(19),
+    전력비: getItem(20),
+    세금과공과: getItem(21),
+    지급임차료: getItem(22),
+    보험료: getItem(23),
+    차량유지비: getItem(24),
+    운반비: getItem(25),
+    소모품비: getItem(26),
+    지급수수료: getItem(27),
+    광고선전비: getItem(28),
+    판매수수료: getItem(29),
+    리스료: getItem(30),
+    인적용역비: getItem(31),
+    견본비: getItem(32),
+    판매촉진비: getItem(33),
+    영업이익: getItem(34),
+    당기순이익: getItem(44),
+  };
+
+  // 재고 시작금액(기초) - 25.12월말 → 26.1월 기초 재고 (row 5 = 기초 제품 재고액)
+  const startInv = raw[5] ? (typeof raw[5][4]==='number' ? raw[5][4] : null) : null;
+  G.inv = startInv ? [startInv, ...G.pl.기말재고] : G.pl.기말재고;
+
+  // ── 2. '항목별 세부금액' 시트 파싱 ──
+  const ws2 = wb.Sheets['항목별 세부금액'];
+  G.revDetail = []; G.matDetail = [];
+  if(ws2) {
+    const rd = XLSX.utils.sheet_to_json(ws2, {header:1, defval:null});
+    // 헤더 행(i=1): col2~부터 '2026년01월' 등
+    const hdr2 = rd[1] || [];
+    const mCols2 = [];
+    for(let c=2; c<hdr2.length; c++) {
+      if(typeof hdr2[c]==='string' && hdr2[c].includes('년')) mCols2.push(c);
+    }
+
+    let section = null; // 'rev' | 'mat'
+    for(let i=2; i<rd.length; i++) {
+      const r = rd[i]; if(!r) continue;
+      const c1 = r[1];
+      // 섹션 구분
+      if(c1==='제품매출') { section='rev'; continue; }
+      if(c1==='원재료 등') { section='mat'; continue; }
+      // 소계 행 무시 (c1이 null 또는 공백)
+      if(!c1 || typeof c1!=='string') continue;
+      // 데이터 행: c1이 거래처명, c2가 숫자
+      const firstVal = r[mCols2[0]];
+      if(typeof firstVal!=='number' && firstVal!==null) continue;
+      const vals = mCols2.map(c => typeof r[c]==='number' ? r[c] : 0);
+      const total = vals.reduce((s,v)=>s+v, 0);
+      if(total===0) continue;
+      if(section==='rev') G.revDetail.push({name:c1.replace('（주）','(주)'), vals, total});
+      if(section==='mat') G.matDetail.push({name:c1, vals, total});
+    }
+    // 합계 내림차순 정렬
+    G.revDetail.sort((a,b)=>b.total-a.total);
+    G.matDetail.sort((a,b)=>b.total-a.total);
+  }
+}
+
+// ─── 렌더링 ───────────────────────────────────────────────
+function renderAll() {
+  renderKPIs();
+  renderMainChart();
+  renderInvChart();
+  renderChannelChart();
+  renderMatChart();
+  renderSgaCharts();
+  renderMgmtTable();
+}
+
+function latest(arr) { return arr?.[arr.length-1] ?? 0; }
+function prev(arr)   { return arr?.[arr.length-2] ?? 0; }
+function diff(arr)   { return latest(arr)-prev(arr); }
+function pctDiff(arr){ const p=prev(arr); return p?(diff(arr)/Math.abs(p)*100).toFixed(1):null; }
+
+function renderKPIs() {
+  const p = ['kpi-main','kpi-mgmt'].map(id=>document.getElementById(id));
+  const l_rev=latest(G.pl.매출액), d_rev=diff(G.pl.매출액), pd_rev=pctDiff(G.pl.매출액);
+  const l_op=latest(G.pl.영업이익), p_op=prev(G.pl.영업이익);
+  const l_cost=latest(G.pl.매출원가), l_rate=latest(G.pl.매출원가율);
+  const l_sga=latest(G.pl.판관비), l_sga_r=G.pl.매출액?.[G.pl.매출액.length-1]?l_sga/G.pl.매출액[G.pl.매출액.length-1]*100:null;
+  const curM = G.months[G.months.length-1] || '최신';
+  const html = `
+    <div class="kpi ind">
+      <div class="klabel">해당월 매출액</div>
+      <div class="kval">${K(l_rev)}</div>
+      <div class="ksub">전월 ${K(prev(G.pl.매출액))} → ${curM} ${K(l_rev)}</div>
+      <span class="kdiff ${pd_rev>=0?'up':'dn'}">${pd_rev!==null?(pd_rev>=0?'▲':'▼')+Math.abs(pd_rev)+'% MoM':''}</span>
+    </div>
+    <div class="kpi amb">
+      <div class="klabel">해당월 원가</div>
+      <div class="kval">${K(l_cost)}</div>
+      <div class="ksub">원가율 ${l_rate!==null?(l_rate*100).toFixed(1)+'%':'-'}</div>
+    </div>
+    <div class="kpi red">
+      <div class="klabel">해당월 판관비</div>
+      <div class="kval">${K(l_sga)}</div>
+      <div class="ksub">판관비율 ${l_sga_r!==null?l_sga_r.toFixed(1)+'%':'-'}</div>
+    </div>
+    <div class="kpi grn">
+      <div class="klabel">해당월 영업이익</div>
+      <div class="kval">${K(l_op)}</div>
+      <div class="ksub">전월 ${K(p_op)}</div>
+      <span class="kdiff ${l_op>=p_op?'up':'dn'}">${l_op>=p_op?'▲':'▼'} ${K(Math.abs(l_op-p_op))}</span>
+    </div>`;
+  p.forEach(el=>{ if(el) el.innerHTML=html; });
+}
+
+function mkLine(id, datasets, opts={}) {
+  if(charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id)?.getContext('2d'); if(!ctx) return;
+  charts[id] = new Chart(ctx, {
+    type:'line', data:{ labels:G.months, datasets },
+    options:{ plugins:{ legend:{labels:{color:'#475569',boxWidth:10,padding:10}}, tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${K(c.raw)}`}} }, scales:{ x:{grid:{display:false},ticks:{color:TICK}}, y:{grid:{color:GRID},ticks:{callback:v=>K(v),color:TICK}} }, ...opts }
+  });
+}
+
+function renderMainChart() {
+  mkLine('c-main', [
+    {label:'매출액',  data:G.pl.매출액,  borderColor:LC[0],fill:false,tension:0.3,pointRadius:6,pointHoverRadius:8,pointBorderColor:'#fff',pointBorderWidth:2,borderWidth:2.5},
+    {label:'원가',    data:G.pl.매출원가,borderColor:LC[2],fill:false,tension:0.3,pointRadius:6,pointHoverRadius:8,pointBorderColor:'#fff',pointBorderWidth:2,borderWidth:2.5},
+    {label:'판관비',  data:G.pl.판관비,  borderColor:LC[3],fill:false,tension:0.3,pointRadius:6,pointHoverRadius:8,pointBorderColor:'#fff',pointBorderWidth:2,borderWidth:2.5},
+    {label:'영업이익',data:G.pl.영업이익,borderColor:LC[1],fill:false,tension:0.3,pointRadius:6,pointHoverRadius:8,pointBorderColor:'#fff',pointBorderWidth:2,borderWidth:2.5},
+  ]);
+}
+
+function renderInvChart() {
+  if(charts['c-inv']) charts['c-inv'].destroy();
+  const ctx = document.getElementById('c-inv')?.getContext('2d'); if(!ctx) return;
+  const startInvLabel = G.inv.length > G.months.length ? ['25.12월말(기초)', ...G.months] : G.months;
+  charts['c-inv'] = new Chart(ctx, {
+    type:'line', data:{ labels:startInvLabel, datasets:[{
+      label:'제품 재고금액', data:G.inv, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,0.07)',
+      fill:true, tension:0.4, pointBackgroundColor:'#10b981', pointBorderColor:'#fff', pointBorderWidth:2, pointRadius:6, pointHoverRadius:8
+    }]},
+    options:{ plugins:{ legend:{labels:{color:'#475569',boxWidth:12}}, tooltip:{callbacks:{label:c=>` ${K(c.raw)}`}} }, scales:{ x:{grid:{display:false},ticks:{color:TICK}}, y:{grid:{color:GRID},ticks:{callback:v=>K(v),color:TICK}} } }
+  });
+}
+
+function renderChannelChart() {
+  const top = G.revDetail.slice(0,8);
+  if(!top.length) return;
+  mkLine('c-ch', top.map((d,i)=>({
+    label:d.name.length>10?d.name.slice(0,10)+'…':d.name, data:d.vals,
+    borderColor:LC[i%LC.length], backgroundColor:LC[i%LC.length]+'18',
+    fill:false, tension:0.3, pointRadius:5, pointHoverRadius:7, pointBorderColor:'#fff', pointBorderWidth:2, borderWidth:2
+  })));
+}
+
+function renderMatChart() {
+  const top = G.matDetail.slice(0,8);
+  if(!top.length) return;
+  mkLine('c-mat', top.map((d,i)=>({
+    label:d.name.length>10?d.name.slice(0,10)+'…':d.name, data:d.vals,
+    borderColor:LC[i%LC.length], backgroundColor:LC[i%LC.length]+'18',
+    fill:false, tension:0.3, pointRadius:5, pointHoverRadius:7, pointBorderColor:'#fff', pointBorderWidth:2, borderWidth:2
+  })));
+}
+
+function mkSimple(id, data, color) {
+  if(charts[id]) charts[id].destroy();
+  const ctx=document.getElementById(id)?.getContext('2d'); if(!ctx) return;
+  charts[id]=new Chart(ctx,{type:'line',data:{labels:G.months,datasets:[{label:'금액',data,borderColor:color,backgroundColor:color+'18',fill:true,tension:0.3,pointBackgroundColor:color,pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:6,pointHoverRadius:8,borderWidth:2}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${K(c.raw)}`}}},scales:{x:{grid:{display:false},ticks:{color:TICK}},y:{grid:{color:GRID},ticks:{callback:v=>K(v),color:TICK}}}}});
+}
+
+function renderSgaCharts() {
+  mkSimple('c-svfee',G.pl.지급수수료,LC[5]);
+  mkSimple('c-ad',   G.pl.광고선전비,LC[4]);
+  mkSimple('c-sample',G.pl.견본비,   LC[3]);
+  mkSimple('c-del',  G.pl.운반비,    LC[6]);
+  mkSimple('c-sfee', G.pl.판매수수료,LC[1]);
+  mkSimple('c-rent', G.pl.지급임차료,LC[0]);
+}
+
+function renderMgmtTable() {
+  const N=G.months.length;
+  const ROWS=[
+    {label:'매출액',     key:'매출액',      hi:true},
+    {label:'매출원가',   key:'매출원가'},
+    {label:'  원가율',   key:'매출원가율',  pct:true},
+    {label:'매출총이익', key:'매출총이익',  hi:true},
+    {label:'판관비',     key:'판관비'},
+    {label:'영업이익',   key:'영업이익',    hi:true},
+  ];
+  let html=`<thead><tr><th>항목</th>${G.months.map(m=>`<th>${m}</th>`).join('')}<th>MoM 증감</th></tr></thead><tbody>`;
+  ROWS.forEach(r=>{
+    const arr = G.pl[r.key]||[];
+    const rowCls = r.hi?' class="tr-hi"':r.pct?' class="tr-sub"':'';
+    if(r.pct) {
+      html+=`<tr${rowCls}><td>${r.label}</td>${arr.map(v=>`<td>${v!==null?(v*100).toFixed(1)+'%':'-'}</td>`).join('')}<td>-</td></tr>`;
+    } else {
+      const d=arr.length>=2?arr[arr.length-1]-arr[arr.length-2]:null;
+      html+=`<tr${rowCls}><td>${r.label}</td>${arr.map(v=>`<td>${K(v)}</td>`).join('')}<td>${d!==null?`<span class="${d>=0?'up':'dn'}">${d>=0?'+':''}${K(d)}</span>`:'-'}</td></tr>`;
+    }
+  });
+  html+='</tbody>';
+  document.getElementById('t-mgmt').innerHTML=html;
+}
+
+// ─── 탭 전환 ──────────────────────────────────────────────
+const panels=document.querySelectorAll('.panel');
+const tabs=document.querySelectorAll('.tab');
+function switchTab(i){
+  panels.forEach((p,j)=>p.classList.toggle('active',j===i));
+  tabs.forEach((t,j)=>t.classList.toggle('active',j===i));
+}
+
+// ─── 코멘트 저장 ──────────────────────────────────────────
+function restoreComments(){
+  const c=document.getElementById('txt-current');
+  const p=document.getElementById('txt-compare');
+  if(c){
+    c.value=SAVED.current||localStorage.getItem('pnl_comment_cur')||'';
+    c.addEventListener('input',()=>localStorage.setItem('pnl_comment_cur',c.value));
+  }
+  if(p){
+    p.value=SAVED.compare||localStorage.getItem('pnl_comment_cmp')||'';
+    p.addEventListener('input',()=>localStorage.setItem('pnl_comment_cmp',p.value));
+  }
+}
+
+function saveComments(){
+  const cur=document.getElementById('txt-current').value;
+  const cmp=document.getElementById('txt-compare').value;
+  const html=document.documentElement.outerHTML;
+  const updated=html.replace(/const SAVED=\{current:.*?,compare:.*?\};/,
+    `const SAVED={current:${JSON.stringify(cur)},compare:${JSON.stringify(cmp)}};`);
+  const blob=new Blob([updated],{type:'text/html;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='손익보고_동적.html';document.body.appendChild(a);a.click();
+  document.body.removeChild(a);URL.revokeObjectURL(a.href);
+  const n=document.getElementById('save-notice');
+  if(n){n.textContent='✓ 저장 완료 — 다운로드된 파일로 교체하세요';n.style.color='#059669';setTimeout(()=>n.textContent='',4000);}
+}
+
+// ─── 자동 렌더 (Netlify 배포 환경) ──────────────────────────
+if (window.__PD__) {
+  Object.assign(G, window.__PD__);
+  renderAll();
+  restoreComments();
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('main-wrap').style.display = 'block';
+  document.getElementById('period-badge').textContent = G.months.join(' / ') + ' 기준';
+  document.getElementById('sub-txt').textContent = '주식회사 더라스트 · 자동 업데이트됨';
+}
+</script>
+</body>
+</html>
