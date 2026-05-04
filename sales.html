@@ -389,7 +389,7 @@ function renderMonthBtns() {
 
 function selectMonth(i) {
   G.curMonth = i;
-  document.querySelectorAll('.month-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  document.querySelectorAll('#month-btns .month-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
   renderDailyChart();
   renderDailyTable();
 }
