@@ -206,20 +206,34 @@ function loadFile(evt) {
 
 // ─── 파싱 ─────────────────────────────────────────────────
 function parseWorkbook(wb) {
-  // ── 요약 시트
+  // ── 요약 시트 (표1 월별 + 표2 공급처별 + 표3 창고별)
   const wsSu=wb.Sheets['요약'];
   if(!wsSu) throw new Error("'요약' 시트 없음");
   const su=XLSX.utils.sheet_to_json(wsSu,{header:1,defval:null});
-  G.summary=[];
-  // 헤더행: '월','총 SKU수','총 수량','총 재고금액','전월대비 증감','상태' 찾기
+  G.summary=[]; G.supplierSummary=[]; G.warehouseSummary=[];
   const hIdx=su.findIndex(r=>r&&r.some(v=>v==='총 수량'));
   if(hIdx>=0){
     for(let i=hIdx+1;i<su.length;i++){
       const r=su[i]; if(!r) continue;
-      const m=r[1]; if(!m||typeof m!=='string') continue;
-      if(m==='월 평균'||m==='월') continue;
-      const sku=r[2], qty=r[3], amt=r[4], mom=r[5], status=r[6];
-      if(sku!=='-'&&qty!=='-'&&amt!=='-') G.summary.push({month:m,sku:sku||0,qty:qty||0,amount:amt||0,momChange:mom,status:status||'대기중'});
+      // 표1: 월별 (col B~F = index 1~5, SKU열 삭제 후 구조)
+      const m=r[1];
+      if(m&&typeof m==='string'&&m!=='월 평균'&&m!=='월'){
+        const qty=r[2], amt=r[3], mom=r[4], status=r[5];
+        if(qty!=='-'&&qty!==null&&amt!=='-'&&amt!==null)
+          G.summary.push({month:m,qty:qty||0,amount:amt||0,momChange:mom,status:status||'대기중'});
+      }
+      // 표2: 공급처별 (col I~K = index 8~10)
+      const sup=r[8];
+      if(sup&&typeof sup==='string'){
+        const a2=r[9], p2=r[10];
+        if(typeof a2==='number'&&a2>0) G.supplierSummary.push({name:sup,amount:a2,pct:String(p2||'')});
+      }
+      // 표3: 창고별 (col M~O = index 12~14)
+      const wh=r[12];
+      if(wh&&typeof wh==='string'){
+        const a3=r[13], p3=r[14];
+        if(typeof a3==='number'&&a3>0) G.warehouseSummary.push({name:wh,amount:a3,pct:String(p3||'')});
+      }
     }
   }
 
@@ -236,7 +250,7 @@ function parseWorkbook(wb) {
       if(typeof c0==='string'&&c0.includes('감소')) { section='dec'; return; }
       if(!c0||c0==='순위'||c0==='합계') return;
       if(typeof c0==='string'&&(c0.includes('위')||c0.includes('🥇')||c0.includes('🥈')||c0.includes('🥉'))) {
-        const item={rank:c0.replace(/[🥇🥈🥉\s]/g,''),supplier:r[1]||'',name:r[2]||'',q1:r[3]||0,q2:r[4]||0,q3:r[5]||0,chg:r[6]||0};
+        const item={rank:c0.replace(/[🥇🥈🥉\s]/g,''),supplier:r[1]||'',name:r[2]||'',q1:r[3]||0,q2:r[4]||0,q3:r[5]||0,q4:r[6]||0,chg:r[7]||0};
         if(section==='inc') G.topInc.push(item);
         if(section==='dec') G.topDec.push(item);
       }
