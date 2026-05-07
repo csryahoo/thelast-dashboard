@@ -456,48 +456,4 @@ function renderSummaryTab() {
   const top10=sup.slice(0,10);
   const total=top10.reduce((s,d)=>s+d.amount,0);
   const W=document.getElementById('sup-pie2').offsetWidth||320, H=280;
-  const cx=W/2, cy=H/2, R=Math.min(cx,cy)-40;
-  let svg=`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">`;
-  let angle=-Math.PI/2;
-  top10.forEach((d,i)=>{
-    const slice=(d.amount/total)*Math.PI*2;
-    const x1=cx+R*Math.cos(angle), y1=cy+R*Math.sin(angle);
-    const x2=cx+R*Math.cos(angle+slice), y2=cy+R*Math.sin(angle+slice);
-    const lf=slice>Math.PI?1:0;
-    svg+=`<path d="M${cx},${cy} L${x1},${y1} A${R},${R} 0 ${lf} 1 ${x2},${y2} Z" fill="${COLS[i]}" opacity="0.85" stroke="#ffffff" stroke-width="1.5"/>`;
-    const mid=angle+slice/2;
-    if(slice>0.15) svg+=`<text x="${cx+R*0.68*Math.cos(mid)}" y="${cy+R*0.68*Math.sin(mid)+4}" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">${(d.amount/total*100).toFixed(0)}%</text>`;
-    angle+=slice;
-  });
-  top10.forEach((d,i)=>{
-    const lx=8, ly=8+i*22;
-    svg+=`<rect x="${lx}" y="${ly}" width="11" height="11" fill="${COLS[i]}" rx="2"/><text x="${lx+15}" y="${ly+9}" fill="#94A3B8" font-size="10">${d.name.slice(0,12)}</text>`;
-  });
-  svg+='</svg>';
-  document.getElementById('sup-pie2').innerHTML=svg;
-}
-
-// ─── 탭 전환 ──────────────────────────────────────────────
-function showTab(id, btn) {
-  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.tnav-btn').forEach(b=>b.classList.remove('on'));
-  document.getElementById(id).classList.add('on');
-  btn.classList.add('on');
-  // 탭 전환 시 SVG 차트 재렌더
-  if(id==='t2'&&G.products.length) { setTimeout(()=>{renderProdChart();renderProdTable();},50); }
-  if(id==='t3') { setTimeout(()=>renderSummaryTab(),50); }
-}
-
-// ─── 자동 렌더 (Netlify 배포 환경) ──────────────────────────
-if (window.__PD__) {
-  Object.assign(G, window.__PD__);
-  document.getElementById('empty-state').style.display = 'none';
-  document.getElementById('main-wrap').style.display = 'block';
-  renderAll();
-  document.getElementById('badge').textContent = G.mRange + ' 기준';
-  document.getElementById('badge').className = 'badge';
-  document.getElementById('sub-txt').textContent = '더라스트 · 자동 업데이트됨';
-}
-</script>
-</body>
-</html>
+  const cx=W/2, cy=H/2, R=Math.mi
