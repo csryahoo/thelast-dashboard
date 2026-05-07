@@ -438,7 +438,8 @@ function renderDailyTable() {
 }
 
 function renderRankMonthBtns() {
-  const keys = Object.keys(G.rankMonths);
+  const keys = Object.keys(G.rankMonths)
+    .sort((a,b) => parseInt(a) - parseInt(b));  // 4월→5월 오름차순
   const el = document.getElementById('rank-month-btns');
   if (!el) return;
   if (keys.length <= 1) { el.innerHTML = ''; return; }
