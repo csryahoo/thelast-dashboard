@@ -505,4 +505,39 @@ function renderRankTable(month) {
       <td style="padding:7px 10px;font-size:12px;text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.name}">${r.name}</td>
       <td style="padding:7px 8px;text-align:right;font-size:12px;color:${r.qty<0?'#dc2626':'#374151'}">${r.qty.toLocaleString()}</td>
       <td style="padding:7px 8px;text-align:right;font-size:12px;color:#64748b">${fmt(r.price)}</td>
-      <td
+      <td style="padding:7px 8px;text-align:right;font-size:12px;font-weight:600">${fmtC(r.total, pos)}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:12px;color:#64748b">${fmt(r.cost)}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:12px;color:#64748b">${fmt(r.ctotal)}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:12px;font-weight:600;color:${profitColor}">${fmt(r.profit)}</td>
+      <td style="padding:7px 8px;text-align:center">${badge(r.margin)}</td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('t-rank').innerHTML = html;
+}
+
+// ─── 탭 전환 ──────────────────────────────────────────────
+function showTab(i, el) {
+  document.querySelectorAll('.section').forEach((s,j)=>s.classList.toggle('active',j===i));
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+  // 일별 탭 진입 시 차트 재렌더 (캔버스 크기 이슈 방지)
+  if (i===1) { setTimeout(()=>{ if(charts.daily){charts.daily.resize();} },50); }
+}
+
+// ─── 자동 렌더 (Netlify 배포 환경) ──────────────────────────
+if (window.__PD__) {
+  Object.assign(G, window.__PD__);
+  G.curMonth = G.months.length - 1;
+  renderAll();
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('main-content').style.display = 'block';
+  const _l = G.months[G.months.length-1];
+  if (_l) {
+    document.getElementById('badge').textContent = '● ' + _l.name + ' 기준';
+    document.getElementById('badge').className = 'badge';
+  }
+  document.getElementById('sub-txt').textContent = '주식회사 더라스트 · 자동 업데이트됨';
+}
+</script>
+</body>
+</html>
