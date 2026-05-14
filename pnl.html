@@ -436,8 +436,15 @@ function renderAll() {
   updateNavVals();
   // 모든 섹션 상세 테이블 렌더링
   SECTIONS.forEach(s => {
-    mkDetailMultiLine(s.chartId, (G[s.dataKey]||[]).slice(0,5));
-    renderDetailTable(s.tableId, G[s.dataKey]);
+    const arr = G[s.dataKey] || [];
+    // 차트 상위 5개: 최근 월 금액 내림차순
+    const sortedByLatest = [...arr].sort((a, b) => {
+      const av = a.vals?.[a.vals.length - 1] ?? 0;
+      const bv = b.vals?.[b.vals.length - 1] ?? 0;
+      return bv - av;
+    });
+    mkDetailMultiLine(s.chartId, sortedByLatest.slice(0, 5));
+    renderDetailTable(s.tableId, arr);
   });
 }
 
