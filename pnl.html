@@ -709,30 +709,43 @@ function updateNavVals() {
   setNv('nv-ad',     L(G.pl.광고선전비));
 }
 
-// 상세 테이블 렌더 (전체 거래처 × 월별 금액)
+// 상세 테이블 렌더 (전체 거래처 × 월별 금액 / 헤더 고정)
 function renderDetailTable(tableId, detailArr) {
   const el = document.getElementById(tableId);
   if(!el || !detailArr?.length) return;
-  const months = G.months || [];
-  // 헤더 행: 업체명 | 1월 | 2월 | ... | 합계
-  let html = `<div style="overflow-x:auto;margin-top:1.2rem">
-  <table class="detail-tbl">
+
+  // vals 길이 기준으로 1월~N월 레이블 생성 (G.months 4개 ≠ detail 12개 불일치 방지)
+  const nVals = detailArr[0].vals.length;
+  const mLabels = Array.from({length: nVals}, (_, i) => `${i+1}월`);
+
+  const thStyle = `style="min-width:62px;position:sticky;top:0;background:#f8fafc;z-index:2"`;
+  const thName  = `style="min-width:200px;position:sticky;top:0;left:0;background:#f8fafc;z-index:3;text-align:left"`;
+  const thTotal = `style="min-width:72px;position:sticky;top:0;right:0;background:#f8fafc;z-index:2"`;
+
+  let html = `<div style="overflow:auto;max-height:calc(78vh - 260px);margin-top:1rem">
+  <table class="detail-tbl" style="min-width:max-content;width:100%">
     <thead><tr>
-      <th style="min-width:180px">업체명</th>
-      ${months.map(m=>`<th style="min-width:60px">${m}</th>`).join('')}
-      <th style="min-width:70px">합계</th>
+      <th ${thName}>업체명</th>
+      ${mLabels.map(m=>`<th ${thStyle}>${m}</th>`).join('')}
+      <th ${thTotal}>합계</th>
     </tr></thead>
     <tbody>`;
+
   detailArr.forEach((d, i) => {
     const inChart = i < 5;
-    const color = LC[i % LC.length];
-    const dot = inChart ? `<span class="dot" style="background:${color}"></span>` : '<span style="display:inline-block;width:14px"></span>';
-    html += `<tr${inChart ? ' style="font-weight:500"' : ''}>`;
-    html += `<td>${dot}${d.name}</td>`;
+    const color   = LC[i % LC.length];
+    const dot     = inChart
+      ? `<span class="dot" style="background:${color}"></span>`
+      : `<span style="display:inline-block;width:14px"></span>`;
+    const tdName  = `style="position:sticky;left:0;background:${inChart?'#fdfdff':'#fff'};font-weight:${inChart?600:400}"`;
+    const tdTotal = `style="font-weight:700;position:sticky;right:0;background:${inChart?'#fdfdff':'#fff'}"`;
+    html += `<tr>`;
+    html += `<td ${tdName}>${dot}${d.name}</td>`;
     d.vals.forEach(v => { html += `<td>${v ? K(v) : '-'}</td>`; });
-    html += `<td style="font-weight:700">${K(d.total)}</td>`;
+    html += `<td ${tdTotal}>${K(d.total)}</td>`;
     html += `</tr>`;
   });
+
   html += `</tbody></table></div>`;
   el.innerHTML = html;
 }
