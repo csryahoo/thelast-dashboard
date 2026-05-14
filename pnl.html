@@ -599,19 +599,22 @@ function selectDetail(id) {
   document.querySelector(`.nav-item[data-id="${id}"]`)?.classList.add('active');
 }
 
-// 네비 전체 합계 표시
+// 네비 최근 월 합계 표시
 function updateNavVals() {
-  // 세부 데이터 있는 경우: 모든 업체의 합계 합산
-  const detailTotal = arr => {
+  // 세부 데이터 기준 최근 월 합계 (마지막 vals 인덱스 합산)
+  const latestSum = arr => {
     if(!arr?.length) return null;
-    const t = arr.reduce((s,d) => s + (d.total||0), 0);
+    const t = arr.reduce((s,d) => {
+      const v = d.vals?.[d.vals.length - 1];
+      return s + (typeof v === 'number' ? v : 0);
+    }, 0);
     return t || null;
   };
   SECTIONS.forEach(s => {
     const el = document.getElementById(`nv-${s.id}`);
     if(!el) return;
     const arr = G[s.dataKey] || [];
-    const t = detailTotal(arr);
+    const t = latestSum(arr);
     el.textContent = t ? K(t) : '-';
   });
 }
