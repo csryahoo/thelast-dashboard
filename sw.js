@@ -1,4 +1,4 @@
-const CACHE = 'thelast-v7';
+const CACHE = 'thelast-v8';
 const SHELL = ['/', '/index.html', '/sales.html', '/pnl.html', '/stock.html', '/icon-192.png', '/manifest.json'];
 
 self.addEventListener('install', e => {
