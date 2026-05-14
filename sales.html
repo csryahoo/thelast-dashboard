@@ -442,10 +442,13 @@ function renderDailyChart() {
     type:'bar',
     data:{ labels, datasets:[
       { label:'전채널', type:'line', data:m.daily.map(d=>d.전채널), borderColor:'#1e40af', backgroundColor:'transparent', fill:false, tension:0.3, pointRadius:2, pointHoverRadius:5, borderWidth:2, yAxisID:'y' },
-      { label:'자사몰', data:m.daily.map(d=>d.자사몰), backgroundColor:'#3b82f699', borderColor:'#3b82f6', borderWidth:1 },
-      { label:'쇼룸',   data:m.daily.map(d=>d.쇼룸),   backgroundColor:'#10b98199', borderColor:'#10b981', borderWidth:1 },
+      { label:'쇼룸',         data:m.daily.map(d=>d.쇼룸||0),         backgroundColor:'#10b98199', borderColor:'#10b981', borderWidth:1 },
+      { label:'자사몰',       data:m.daily.map(d=>d.자사몰||0),       backgroundColor:'#3b82f699', borderColor:'#3b82f6', borderWidth:1 },
+      { label:'팝업',         data:m.daily.map(d=>d.팝업||0),         backgroundColor:'#ec489999', borderColor:'#ec4899', borderWidth:1 },
+      { label:'압구정',       data:m.daily.map(d=>d.압구정||0),       backgroundColor:'#f59e0b99', borderColor:'#f59e0b', borderWidth:1 },
+      { label:'컬리',         data:m.daily.map(d=>d.컬리||0),         backgroundColor:'#06b6d499', borderColor:'#06b6d4', borderWidth:1 },
       { label:'스마트스토어', data:m.daily.map(d=>d.스마트스토어||0), backgroundColor:'#22d3ee99', borderColor:'#22d3ee', borderWidth:1 },
-      { label:'외부채널', data:m.daily.map(d=>d.외부채널), backgroundColor:'#f59e0b99', borderColor:'#f59e0b', borderWidth:1 },
+      { label:'SSF',          data:m.daily.map(d=>d.SSF||0),          backgroundColor:'#8b5cf699', borderColor:'#8b5cf6', borderWidth:1 },
     ]},
     options:{
       plugins:{
