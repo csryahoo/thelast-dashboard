@@ -437,10 +437,11 @@ function renderAll() {
   // 모든 섹션 상세 테이블 렌더링
   SECTIONS.forEach(s => {
     const arr = G[s.dataKey] || [];
-    // 차트 상위 5개: 최근 월 금액 내림차순
+    // 차트 상위 5개: 최근 데이터 월 기준 내림차순
+    const latestIdx = lastNonZeroIdx(arr);
     const sortedByLatest = [...arr].sort((a, b) => {
-      const av = a.vals?.[a.vals.length - 1] ?? 0;
-      const bv = b.vals?.[b.vals.length - 1] ?? 0;
+      const av = latestIdx >= 0 ? (a.vals?.[latestIdx] ?? 0) : 0;
+      const bv = latestIdx >= 0 ? (b.vals?.[latestIdx] ?? 0) : 0;
       return bv - av;
     });
     mkDetailMultiLine(s.chartId, sortedByLatest.slice(0, 5));
@@ -606,22 +607,25 @@ function selectDetail(id) {
   document.querySelector(`.nav-item[data-id="${id}"]`)?.classList.add('active');
 }
 
+// 마지막 비 0 값 인덱스 찾기 (데이터 있는 최근 월)
+function lastNonZeroIdx(arr) {
+  if(!arr?.length) return -1;
+  const nVals = arr[0]?.vals?.length || 0;
+  for(let i = nVals - 1; i >= 0; i--) {
+    if(arr.some(d => typeof d.vals?.[i] === 'number' && d.vals[i] !== 0)) return i;
+  }
+  return -1;
+}
+
 // 네비 최근 월 합계 표시
 function updateNavVals() {
-  // 세부 데이터 기준 최근 월 합계 (마지막 vals 인덱스 합산)
-  const latestSum = arr => {
-    if(!arr?.length) return null;
-    const t = arr.reduce((s,d) => {
-      const v = d.vals?.[d.vals.length - 1];
-      return s + (typeof v === 'number' ? v : 0);
-    }, 0);
-    return t || null;
-  };
   SECTIONS.forEach(s => {
     const el = document.getElementById(`nv-${s.id}`);
     if(!el) return;
     const arr = G[s.dataKey] || [];
-    const t = latestSum(arr);
+    const idx = lastNonZeroIdx(arr);
+    if(idx < 0) { el.textContent = '-'; return; }
+    const t = arr.reduce((s, d) => s + (d.vals?.[idx] || 0), 0);
     el.textContent = t ? K(t) : '-';
   });
 }
