@@ -734,40 +734,73 @@ function renderStatement() {
 
   // 섹션 색상 매핑
   const PROFIT_ROWS = ['Ⅲ','Ⅴ','Ⅹ'];
-  const COST_ROWS   = ['Ⅱ','Ⅳ','Ⅵ','Ⅶ'];
+  const LOSS_ROWS   = ['Ⅵ','Ⅶ','Ⅷ'];
+  const COST_ROWS   = ['Ⅱ','Ⅳ'];
 
-  let html = `<thead><tr style="background:var(--bg)">
-    <th style="text-align:left;width:220px;padding:10px 14px;font-size:11px;border-bottom:2px solid var(--border)">과 목</th>
-    ${labels.map(m => `<th colspan="2" style="padding:8px;text-align:center;font-size:11px;border-bottom:2px solid var(--border)">${m}</th>`).join('')}
+  // 섹션별 테마 색상
+  const SEC_THEME = {
+    'Ⅰ': { bg:'#eff6ff', border:'#3b82f6', text:'#1d4ed8' },  // 매출 - 파랑
+    'Ⅱ': { bg:'#fff7ed', border:'#f97316', text:'#c2410c' },  // 매출원가 - 주황
+    'Ⅲ': { bg:'#f0fdf4', border:'#22c55e', text:'#15803d' },  // 매출총이익 - 초록
+    'Ⅳ': { bg:'#faf5ff', border:'#a855f7', text:'#7e22ce' },  // 판관비 - 보라
+    'Ⅴ': { bg:'#f0fdf4', border:'#22c55e', text:'#15803d' },  // 영업이익 - 초록
+    'Ⅵ': { bg:'#fef2f2', border:'#ef4444', text:'#b91c1c' },  // 영업외
+    'Ⅶ': { bg:'#fef2f2', border:'#ef4444', text:'#b91c1c' },
+    'Ⅷ': { bg:'#fff7ed', border:'#f97316', text:'#c2410c' },
+    'Ⅸ': { bg:'#f8fafc', border:'#64748b', text:'#334155' },
+    'Ⅹ': { bg:'#f0fdf4', border:'#22c55e', text:'#15803d' },  // 당기순이익 - 초록
+  };
+  const getTheme = name => {
+    for (const [k, v] of Object.entries(SEC_THEME)) {
+      if (name.startsWith(k)) return v;
+    }
+    return { bg:'#f8fafc', border:'#94a3b8', text:'#334155' };
+  };
+
+  let html = `<thead><tr style="background:#f1f5f9">
+    <th style="text-align:left;width:220px;padding:10px 16px;font-size:11px;color:#475569;border-bottom:2px solid #cbd5e1">과 목</th>
+    ${labels.map((m,i) => {
+      const isLast = i === ms.length-1;
+      return `<th colspan="2" style="padding:8px;text-align:center;font-size:11px;border-bottom:2px solid #cbd5e1;${isLast?'background:#e0f2fe':''}">${m}</th>`;
+    }).join('')}
   </tr>
-  <tr style="background:var(--bg)">
-    <th style="border-bottom:1px solid var(--border)"></th>
-    ${ms.map(() => `
-      <th style="padding:6px 10px;text-align:right;font-size:10px;color:var(--muted);border-bottom:1px solid var(--border)">금액</th>
-      <th style="padding:6px 6px;text-align:right;font-size:10px;color:var(--muted);width:48px;border-bottom:1px solid var(--border)">비율</th>`).join('')}
+  <tr style="background:#f8fafc">
+    <th style="border-bottom:2px solid #cbd5e1"></th>
+    ${ms.map((_,i) => {
+      const isLast = i === ms.length-1;
+      return `
+      <th style="padding:5px 10px;text-align:right;font-size:10px;color:#94a3b8;border-bottom:2px solid #cbd5e1;${isLast?'background:#e0f2fe':''}">금액</th>
+      <th style="padding:5px 6px;text-align:right;font-size:10px;color:#94a3b8;width:52px;border-bottom:2px solid #cbd5e1;${isLast?'background:#e0f2fe':''}">비율</th>`;
+    }).join('')}
   </tr></thead><tbody>`;
 
   for (const row of stmt.rows) {
     const isSec = row.sec;
-    const firstChar = row.name[0] || '';
-    const isProfit = PROFIT_ROWS.some(x => row.name.startsWith(x));
-    const isCost   = COST_ROWS.some(x => row.name.startsWith(x));
+    const theme = getTheme(row.name);
 
-    let rowBg = '';
-    if (isProfit) rowBg = 'background:#f0fdf4';
-    else if (isCost && isSec) rowBg = 'background:#fafafa';
-    else if (isSec) rowBg = 'background:#f8fafc';
-
-    const nameStyle = isSec
-      ? `font-weight:700;font-size:12px;${isProfit?'color:#15803d':''}`
-      : `padding-left:${14 + row.lv*14}px;color:#374151;font-size:11.5px`;
-
-    html += `<tr style="${rowBg}${isSec?';border-top:2px solid var(--border)':''}">
-      <td style="padding:${isSec?'9':'6'}px 14px;${nameStyle}">${row.name}</td>
-      ${row.v.map((v, i) => `
-        <td style="text-align:right;padding:${isSec?'9':'6'}px 10px;font-size:${isSec?'12':'11.5'}px;font-weight:${isSec?'600':'400'}">${fw(v)}</td>
-        <td style="text-align:right;padding:${isSec?'9':'6'}px 6px">${fr(row.r[i])}</td>`).join('')}
-    </tr>`;
+    if (isSec) {
+      // 섹션 헤더 행: 색상 배경 + 왼쪽 굵은 컬러 보더
+      html += `<tr style="background:${theme.bg};border-top:3px solid ${theme.border}">
+        <td style="padding:10px 14px 10px 10px;font-weight:700;font-size:12.5px;color:${theme.text};border-left:4px solid ${theme.border}">${row.name}</td>
+        ${row.v.map((v, i) => {
+          const isLast = i === ms.length-1;
+          return `
+          <td style="text-align:right;padding:10px 10px;font-size:12.5px;font-weight:700;color:${theme.text};${isLast?'background:rgba(14,165,233,0.06)':''}">${fw(v)}</td>
+          <td style="text-align:right;padding:10px 6px;${isLast?'background:rgba(14,165,233,0.06)':''}">${fr(row.r[i])}</td>`;
+        }).join('')}
+      </tr>`;
+    } else {
+      // 일반 항목 행
+      html += `<tr style="border-bottom:1px solid #f1f5f9" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
+        <td style="padding:6px 14px 6px ${10 + row.lv*16}px;color:#4b5563;font-size:11.5px">${row.name}</td>
+        ${row.v.map((v, i) => {
+          const isLast = i === ms.length-1;
+          return `
+          <td style="text-align:right;padding:6px 10px;font-size:11.5px;${isLast?'background:rgba(14,165,233,0.04)':''}">${fw(v)}</td>
+          <td style="text-align:right;padding:6px 6px;${isLast?'background:rgba(14,165,233,0.04)':''}">${fr(row.r[i])}</td>`;
+        }).join('')}
+      </tr>`;
+    }
   }
 
   html += '</tbody>';
