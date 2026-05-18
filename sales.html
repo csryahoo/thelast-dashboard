@@ -74,6 +74,20 @@ tr:nth-child(1) .rank-no { color: #f59e0b; }
 tr:nth-child(2) .rank-no { color: #94a3b8; }
 tr:nth-child(3) .rank-no { color: #b45309; }
 
+/* Rank filter bar */
+.rank-filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+.rank-search { flex:1; min-width:160px; max-width:280px; padding:7px 12px; border:1px solid #dde1f0; border-radius:8px; font-size:12px; font-family:inherit; outline:none; color:#1a202c; }
+.rank-search:focus { border-color:#2563eb; box-shadow:0 0 0 2px rgba(37,99,235,.15); }
+.rank-filter-group { display:flex; gap:4px; flex-wrap:wrap; }
+.rank-filter-btn { padding:5px 11px; border:1px solid #dde1f0; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; background:#fff; color:#64748b; transition:all .15s; font-family:inherit; }
+.rank-filter-btn.active { background:#2563eb; color:#fff; border-color:#2563eb; }
+.rank-filter-btn:hover:not(.active) { background:#f1f5f9; border-color:#94a3b8; }
+.rank-count { font-size:11px; color:#94a3b8; white-space:nowrap; margin-left:4px; }
+.sort-th { cursor:pointer; user-select:none; }
+.sort-th:hover { color:#2563eb; background:#eef2ff!important; }
+.sort-arrow { display:inline-block; margin-left:3px; opacity:.5; font-size:10px; }
+.sort-arrow.active { opacity:1; color:#2563eb; }
+
 /* Empty state */
 #empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; gap: 16px; color: #94a3b8; }
 #empty-state .es-icon { font-size: 48px; opacity: .5; }
@@ -154,9 +168,21 @@ tr:nth-child(3) .rank-no { color: #b45309; }
     <!-- TAB 2: 자사몰 판매순위 -->
     <div class="section" id="tab-2">
       <div class="month-btns" id="rank-month-btns"></div>
+      <!-- 필터 바 -->
+      <div class="rank-filter-bar">
+        <input class="rank-search" id="rank-search" type="text" placeholder="🔍 상품명 검색..." oninput="applyRankFilter()" autocomplete="off">
+        <div class="rank-filter-group" id="rank-margin-btns">
+          <button class="rank-filter-btn active" onclick="setRankMargin('all',this)">전체</button>
+          <button class="rank-filter-btn" onclick="setRankMargin('high',this)">마진 70%↑</button>
+          <button class="rank-filter-btn" onclick="setRankMargin('mid',this)">50~70%</button>
+          <button class="rank-filter-btn" onclick="setRankMargin('low',this)">50%↓</button>
+          <button class="rank-filter-btn" onclick="setRankMargin('none',this)">원가없음</button>
+        </div>
+        <span class="rank-count" id="rank-count"></span>
+      </div>
       <div class="chart-card">
         <div class="chart-title" id="rank-title">🏆 자사몰 판매순위 (금액 기준)</div>
-        <div style="overflow:auto;max-height:600px"><table id="t-rank"></table></div>
+        <div style="overflow:auto;max-height:580px"><table id="t-rank"></table></div>
       </div>
     </div>
 
@@ -165,7 +191,8 @@ tr:nth-child(3) .rank-no { color: #b45309; }
 
 <script>
 // ─── 전역 상태 ───────────────────────────────────────────
-const G = { months:[], rankMonths:{}, rankMonth:'', curMonth:0 };
+const G = { months:[], rankMonths:{}, rankMonth:'', curMonth:0,
+  rankFilter:{ search:'', margin:'all', sortCol:'total', sortDir:-1 } };
 const charts = {};
 const COLS_IDX = { 쇼룸:1, 자사몰:2, 스마트스토어:3, 자사채널:4, 팝업:5, 압구정:6, 컬리:7, SSF:8, 외부채널:9, 전채널:10 };
 const CH_COLORS = { 자사몰:'#3b82f6', 쇼룸:'#10b981', 스마트스토어:'#22d3ee', 압구정:'#f59e0b', SSF:'#8b5cf6', 컬리:'#06b6d4', 팝업:'#ec4899' };
@@ -491,45 +518,110 @@ function renderRankMonthBtns() {
 
 function switchRankMonth(month, el) {
   G.rankMonth = month;
+  // 월 전환 시 필터 초기화
+  G.rankFilter = { search:'', margin:'all', sortCol:'total', sortDir:-1 };
+  const searchEl = document.getElementById('rank-search');
+  if (searchEl) searchEl.value = '';
+  document.querySelectorAll('#rank-margin-btns .rank-filter-btn').forEach((b,i)=>b.classList.toggle('active',i===0));
   document.querySelectorAll('#rank-month-btns .month-btn').forEach(b => b.classList.remove('active'));
   if (el) el.classList.add('active');
   renderRankTable(month);
 }
 
+// ─── 필터 헬퍼 ───────────────────────────────────────────────
+function applyRankFilter() {
+  G.rankFilter.search = (document.getElementById('rank-search')?.value || '').trim().toLowerCase();
+  renderRankTable(G.rankMonth);
+}
+function setRankMargin(val, el) {
+  G.rankFilter.margin = val;
+  document.querySelectorAll('#rank-margin-btns .rank-filter-btn').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderRankTable(G.rankMonth);
+}
+function setRankSort(col) {
+  if (G.rankFilter.sortCol === col) {
+    G.rankFilter.sortDir *= -1;
+  } else {
+    G.rankFilter.sortCol = col;
+    G.rankFilter.sortDir = -1;
+  }
+  renderRankTable(G.rankMonth);
+}
+
 function renderRankTable(month) {
-  const rankData = G.rankMonths[month || G.rankMonth] || [];
-  if (!rankData.length) {
+  const allData = G.rankMonths[month || G.rankMonth] || [];
+  if (!allData.length) {
     document.getElementById('t-rank').innerHTML = '<tr><td style="padding:20px;color:#94a3b8">판매순위 시트를 찾을 수 없습니다. 시트명에 "판매순위"가 포함되어야 합니다.</td></tr>';
     return;
   }
   document.getElementById('rank-title').textContent = `🏆 ${month || G.rankMonth} 자사몰 판매순위 (금액 기준)`;
+
+  // ─── 필터 적용 ───
+  const { search, margin, sortCol, sortDir } = G.rankFilter;
+  let data = allData.filter(r => {
+    if (search && !r.name.toLowerCase().includes(search)) return false;
+    if (margin === 'high') return r.margin != null && r.margin >= 70;
+    if (margin === 'mid')  return r.margin != null && r.margin >= 50 && r.margin < 70;
+    if (margin === 'low')  return r.margin != null && r.margin < 50;
+    if (margin === 'none') return r.margin == null;
+    return true;
+  });
+
+  // ─── 정렬 적용 ───
+  data = [...data].sort((a,b) => {
+    if (sortCol === 'name') {
+      return (a.name || '').localeCompare(b.name || '', 'ko') * sortDir;
+    }
+    const av = a[sortCol] ?? -Infinity, bv = b[sortCol] ?? -Infinity;
+    return (av - bv) * sortDir;
+  });
+
+  // 필터 결과 카운트 표시
+  const countEl = document.getElementById('rank-count');
+  if (countEl) {
+    countEl.textContent = search || margin !== 'all'
+      ? `${data.length} / ${allData.length}개`
+      : `총 ${allData.length}개`;
+  }
+
   const fmt = v => v == null ? '-' : (v < 0 ? '-' : '') + Math.abs(Math.round(v)).toLocaleString();
   const fmtC = (v, pos) => v == null ? '<span style="color:#94a3b8">-</span>'
     : `<span style="color:${v < 0 ? '#dc2626' : pos ? '#1a202c' : '#374151'}">${fmt(v)}</span>`;
   const badge = m => m == null
     ? '<span style="color:#94a3b8;font-size:10px">-</span>'
     : `<span style="background:${m>=70?'#dcfce7':m>=50?'#fef9c3':'#fee2e2'};color:${m>=70?'#15803d':m>=50?'#854d0e':'#dc2626'};font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px">${m}%</span>`;
+
+  // ─── 정렬 헤더 생성 헬퍼 ───
+  const sortTh = (label, col, align='right', width='') =>  {
+    const isActive = sortCol === col;
+    const arrow = isActive ? (sortDir === -1 ? '▼' : '▲') : '⇅';
+    const wStyle = width ? `width:${width};` : '';
+    return `<th class="sort-th" onclick="setRankSort('${col}')" style="padding:8px 8px;text-align:${align};${wStyle}background:#f8fafc">${label}<span class="sort-arrow${isActive?' active':''}">${arrow}</span></th>`;
+  };
+
   let html = `<thead><tr style="background:#f8fafc;font-size:11px;color:#64748b">
-    <th style="padding:8px 6px;text-align:center;width:36px">#</th>
-    <th style="padding:8px 10px;text-align:left;width:260px">상품명</th>
-    <th style="padding:8px 8px;text-align:right;width:60px">수량</th>
-    <th style="padding:8px 8px;text-align:right;width:80px">판매가</th>
-    <th style="padding:8px 8px;text-align:right;width:90px">판매합계</th>
-    <th style="padding:8px 8px;text-align:right;width:70px">원가</th>
-    <th style="padding:8px 8px;text-align:right;width:90px">원가합계</th>
-    <th style="padding:8px 8px;text-align:right;width:90px">이익액</th>
-    <th style="padding:8px 8px;text-align:center;width:60px">마진율</th>
+    <th style="padding:8px 6px;text-align:center;width:36px;background:#f8fafc">#</th>
+    <th class="sort-th" onclick="setRankSort('name')" style="padding:8px 10px;text-align:left;width:260px;background:#f8fafc">상품명<span class="sort-arrow${sortCol==='name'?' active':''}">${sortCol==='name'?(sortDir===-1?'▼':'▲'):'⇅'}</span></th>
+    ${sortTh('수량','qty','right','60px')}
+    <th style="padding:8px 8px;text-align:right;width:80px;background:#f8fafc">판매가</th>
+    ${sortTh('판매합계','total','right','90px')}
+    <th style="padding:8px 8px;text-align:right;width:70px;background:#f8fafc">원가</th>
+    ${sortTh('원가합계','ctotal','right','90px')}
+    ${sortTh('이익액','profit','right','90px')}
+    ${sortTh('마진율','margin','center','60px')}
   </tr></thead><tbody>`;
-  // ─── 합계 행 ───
-  const totQty    = rankData.reduce((s,r)=>s+(r.qty||0),0);
-  const totSales  = rankData.reduce((s,r)=>s+(r.total||0),0);
-  const totCtotal = rankData.reduce((s,r)=>r.ctotal!=null?s+r.ctotal:s,0);
-  const totProfit = rankData.reduce((s,r)=>r.profit!=null?s+r.profit:s,0);
+
+  // ─── 합계 행 (필터된 데이터 기준) ───
+  const totQty    = data.reduce((s,r)=>s+(r.qty||0),0);
+  const totSales  = data.reduce((s,r)=>s+(r.total||0),0);
+  const totCtotal = data.reduce((s,r)=>r.ctotal!=null?s+r.ctotal:s,0);
+  const totProfit = data.reduce((s,r)=>r.profit!=null?s+r.profit:s,0);
   const totMargin = totSales>0 ? Math.round(totProfit/totSales*100) : null;
-  const hasC = rankData.some(r=>r.ctotal!=null);
+  const hasC = data.some(r=>r.ctotal!=null);
   html += `<tr style="background:#eef2ff;font-weight:700;border-top:2px solid #c7d2fe;border-bottom:2px solid #c7d2fe">
     <td style="padding:8px 6px;text-align:center;font-size:11px;color:#6366f1">합계</td>
-    <td style="padding:8px 10px;font-size:12px;color:#4f46e5">총 ${rankData.length}개 상품</td>
+    <td style="padding:8px 10px;font-size:12px;color:#4f46e5">총 ${data.length}개 상품</td>
     <td style="padding:8px 8px;text-align:right;font-size:12px;color:#4f46e5">${totQty.toLocaleString()}</td>
     <td style="padding:8px 8px;text-align:right;font-size:12px;color:#94a3b8">-</td>
     <td style="padding:8px 8px;text-align:right;font-size:12px;color:#4f46e5">${totSales.toLocaleString()}</td>
@@ -538,21 +630,36 @@ function renderRankTable(month) {
     <td style="padding:8px 8px;text-align:right;font-size:12px;color:${hasC?(totProfit>=0?'#16a34a':'#dc2626'):'#94a3b8'}">${hasC?totProfit.toLocaleString():'-'}</td>
     <td style="padding:8px 8px;text-align:center">${totMargin!=null&&hasC?`<span style="background:${totMargin>=70?'#dcfce7':totMargin>=50?'#fef9c3':'#fee2e2'};color:${totMargin>=70?'#15803d':totMargin>=50?'#854d0e':'#dc2626'};font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px">${totMargin}%</span>`:'<span style="color:#94a3b8;font-size:10px">-</span>'}</td>
   </tr>`;
-  rankData.forEach((r,i) => {
-    const pos = r.total > 0;
-    const profitColor = r.profit == null ? '#94a3b8' : r.profit > 0 ? '#16a34a' : r.profit < 0 ? '#dc2626' : '#374151';
-    html += `<tr style="border-bottom:1px solid #f1f5f9;${!pos?'background:#fff8f8':''}">
-      <td style="padding:7px 6px;text-align:center;font-size:11px;color:#94a3b8">${i+1}</td>
-      <td style="padding:7px 10px;font-size:12px;text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.name}">${r.name}</td>
-      <td style="padding:7px 8px;text-align:right;font-size:12px;color:${r.qty<0?'#dc2626':'#374151'}">${r.qty.toLocaleString()}</td>
-      <td style="padding:7px 8px;text-align:right;font-size:12px;color:#64748b">${fmt(r.price)}</td>
-      <td style="padding:7px 8px;text-align:right;font-size:12px;font-weight:600">${fmtC(r.total, pos)}</td>
-      <td style="padding:7px 8px;text-align:right;font-size:12px;color:#64748b">${fmt(r.cost)}</td>
-      <td style="padding:7px 8px;text-align:right;font-size:12px;color:#64748b">${fmt(r.ctotal)}</td>
-      <td style="padding:7px 8px;text-align:right;font-size:12px;font-weight:600;color:${profitColor}">${fmt(r.profit)}</td>
-      <td style="padding:7px 8px;text-align:center">${badge(r.margin)}</td>
-    </tr>`;
-  });
+
+  if (!data.length) {
+    html += `<tr><td colspan="9" style="padding:24px;text-align:center;color:#94a3b8;font-size:12px">검색 결과가 없습니다.</td></tr>`;
+  } else {
+    data.forEach((r,i) => {
+      const pos = r.total > 0;
+      const profitColor = r.profit == null ? '#94a3b8' : r.profit > 0 ? '#16a34a' : r.profit < 0 ? '#dc2626' : '#374151';
+      // 검색어 하이라이트
+      let nameHtml = r.name;
+      if (search) {
+        const idx = r.name.toLowerCase().indexOf(search);
+        if (idx >= 0) {
+          nameHtml = r.name.slice(0,idx)
+            + `<mark style="background:#fef08a;border-radius:2px;padding:0 1px">${r.name.slice(idx, idx+search.length)}</mark>`
+            + r.name.slice(idx+search.length);
+        }
+      }
+      html += `<tr style="border-bottom:1px solid #f1f5f9;${!pos?'background:#fff8f8':''}">
+        <td style="padding:7px 6px;text-align:center;font-size:11px;color:#94a3b8">${i+1}</td>
+        <td style="padding:7px 10px;font-size:12px;text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.name}">${nameHtml}</td>
+        <td style="padding:7px 8px;text-align:right;font-size:12px;color:${r.qty<0?'#dc2626':'#374151'}">${r.qty.toLocaleString()}</td>
+        <td style="padding:7px 8px;text-align:right;font-size:12px;color:#64748b">${fmt(r.price)}</td>
+        <td style="padding:7px 8px;text-align:right;font-size:12px;font-weight:600">${fmtC(r.total, pos)}</td>
+        <td style="padding:7px 8px;text-align:right;font-size:12px;color:#64748b">${fmt(r.cost)}</td>
+        <td style="padding:7px 8px;text-align:right;font-size:12px;color:#64748b">${fmt(r.ctotal)}</td>
+        <td style="padding:7px 8px;text-align:right;font-size:12px;font-weight:600;color:${profitColor}">${fmt(r.profit)}</td>
+        <td style="padding:7px 8px;text-align:center">${badge(r.margin)}</td>
+      </tr>`;
+    });
+  }
   html += '</tbody>';
   document.getElementById('t-rank').innerHTML = html;
 }
