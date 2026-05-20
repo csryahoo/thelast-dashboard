@@ -138,6 +138,7 @@
   .dash-card.sales::before { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
   .dash-card.pnl::before   { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
   .dash-card.stock::before { background: linear-gradient(90deg, #10b981, #34d399); }
+  .dash-card.inout::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
   .dash-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
   .dash-card:active { transform: translateY(0); }
 
@@ -149,12 +150,14 @@
   .dash-card.sales .dash-tag { background: rgba(59,130,246,0.08); color: #2563eb; border-color: rgba(59,130,246,0.15); }
   .dash-card.pnl .dash-tag   { background: rgba(99,102,241,0.08); color: #6366f1; border-color: rgba(99,102,241,0.15); }
   .dash-card.stock .dash-tag { background: rgba(16,185,129,0.08); color: #059669; border-color: rgba(16,185,129,0.15); }
+  .dash-card.inout .dash-tag { background: rgba(245,158,11,0.08); color: #d97706; border-color: rgba(245,158,11,0.15); }
 
   .dash-card-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border); }
   .dash-launch { font-size: 11px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
   .dash-card.sales .dash-launch { color: #2563eb; }
   .dash-card.pnl .dash-launch   { color: #6366f1; }
   .dash-card.stock .dash-launch { color: #059669; }
+  .dash-card.inout .dash-launch { color: #d97706; }
   .dash-updated { font-size: 10px; color: #94a3b8; font-family: 'DM Mono', monospace; }
 
   .quick-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -300,6 +303,10 @@
       <span class="icon">📦</span>
       <span>재고 추이</span>
     </div>
+    <div class="nav-item" id="nav-inout" onclick="loadDash('inout')">
+      <span class="icon">🔄</span>
+      <span>입출고 현황</span>
+    </div>
   </div>
 
   <div class="sidebar-footer">
@@ -391,6 +398,25 @@
           </div>
         </div>
 
+        <!-- 입출고 카드 -->
+        <div class="dash-card inout" onclick="loadDash('inout')">
+          <span class="dash-card-icon">🔄</span>
+          <div class="dash-card-title">입출고 현황</div>
+          <div class="dash-card-desc">
+            일별 입고·출고 수량 추이, 상품별<br>
+            전월재고·현재재고 및 순위 분석
+          </div>
+          <div class="dash-card-tags">
+            <span class="dash-tag">일별 입출고</span>
+            <span class="dash-tag">상품 순위</span>
+            <span class="dash-tag">재고 현황</span>
+          </div>
+          <div class="dash-card-footer">
+            <span class="dash-launch">열기 →</span>
+            <span class="dash-updated">2026.05 기준</span>
+          </div>
+        </div>
+
       </div>
 
       <!-- 하단 quick info -->
@@ -406,7 +432,7 @@
           <div class="quick-icon">🗂️</div>
           <div>
             <div class="quick-label">대시보드</div>
-            <div class="quick-value">3개 통합</div>
+            <div class="quick-value">4개 통합</div>
           </div>
         </div>
         <div class="quick-card">
@@ -445,6 +471,10 @@
     <span class="bn-icon">💹</span>
     <span class="bn-label">손익</span>
   </div>
+  <div class="bn-item" id="bn-inout" onclick="loadDash('inout')">
+    <span class="bn-icon">🔄</span>
+    <span class="bn-label">입출고</span>
+  </div>
   <div class="bn-item" id="bn-stock" onclick="loadDash('stock')">
     <span class="bn-icon">📦</span>
     <span class="bn-label">재고</span>
@@ -473,6 +503,13 @@
       nav: 'nav-stock',
       bn: 'bn-stock',
       label: '📦 재고 추이'
+    },
+    inout: {
+      file: 'inout.html',
+      title: '입출고 현황',
+      nav: 'nav-inout',
+      bn: 'bn-inout',
+      label: '🔄 입출고 현황'
     }
   };
 
