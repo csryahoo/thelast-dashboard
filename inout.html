@@ -68,6 +68,15 @@ tr:hover td { background:#f8fafc; }
 .sort-arrow { display:inline-block; margin-left:3px; opacity:.5; font-size:10px; }
 .sort-arrow.active { opacity:1; color:#059669; }
 
+/* 테이블 헤더 고정 */
+#t-rank thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: #f8fafc;
+  box-shadow: 0 1px 0 #e2e8f0;
+}
+
 /* Empty */
 #empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; height:55vh; gap:16px; color:#94a3b8; }
 #empty-state .es-icon { font-size:48px; opacity:.5; }
@@ -179,7 +188,8 @@ const charts = {};
 // ── 데이터 주입(배포) 모드 ──────────────────────────────────
 if (window.__PD__) {
   G.data = window.__PD__;
-  render();
+  document.addEventListener('DOMContentLoaded', function() { render(); });
+  if (document.readyState !== 'loading') render();
 }
 
 // ── CSV 파일 업로드 ──────────────────────────────────────────
@@ -291,6 +301,7 @@ function processData(rows) {
 
 // ── 렌더링 ──────────────────────────────────────────────────
 function render() {
+  try {
   const d = G.data;
   if (!d) return;
 
@@ -316,11 +327,22 @@ function render() {
 
   renderCharts();
   renderRank();
+  } catch(e) {
+    console.error('[입출고] render 오류:', e);
+    document.getElementById('status-badge').textContent = '렌더 오류: ' + e.message;
+    document.getElementById('status-badge').style.background = '#fee2e2';
+    document.getElementById('status-badge').style.color = '#b91c1c';
+  }
 }
 
 function renderCharts() {
   const d = G.data;
   const labels = d.dates;
+
+  if (typeof Chart === 'undefined') {
+    document.getElementById('chart-section').innerHTML = '<div style="padding:24px;text-align:center;color:#94a3b8">차트 라이브러리 로드 실패 (새로고침 해주세요)</div>';
+    return;
+  }
 
   const chartCfgBase = (label, data, color) => ({
     type: 'bar',
@@ -341,13 +363,14 @@ function renderCharts() {
     }
   });
 
-  // 입고 차트
-  if (charts.in) charts.in.destroy();
-  charts.in = new Chart(document.getElementById('chart-in'), chartCfgBase('입고수량', d.daily.map(r=>r.in), '#059669'));
-
-  // 출고 차트
-  if (charts.out) charts.out.destroy();
-  charts.out = new Chart(document.getElementById('chart-out'), chartCfgBase('출고수량', d.daily.map(r=>r.out), '#dc2626'));
+  try {
+    if (charts.in) charts.in.destroy();
+    charts.in = new Chart(document.getElementById('chart-in'), chartCfgBase('입고수량', d.daily.map(r=>r.in), '#059669'));
+    if (charts.out) charts.out.destroy();
+    charts.out = new Chart(document.getElementById('chart-out'), chartCfgBase('출고수량', d.daily.map(r=>r.out), '#dc2626'));
+  } catch(e) {
+    console.error('차트 렌더 오류:', e);
+  }
 }
 
 function setRankMode(mode, el) {
@@ -383,7 +406,7 @@ function renderRank() {
   const cls = s => s === col ? ' active' : '';
   const sth = (label, key, align='right', w='') => `<th class="sort-th" onclick="setRankSort('${key}')" style="text-align:${align};${w?'width:'+w+';':''}background:#f8fafc">${label}<span class="sort-arrow${cls(key)}">${arr(key)}</span></th>`;
 
-  let html = `<thead><tr style="background:#f8fafc;font-size:11px;color:#64748b">
+  let html = `<thead style="position:sticky;top:0;z-index:3"><tr style="background:#f8fafc;font-size:11px;color:#64748b;box-shadow:0 1px 0 #e2e8f0">
     <th style="text-align:center;width:36px;background:#f8fafc">#</th>
     ${sth('상품명','name','left','220px')}
     <th style="text-align:left;width:140px;background:#f8fafc">공급처</th>
