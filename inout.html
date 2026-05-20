@@ -545,16 +545,21 @@ function renderPivot() {
   // 정렬 화살표 헬퍼
   const arr = k => col===k ? (dir===-1?'▼':'▲') : '⇅';
   const ac  = k => col===k ? 'color:#059669;' : 'color:#94a3b8;';
+  // rowspan=2 포함 헤더 (고정 컬럼용)
+  const sth2 = (label, key, cls='', extra='') =>
+    `<th class="${cls} sort-th" rowspan="2" onclick="setPivotSort('${key}')" style="cursor:pointer;${extra}">
+      ${label}<span style="font-size:9px;margin-left:2px;${ac(key)}">${arr(key)}</span></th>`;
+  // 일반 헤더 (날짜 서브헤더용)
   const sth = (label, key, cls='') =>
     `<th class="${cls} sort-th" onclick="setPivotSort('${key}')" style="cursor:pointer">
       ${label}<span style="font-size:9px;margin-left:2px;${ac(key)}">${arr(key)}</span></th>`;
 
   // ── 헤더 1행: 날짜 colspan ──
   let h1 = `<tr>
-    <th class="s0" rowspan="2">#</th>
-    ${sth('상품명','name','s1')}
-    ${sth('공급처','supplier','s2')}
-    ${sth('전월재고','prev','col-prev')}`;
+    <th class="s0" rowspan="2" style="text-align:center">#</th>
+    ${sth2('상품명','name','s1')}
+    ${sth2('공급처','supplier','s2')}
+    ${sth2('전월재고','prev','col-prev')}`;
   let h2 = `<tr>`;
   for (const dt of dates) {
     h1 += `<th class="date-hd" colspan="2">${dt}</th>`;
