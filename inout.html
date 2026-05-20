@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>입출고 현황 대시보드 | 더라스트</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif; background:#f0f2f7; color:#1a202c; font-size:13px; }
+
+.header { background:linear-gradient(135deg,#fff 0%,#ecfdf5 100%); padding:18px 28px; border-bottom:1px solid #dde1f0; display:flex; align-items:center; justify-content:space-between; box-shadow:0 1px 4px rgba(0,0,0,.06); position:sticky; top:0; z-index:100; }
+.header h1 { font-size:18px; font-weight:700; color:#1a202c; letter-spacing:-.5px; }
+.header .sub { font-size:11px; color:#64748b; margin-top:3px; }
+.header-right { display:flex; align-items:center; gap:10px; }
+
+.load-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 16px; background:#059669; color:#fff; border-radius:7px; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; white-space:nowrap; }
+.load-btn:hover { background:#047857; box-shadow:0 2px 8px rgba(5,150,105,.4); }
+.load-btn input { display:none; }
+.badge { background:#d1fae5; color:#065f46; font-size:11px; padding:4px 12px; border-radius:20px; font-weight:600; white-space:nowrap; }
+.badge.wait { background:#f1f5f9; color:#94a3b8; }
+
+.tabs { display:flex; background:#fff; border-bottom:1px solid #dde1f0; padding:0 28px; position:sticky; top:73px; z-index:99; }
+.tab { padding:12px 20px; font-size:12px; cursor:pointer; border-bottom:2px solid transparent; color:#94a3b8; transition:all .2s; user-select:none; font-weight:500; }
+.tab.active { color:#059669; border-bottom-color:#059669; font-weight:700; }
+.tab:hover:not(.active) { color:#475569; }
+
+.content { padding:22px 28px; }
+.section { display:none; }
+.section.active { display:block; }
+
+/* KPI */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+.kpi-card { background:#fff; border:1px solid #dde1f0; border-radius:12px; padding:18px 20px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+.kpi-label { font-size:10px; color:#64748b; letter-spacing:.5px; margin-bottom:6px; font-weight:700; text-transform:uppercase; }
+.kpi-value { font-size:22px; font-weight:700; color:#1a202c; letter-spacing:-.5px; line-height:1.2; }
+.kpi-unit { font-size:12px; font-weight:400; color:#94a3b8; margin-left:2px; }
+.kpi-change { font-size:11px; margin-top:5px; color:#64748b; }
+
+/* Chart */
+.chart-card { background:#fff; border:1px solid #dde1f0; border-radius:12px; padding:18px; margin-bottom:16px; box-shadow:0 1px 4px rgba(0,0,0,.05); }
+.chart-title { font-size:12px; font-weight:700; color:#374151; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.chart-wrap { position:relative; }
+.chart-wrap canvas { max-height:300px; }
+
+/* Table */
+table { width:100%; border-collapse:collapse; font-size:12px; }
+th { text-align:right; padding:9px 10px; font-size:10px; font-weight:700; color:#64748b; border-bottom:2px solid #e2e8f0; white-space:nowrap; background:#f8fafc; }
+th:first-child, th:nth-child(2) { text-align:left; }
+td { text-align:right; padding:8px 10px; border-bottom:1px solid #f1f5f9; color:#374151; white-space:nowrap; font-variant-numeric:tabular-nums; }
+td:first-child { text-align:center; }
+td:nth-child(2) { text-align:left; font-weight:500; color:#1a202c; }
+td:nth-child(3) { text-align:left; color:#64748b; }
+tr:hover td { background:#f8fafc; }
+
+/* 상품 필터 */
+.rank-filter-bar { display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+.rank-search { flex:1; min-width:180px; max-width:300px; padding:7px 12px; border:1px solid #dde1f0; border-radius:8px; font-size:12px; font-family:inherit; outline:none; }
+.rank-search:focus { border-color:#059669; box-shadow:0 0 0 2px rgba(5,150,105,.15); }
+.rank-filter-group { display:flex; gap:4px; }
+.rank-filter-btn { padding:5px 11px; border:1px solid #dde1f0; border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; background:#fff; color:#64748b; transition:all .15s; font-family:inherit; }
+.rank-filter-btn.active { background:#059669; color:#fff; border-color:#059669; }
+.rank-filter-btn:hover:not(.active) { background:#f0fdf4; border-color:#94a3b8; }
+.rank-count { font-size:11px; color:#94a3b8; }
+
+.sort-th { cursor:pointer; user-select:none; }
+.sort-th:hover { color:#059669; background:#f0fdf4!important; }
+.sort-arrow { display:inline-block; margin-left:3px; opacity:.5; font-size:10px; }
+.sort-arrow.active { opacity:1; color:#059669; }
+
+/* Empty */
+#empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; height:55vh; gap:16px; color:#94a3b8; }
+#empty-state .es-icon { font-size:48px; opacity:.5; }
+
+/* Month btns */
+.month-btns { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.month-btn { padding:6px 16px; border-radius:6px; border:1px solid #dde1f0; background:#fff; color:#64748b; font-size:12px; cursor:pointer; transition:all .15s; font-family:inherit; }
+.month-btn.active { background:#059669; border-color:#059669; color:#fff; font-weight:600; }
+
+@media(max-width:768px){
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .content{padding:14px 16px;}
+  .header{padding:14px 16px;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>📦 입출고 현황</h1>
+    <div class="sub" id="period-sub">CSV 파일을 불러와 주세요</div>
+  </div>
+  <div class="header-right">
+    <span class="badge wait" id="status-badge">데이터 없음</span>
+    <label class="load-btn">
+      📂 CSV 불러오기
+      <input type="file" accept=".csv" multiple onchange="handleFiles(this.files)">
+    </label>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="showTab(0,this)">일별 입출고 차트</div>
+  <div class="tab" onclick="showTab(1,this)">상품별 순위</div>
+</div>
+
+<div class="content">
+
+  <!-- KPI -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">총 입고수량</div>
+      <div class="kpi-value" id="kpi-in">-<span class="kpi-unit">개</span></div>
+      <div class="kpi-change" id="kpi-in-sub">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">총 출고수량</div>
+      <div class="kpi-value" id="kpi-out">-<span class="kpi-unit">개</span></div>
+      <div class="kpi-change" id="kpi-out-sub">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">현재 재고수량</div>
+      <div class="kpi-value" id="kpi-stock">-<span class="kpi-unit">개</span></div>
+      <div class="kpi-change" id="kpi-stock-sub">-</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">상품 종류</div>
+      <div class="kpi-value" id="kpi-prods">-<span class="kpi-unit">개</span></div>
+      <div class="kpi-change" id="kpi-prods-sub">-</div>
+    </div>
+  </div>
+
+  <!-- TAB 0: 일별 차트 -->
+  <div class="section active" id="tab-0">
+    <div id="empty-state">
+      <div class="es-icon">📦</div>
+      <div style="font-size:14px;font-weight:600">CSV 파일을 불러오세요</div>
+      <div style="font-size:12px">셀메이트 stk_inoutList_*.csv 파일을 업로드하면<br>일별 입출고 차트가 표시됩니다</div>
+    </div>
+    <div id="chart-section" style="display:none">
+      <div class="chart-card">
+        <div class="chart-title">📅 일별 입고 현황</div>
+        <div class="chart-wrap"><canvas id="chart-in"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">📤 일별 출고 현황</div>
+        <div class="chart-wrap"><canvas id="chart-out"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 1: 상품별 순위 -->
+  <div class="section" id="tab-1">
+    <div class="rank-filter-bar">
+      <input class="rank-search" id="rank-search" type="text" placeholder="🔍 상품명 검색..." oninput="renderRank()" autocomplete="off">
+      <div class="rank-filter-group">
+        <button class="rank-filter-btn active" onclick="setRankMode('out',this)">출고 기준</button>
+        <button class="rank-filter-btn" onclick="setRankMode('in',this)">입고 기준</button>
+        <button class="rank-filter-btn" onclick="setRankMode('stock',this)">현재재고 기준</button>
+      </div>
+      <span class="rank-count" id="rank-count"></span>
+    </div>
+    <div class="chart-card" style="padding:0;overflow:hidden">
+      <div style="overflow:auto;max-height:600px">
+        <table id="t-rank"><tr><td style="padding:30px;color:#94a3b8;text-align:center">CSV 파일을 불러오세요</td></tr></table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+window.__PD__={"period":"05/04 ~ 05/19","dates":["05/04","05/06","05/07","05/08","05/11","05/12","05/13","05/14","05/15","05/18","05/19"],"daily":[{"date":"05/04","in":0,"out":0},{"date":"05/06","in":0,"out":0},{"date":"05/07","in":0,"out":0},{"date":"05/08","in":0,"out":0},{"date":"05/11","in":0,"out":0},{"date":"05/12","in":0,"out":0},{"date":"05/13","in":0,"out":0},{"date":"05/14","in":0,"out":0},{"date":"05/15","in":0,"out":0},{"date":"05/18","in":0,"out":0},{"date":"05/19","in":0,"out":0}],"products":[{"name":"Savia lace silk midi SK","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Sella linen blended long sleeve KN","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Ophelie lyocell linen Shorts","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Ophelie lyocell linen hooded JK","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Toby linen V neck T","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Toby linen round neck T","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Cory linen half SH","supplier":"보성어패럴","in":0,"out":0,"stock":0,"prev":0},{"name":"Ardel capri knit leggings PT","supplier":"모들","in":0,"out":0,"stock":0,"prev":0},{"name":"Delina cupra layered balloon SK","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne wide PT","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Neris wool silk V neck CD","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Buckley cotton crop SH","supplier":"위드(완)","in":0,"out":0,"stock":0,"prev":0},{"name":"Edric straight DN - Blue","supplier":"리싸이클","in":0,"out":0,"stock":0,"prev":0},{"name":"Vailo wool blended double sleeveless JK","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"Carnas destroyed straight DN - Blue","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Monsanto eel penny loafer - Brown","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Vailo wool blended midi SK","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"Ardel square neck sleeveless KN","supplier":"모들","in":0,"out":0,"stock":0,"prev":0},{"name":"Ardel round neck CD","supplier":"모들","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Light chihiro semi wide PT","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Light chihiro long sleeve T","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Nina rayon blended leggings PT","supplier":"에린블랙","in":0,"out":0,"stock":0,"prev":0},{"name":"Fobby oversized lyocell SH","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Costa cotton banding SK","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Sella linen blended cap sleeve KN","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Niel loose sleeve T","supplier":"신우","in":0,"out":0,"stock":0,"prev":0},{"name":"Miller cotton bermuda PT","supplier":"위드(완)","in":0,"out":0,"stock":0,"prev":0},{"name":"Clanet boot-cut PT","supplier":"디트레코즈","in":0,"out":0,"stock":0,"prev":0},{"name":"Deepin oversized half sleeve T","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"CC CRUSH DIAMOND RING","supplier":"윤퀸(루시아)","in":0,"out":0,"stock":0,"prev":0},{"name":"퀼팅 뱅글  풀다이아 미니 반액 결제창 (1)","supplier":"신비손","in":0,"out":0,"stock":0,"prev":0},{"name":"퀼팅 뱅글  풀다이아 미니","supplier":"신비손","in":0,"out":0,"stock":0,"prev":0},{"name":"Vailo wool blended pintuck PT","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"베르베르 3로우 링 파베 다이아 (2024ver.)","supplier":"신비손","in":0,"out":0,"stock":0,"prev":0},{"name":"Dranta barrel PT","supplier":"에린블랙","in":0,"out":0,"stock":0,"prev":0},{"name":"Seldana capri midi PT","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Jenson wool blended PT","supplier":"에린블랙","in":0,"out":0,"stock":0,"prev":0},{"name":"Winne feather fringed sleeveless BL","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"Rindeman pocket long SK","supplier":"에린블랙","in":0,"out":0,"stock":0,"prev":0},{"name":"Enola modal cotton oversized SH - Red & Navy","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"Bert french work cotton JK","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Jenson wool blended safari pocket JP","supplier":"에린블랙","in":0,"out":0,"stock":0,"prev":0},{"name":"Manes wool PT","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Tinson wide trousers","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Siena rayon blended short JK","supplier":"에린블랙","in":0,"out":0,"stock":0,"prev":0},{"name":"Lahita pintuck wide DN - Washed blue","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Winne feather fringed SK","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"Goyle wool satin track PT","supplier":"애시드","in":0,"out":0,"stock":0,"prev":0},{"name":"HOOP EARRING","supplier":"윤퀸(루시아)","in":0,"out":0,"stock":0,"prev":0},{"name":"바이퍼 두줄링","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"BEBR daily necklace","supplier":"자사","in":0,"out":0,"stock":0,"prev":0},{"name":"CC CRUSH RING- MINI","supplier":"신비손","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Jade semi wide PT","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Fobby linen oversized SH","supplier":"예림사","in":0,"out":0,"stock":0,"prev":0},{"name":"Evony cotton turtle striped SH - Blue","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Priah cotton rayon tie striped SH","supplier":"디트레코즈","in":0,"out":0,"stock":0,"prev":0},{"name":"Padilla wool linen Anorak","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Padilla wool linen flared SK","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Webby cotton tapered PT","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Lillia balloon pintuck PT","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Jade hoodie zip-up","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Kellman straight DN - Washed blue","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Pelina wool blended pocket JK","supplier":"에린블랙","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Hatty tapered DN - Washed blue","supplier":"비제이인터내셔널","in":0,"out":0,"stock":0,"prev":0},{"name":"Denma long sleeve sweat T","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Giana cotton round T","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Arben silk cash V KN","supplier":"주느세콰","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Light chihiro wide jogger PT","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Utah cotton T","supplier":"신우","in":0,"out":0,"stock":0,"prev":0},{"name":"Denma long sleeve round T","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Heim wool button KN","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Kolt draped nylon bag  - Khaki beige","supplier":"자이(중국)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Velope wool silk loose half KN","supplier":"삼흥","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne cowl neck sleeveless BL","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Marton jogger PT","supplier":"예림사","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Marton boat neck loose BL","supplier":"보성어패럴","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne cap sleeve BL","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Marton loose PT","supplier":"예림사","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Marton flared BL","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Chihiro semi wide PT","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Chihiro jogger PT","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Jade crew neck T","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Gregg linen blended DN","supplier":"더엘엔컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Seldana capri PT","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"Nicas wool cash KN","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Delina cupra vintage pocket JP","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Zephyrine high vamp pumps","supplier":"옹디느","in":0,"out":0,"stock":0,"prev":0},{"name":"Nessa strap heels_7cm","supplier":"옹디느","in":0,"out":0,"stock":0,"prev":0},{"name":"Nessa strap heels_5cm","supplier":"옹디느","in":0,"out":0,"stock":0,"prev":0},{"name":"Ardel jacquard square neck sleeveless KN","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Ardel jacquard round neck CD","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Viken cotton silk collar CD","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Marton wide jogger PT","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Marton A-line SK","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Raiso wool silk regular KN","supplier":"삼흥","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Marton round BL","supplier":"보성어패럴","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Denika cutting cotton T - loose fit","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Marton round sleeveless BL","supplier":"보성어패럴","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Marton half sleeve OPS","supplier":"프랭키/프랭크","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Artie cotton wide DN - Green","supplier":"비제이인터내셔널","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne U-neck sleeveless","supplier":"명지(임)","in":0,"out":0,"stock":0,"prev":0},{"name":"Riley tencel pleats SK","supplier":"디트레코즈","in":0,"out":0,"stock":0,"prev":0},{"name":"Lizzo silket cotton T","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Chihiro hoodie zip-up","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Kenji tencel silk half sleeve KN","supplier":"모들","in":0,"out":0,"stock":0,"prev":0},{"name":"Sidoff light cropped PT","supplier":"위드(완)","in":0,"out":0,"stock":0,"prev":0},{"name":"Meryl rayon silk blended T","supplier":"세원","in":0,"out":0,"stock":0,"prev":0},{"name":"Gregg linen blended SH","supplier":"더엘엔컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Zuri tapered DN - Blue","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Mael barrel DN - Blue","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Denma short sleeve U-neck T","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Della pima round T","supplier":"신우","in":0,"out":0,"stock":0,"prev":0},{"name":"Niel oversized half sleeve T","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Noa studded suede flat","supplier":"셀렉션","in":0,"out":0,"stock":0,"prev":0},{"name":"Monsanto eel penny loafer - Black","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Belinda rayon silk button T","supplier":"세원","in":0,"out":0,"stock":0,"prev":0},{"name":"Denma short sleeve round T","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Kolt draped nylon bag  - Brown","supplier":"자이(중국)","in":0,"out":0,"stock":0,"prev":0},{"name":"Linzy vis ribbed sleeveless KN","supplier":"주느세콰","in":0,"out":0,"stock":0,"prev":0},{"name":"Tenu cutting DN - Ecru","supplier":"리싸이클","in":0,"out":0,"stock":0,"prev":0},{"name":"Carrow straight wide DN - Washed Blue","supplier":"SJ 인더스트리","in":0,"out":0,"stock":0,"prev":0},{"name":"Lilo half sleeve cotton T","supplier":"신우","in":0,"out":0,"stock":0,"prev":0},{"name":"Lilo cotton long sleeve T","supplier":"세원","in":0,"out":0,"stock":0,"prev":0},{"name":"Nita silk half sleeve KN","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Nerin pocket round linen KN","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"BOB Pleated linen mid shorts","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Elita wide PT","supplier":"에린블랙(제작)","in":0,"out":0,"stock":0,"prev":0},{"name":"Lamar linen short PT","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"Neibin linen banding PT","supplier":"예림사","in":0,"out":0,"stock":0,"prev":0},{"name":"Karim linen PT","supplier":"디트레코즈","in":0,"out":0,"stock":0,"prev":0},{"name":"Lumira linen tapered pintuck PT","supplier":"임가공","in":0,"out":0,"stock":0,"prev":0},{"name":"Delina cupra vintage banding PT","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Delina cupra vintage mermaid SK","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Alize collar KN","supplier":"울월드","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne cargo PT","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Isla baguette shoulder bag - Violet","supplier":"자이(중국)","in":0,"out":0,"stock":0,"prev":0},{"name":"Zecott round KN","supplier":"울월드","in":0,"out":0,"stock":0,"prev":0},{"name":"Beesham leather SK","supplier":"지엘컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Arben wool cash V KN","supplier":"울월드","in":0,"out":0,"stock":0,"prev":0},{"name":"Keim silk wool collar KN","supplier":"모들","in":0,"out":0,"stock":0,"prev":0},{"name":"Hazy straight DN - Washed blue","supplier":"비제이인터내셔널","in":0,"out":0,"stock":0,"prev":0},{"name":"31 Round square leather belt - Black(Gold)","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Nunez leather bomber JP","supplier":"지엘컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Riley tencel pintuck wide PT","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"31 Round square leather belt - Black(Silver)","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Kelois wool semi tapered PT","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Naki boucle open collar KN","supplier":"sm니트","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]3.5 ROUND KN","supplier":"울월드","in":0,"out":0,"stock":0,"prev":0},{"name":"Willa pocket DN - Light blue","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Webby side panel wide DN - Ecru","supplier":"리싸이클","in":0,"out":0,"stock":0,"prev":0},{"name":"Leah silk satin SH","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Kairis piping pajama PT","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Kairis piping pajama SH","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Dict suede shoulder bag - Choco brown","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"26 Bold leather belt - Black(Silver)","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Giana cotton hoodie T","supplier":"신우","in":0,"out":0,"stock":0,"prev":0},{"name":"Hibi cotton half sleeve T - oversized fit","supplier":"신우","in":0,"out":0,"stock":0,"prev":0},{"name":"Belinda rayon silk boat neck T","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne cape BL","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne crop JK","supplier":"명지(임)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne pintuck jogger PT","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne draped BL","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne half banding PT","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne one button JK","supplier":"명지(임)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne wide bermuda PT","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne midi SK","supplier":"명지(임)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne maxi SK","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Belinda rayon silk sleeveless T","supplier":"세원","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne sleeveless long OPS","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Berne long sleeve OPS","supplier":"명지(임)","in":0,"out":0,"stock":0,"prev":0},{"name":"Etna cotton flare SK","supplier":"디트레코즈","in":0,"out":0,"stock":0,"prev":0},{"name":"Manas cotton elastic-waist long PT","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Shally tailored wool cash handmade CT","supplier":"정원","in":0,"out":0,"stock":0,"prev":0},{"name":"Ana high-neck destroyed wool cash KN","supplier":"명보","in":0,"out":0,"stock":0,"prev":0},{"name":"Drew linen cotton PT","supplier":"위드(완)","in":0,"out":0,"stock":0,"prev":0},{"name":"Macken round OPS","supplier":"위드(완)","in":0,"out":0,"stock":0,"prev":0},{"name":"Monsanto eel penny mule - Black","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Pelin lamb leather button JK","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Farel curved DN - Purple blue","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Manoff wool pintuck PT","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Sulan lamb leather tailored JK","supplier":"지엘컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Mien lamb skin leather JP","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Mael denim high-neck JK","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Helt wool straight PT","supplier":"디트레코즈","in":0,"out":0,"stock":0,"prev":0},{"name":"Nigel cotton SH","supplier":"위드(완)","in":0,"out":0,"stock":0,"prev":0},{"name":"Burns suede slide","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Matar wholegament wool silk KN","supplier":"모들","in":0,"out":0,"stock":0,"prev":0},{"name":"Libella cash half sleeve KN","supplier":"울월드","in":0,"out":0,"stock":0,"prev":0},{"name":"Peri barrel fringed DN - Blue","supplier":"리싸이클","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Milae leather cylinder bag - Black","supplier":"자이(중국)","in":0,"out":0,"stock":0,"prev":0},{"name":"Hamid cotton high neck CT","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"Agnes cupra draped BL","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"Rennue airplane charm","supplier":"자이(중국)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Harvey curved DN - White","supplier":"SJ인더스트리","in":0,"out":0,"stock":0,"prev":0},{"name":"Marta cash slit crop KN","supplier":"울월드","in":0,"out":0,"stock":0,"prev":0},{"name":"Dict suede shoulder bag - Desert","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Dict suede shoulder bag - Colbert","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Vonnie wool JK","supplier":"프랭키/프랭크","in":0,"out":0,"stock":0,"prev":0},{"name":"Matian wool side pleats PT","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Fobby oversized supima cotton SH","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"Monsanto eel penny loafer - Burgundy","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Farel curved DN - Mocha","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Minuet cash zip-up JK","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Rubia A line half CT","supplier":"에린블랙(제작)","in":0,"out":0,"stock":0,"prev":0},{"name":"Liman wool cash single CT","supplier":"에린블랙","in":0,"out":0,"stock":0,"prev":0},{"name":"Toni wool cash shawl collar CT","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Stein raglan cash CT","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Ezra cash round collar CT","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Eileen wool cash CD","supplier":"울월드","in":0,"out":0,"stock":0,"prev":0},{"name":"Rones suede slide","supplier":"옹디느","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Chihiro wide jogger PT","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Chihiro relaxed sweat T","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Winne feather fringed half sleeve BL","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"Doreah wool cash round CD","supplier":"울월드","in":0,"out":0,"stock":0,"prev":0},{"name":"Willa pocket DN - Black","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"터콰이즈 네크리스","supplier":"신비손","in":0,"out":0,"stock":0,"prev":0},{"name":"Amora silk nylon pocket SH","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"100만원 이상 아우터 : Garment bag (광목천)","supplier":"자사","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Zuri tapered DN - White","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Isla leather bag - Black","supplier":"자이(중국)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Hatty tapered DN - Black","supplier":"비제이인터내셔널","in":0,"out":0,"stock":0,"prev":0},{"name":"Charlotte mary jane flat","supplier":"셀렉션","in":0,"out":0,"stock":0,"prev":0},{"name":"Oscar cotton regular SH","supplier":"에린블랙","in":0,"out":0,"stock":0,"prev":0},{"name":"Avery high-neck oversized Anorak","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Tallis cotton cash V neck KN","supplier":"칼라인","in":0,"out":0,"stock":0,"prev":0},{"name":"Dein cross heel sandals","supplier":"옹디느","in":0,"out":0,"stock":0,"prev":0},{"name":"Joren heel sandals","supplier":"옹디느","in":0,"out":0,"stock":0,"prev":0},{"name":"Dein cross flat sandals","supplier":"옹디느","in":0,"out":0,"stock":0,"prev":0},{"name":"Felipa cash loose V neck KN","supplier":"울월드","in":0,"out":0,"stock":0,"prev":0},{"name":"Gina wool cash turtle zip-up KN","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Beily wool long SK","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Clyde tencel wool round T","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Tola cotton linen collar T","supplier":"위드(완)","in":0,"out":0,"stock":0,"prev":0},{"name":"Enola modal cotton oversized SH - Mint & Beige","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"Adera wool wrap PT","supplier":"에린블랙","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Milae leather cylinder bag - Ivory","supplier":"자이(중국)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Milae leather cylinder bag - Navy","supplier":"자이(중국)","in":0,"out":0,"stock":0,"prev":0},{"name":"Hugo cupra washed cargo PT","supplier":"디트레코즈","in":0,"out":0,"stock":0,"prev":0},{"name":"[GIFT] R2W Nylon bag","supplier":"주주","in":0,"out":0,"stock":0,"prev":0},{"name":"Anki heel mules","supplier":"히시화셀렉션","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Marton Jumpsuit - Short","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Marton Jumpsuit - Long","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"Miska leather glasses case","supplier":"아산모드","in":0,"out":0,"stock":0,"prev":0},{"name":"Nimb togo leather passport holder","supplier":"아산모드","in":0,"out":0,"stock":0,"prev":0},{"name":"Brent wide cotton blended PT","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"앙티퍼 뱅글 슬림 다이아 버전 하프(1)","supplier":"신비손","in":0,"out":0,"stock":0,"prev":0},{"name":"Marcel tencel long CT","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Denika cutting cotton T - regular fit","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Zestin crocodile card wallet - Black","supplier":"뷰티(임)","in":0,"out":0,"stock":0,"prev":0},{"name":"Zestin crocodile tote bag - Black","supplier":"뷰티(임)","in":0,"out":0,"stock":0,"prev":0},{"name":"Viora A line JK","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Elga pintuck PT","supplier":"에린블랙(제작)","in":0,"out":0,"stock":0,"prev":0},{"name":"Velo wool shirring maxi SK","supplier":"예림사","in":0,"out":0,"stock":0,"prev":0},{"name":"Lebin velvet notched-collar CT","supplier":"프랭키/프랭크","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Monslin padding leather bag - Brick","supplier":"자이(중국)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Isla leather bag - Deep brown","supplier":"자이(중국)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Isla leather bag - Grayish mint","supplier":"자이(중국)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]32 Dict togo leather bag - Camel","supplier":"뷰티(샘플실)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]32 Dict leather bag - Choco brown","supplier":"뷰티(샘플실)","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Monslin padding bag - Black","supplier":"자이(중국)","in":0,"out":0,"stock":0,"prev":0},{"name":"Aristo pleats long SK","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Linden layered skirt PT","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"SS Ghieri wool wide PT","supplier":"히시화애시드","in":0,"out":0,"stock":0,"prev":0},{"name":"Sylvia tencel long SK","supplier":"에린블랙(제작)","in":0,"out":0,"stock":0,"prev":0},{"name":"Vayne curved cotton PT","supplier":"디트레코즈","in":0,"out":0,"stock":0,"prev":0},{"name":"Vesper maxi wrap PT","supplier":"에린블랙(제작)","in":0,"out":0,"stock":0,"prev":0},{"name":"Edgar wool wrap shorts","supplier":"디트레코즈","in":0,"out":0,"stock":0,"prev":0},{"name":"Linden oversized JK","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"Benny cotton JK","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Raya silky sleeveless BL","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"Marton button OPS","supplier":"히시화애시드","in":0,"out":0,"stock":0,"prev":0},{"name":"Marton cap sleeve long OPS","supplier":"예림사","in":0,"out":0,"stock":0,"prev":0},{"name":"Marton trapeze BL","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"Marton open-collar loose OPS","supplier":"히시화애시드","in":0,"out":0,"stock":0,"prev":0},{"name":"Marton summer scarf","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"Melonia wool maxi SK","supplier":"예림사","in":0,"out":0,"stock":0,"prev":0},{"name":"Mika wide kitten heels","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Leim vis modal BL","supplier":"에린블랙(제작)","in":0,"out":0,"stock":0,"prev":0},{"name":"Montana V neck wool CD","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Quando wool round KN","supplier":"비아크","in":0,"out":0,"stock":0,"prev":0},{"name":"Edric straight pinched DN - Light blue","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Raffia oversized striped bag","supplier":"자이(중국)","in":0,"out":0,"stock":0,"prev":0},{"name":"Kori half sleeve OPS","supplier":"에린블랙","in":0,"out":0,"stock":0,"prev":0},{"name":"Leah cotton SH","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"Alecto cash loose KN","supplier":"명보","in":0,"out":0,"stock":0,"prev":0},{"name":"Hatty tapered DN - White","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Camden leather heels","supplier":"셀렉션","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Noell cash round KN","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Locasia boat neck sleeveless KN","supplier":"모들","in":0,"out":0,"stock":0,"prev":0},{"name":"S.P VIPER RING","supplier":"신비손","in":0,"out":0,"stock":0,"prev":0},{"name":"Raya wide pleated PT","supplier":"이정어패럴(이전 민우상사)","in":0,"out":0,"stock":0,"prev":0},{"name":"Dory brushed cotton T","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Rikado safari cotton CT","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Bruni wool silk PT","supplier":"임가공","in":0,"out":0,"stock":0,"prev":0},{"name":"Lega leather leggings PT","supplier":"지엘컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"Vela silk SH","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"Julio wool silk high neck JP","supplier":"히시화애시드","in":0,"out":0,"stock":0,"prev":0},{"name":"Manes wool cash PT","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Verta wool maxi SK","supplier":"에린블랙","in":0,"out":0,"stock":0,"prev":0},{"name":"Hecky tweed JK","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Aman cash double CT","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Selsian high neck zipper VT","supplier":"해외임가공","in":0,"out":0,"stock":0,"prev":0},{"name":"Tiea tied wool jersey BL","supplier":"임가공","in":0,"out":0,"stock":0,"prev":0},{"name":"Nicolas round KN","supplier":"비아크","in":0,"out":0,"stock":0,"prev":0},{"name":"Leary silk nylon oversized SH","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"Paulo wool zip-up KN","supplier":"채움","in":0,"out":0,"stock":0,"prev":0},{"name":"Veon shorts DN - Black","supplier":"리싸이클","in":0,"out":0,"stock":0,"prev":0},{"name":"Kalian half sleeve round T","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Aida wool blended single JK","supplier":"에린블랙","in":0,"out":0,"stock":0,"prev":0},{"name":"Fobby oversized tencel silk blended SH","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"Sidoff light JK","supplier":"위드(완)","in":0,"out":0,"stock":0,"prev":0},{"name":"Leif banding mesh belt - Taupe","supplier":"이엘","in":0,"out":0,"stock":0,"prev":0},{"name":"Tani banding half PT","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Pietro cotton shirring OPS","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Artie cotton wide DN - Washed black","supplier":"비제이인터내셔널","in":0,"out":0,"stock":0,"prev":0},{"name":"Render cotton bermuda PT","supplier":"위드(완)","in":0,"out":0,"stock":0,"prev":0},{"name":"Lie oversized T","supplier":"위드(완)","in":0,"out":0,"stock":0,"prev":0},{"name":"Leka cross strap mule heels","supplier":"셀렉션","in":0,"out":0,"stock":0,"prev":0},{"name":"Teria viscose OPS","supplier":"위드(완)","in":0,"out":0,"stock":0,"prev":0},{"name":"Orielle wool wide tapered PT","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Dovichi mule heels","supplier":"셀렉션","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Falco oversized wool slik fur JP","supplier":"더율 컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"[3PL]Zuri tapered DN - Black","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"3.5 TURTLE KNIT","supplier":"주느세콰","in":0,"out":0,"stock":0,"prev":0},{"name":"Enola rayon blended oversized SH - Red & Navy","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Ianthe wide bermuda PT","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"29 Vintage buckle suede belt - Beige","supplier":"이엘","in":0,"out":0,"stock":0,"prev":0},{"name":"Romia modal silk cowl neck BL","supplier":"월드K","in":0,"out":0,"stock":0,"prev":0},{"name":"Milo pintuck cotton PT","supplier":"이정","in":0,"out":0,"stock":0,"prev":0},{"name":"FALCO OVERSIZED WOOL SLIK FUR JP_2EM CLASSE","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Luno cupra oversized JK","supplier":"에린블랙(제작)","in":0,"out":0,"stock":0,"prev":0},{"name":"Arix cotton cargo PT","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Raon draped asymmetric sleeveless","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Morris cotton wide banding PT","supplier":"혜성컴퍼니","in":0,"out":0,"stock":0,"prev":0},{"name":"31 Round square leather belt - Deep brown(Gold)","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"31 Round square leather belt - Deep brown(Silver)","supplier":"인스","in":0,"out":0,"stock":0,"prev":0},{"name":"Haver cotton straight PT","supplier":"디트레코즈","in":0,"out":0,"stock":0,"prev":0},{"name":"Sophia wool cash draped KN","supplier":"민","in":0,"out":0,"stock":0,"prev":0},{"name":"Morgan wool cash turtle KN","supplier":"자체제작","in":0,"out":0,"stock":0,"prev":0},{"name":"Zestin crocodile dome bag - Black","supplier":"뷰티(임)","in":0,"out":0,"stock":0,"prev":0},{"name":"Zestin crocodile bowling bag - Black","supplier":"뷰티(임)","in":0,"out":0,"stock":0,"prev":0},{"name":"Zestin crocodile square bag - Black","supplier":"뷰티(임)","in":0,"out":0,"stock":0,"prev":0},{"name":"Zestin crocodile card wallet - Glossy black","supplier":"뷰티(임)","in":0,"out":0,"stock":0,"prev":0},{"name":"Zestin crocodile dome bag - Glossy Black","supplier":"뷰티(임)","in":0,"out":0,"stock":0,"prev":0},{"name":"Zestin crocodile square bag - Glossy black","supplier":"뷰티(임)","in":0,"out":0,"stock":0,"prev":0},{"name":"Kosher washed crop DN - Blue","supplier":"비제이인터내셔널","in":0,"out":0,"stock":0,"prev":0},{"name":"Roberta suede JP","supplier":"인스","in":0,"out":0,"stock":0,"prev":0}],"totals":{"in":0,"out":0,"stock":0,"products":347}};
+
+const G = { data:null, rankMode:'out', rankSort:{col:'out',dir:-1} };
+const charts = {};
+
+// ── 데이터 주입(배포) 모드 ──────────────────────────────────
+if (window.__PD__) {
+  G.data = window.__PD__;
+  render();
+}
+
+// ── CSV 파일 업로드 ──────────────────────────────────────────
+function handleFiles(files) {
+  const allRows = [];
+  let loaded = 0;
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const rows = parseCSV(e.target.result);
+      allRows.push(...rows);
+      loaded++;
+      if (loaded === files.length) {
+        G.data = processData(allRows);
+        render();
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  });
+}
+
+function parseCSV(text) {
+  // BOM 제거
+  if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  // 큰따옴표 안의 콤마 처리
+  const lines = text.split('\n').filter(l => l.trim());
+  if (!lines.length) return [];
+  const headers = splitCSVLine(lines[0]);
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = splitCSVLine(lines[i]);
+    if (vals.length < headers.length) continue;
+    const obj = {};
+    headers.forEach((h, idx) => { obj[h.replace(/"/g,'')] = (vals[idx]||'').replace(/^="(.+)"$/, '$1').replace(/"/g,''); });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function splitCSVLine(line) {
+  const result = []; let cur = ''; let inQ = false;
+  for (let c of line) {
+    if (c === '"') inQ = !inQ;
+    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+    else cur += c;
+  }
+  result.push(cur);
+  return result;
+}
+
+function processData(rows) {
+  // 5월 필터
+  const thisMonth = rows.filter(r => {
+    const d = r['입출고일자']?.slice(0,10);
+    return d && d >= '2026-05-01' && d <= '2026-12-31';
+  });
+  if (!thisMonth.length) return null;
+
+  // 날짜별 집계
+  const dateMap = {};
+  const prodMap = {};
+
+  thisMonth.forEach(r => {
+    const date = r['입출고일자']?.slice(5,10).replace('-','/');  // MM/DD
+    const name = r['상품명']||'';
+    const supplier = r['공급처명']||'';
+    const inQty  = parseInt(r['입고수량'])||0;
+    const outQty = parseInt(r['출고수량'])||0;
+    const stock  = parseInt(r['현재재고'])||0;
+    const serial = parseInt(r['일련번호'])||0;
+    const barcode = r['바코드번호']||'';
+    const warehouse = r['창고명']||'';
+
+    if (!dateMap[date]) dateMap[date] = {date, in:0, out:0};
+    dateMap[date].in  += inQty;
+    dateMap[date].out += outQty;
+
+    if (!prodMap[name]) prodMap[name] = {name, supplier, in:0, out:0, stock:0, lastSerial:{}, prev:0};
+    prodMap[name].in  += inQty;
+    prodMap[name].out += outQty;
+
+    // 최신 현재재고 (바코드+창고 기준 최신 serial)
+    const key = `${barcode}|${warehouse}`;
+    if (!prodMap[name].lastSerial[key] || serial > prodMap[name].lastSerial[key].serial) {
+      prodMap[name].lastSerial[key] = {serial, stock};
+    }
+  });
+
+  // 상품별 현재재고 합산
+  Object.values(prodMap).forEach(p => {
+    p.stock = Object.values(p.lastSerial).reduce((s,v)=>s+v.stock,0);
+    p.prev  = p.stock - p.in + p.out;   // 전월재고 역산
+    delete p.lastSerial;
+  });
+
+  const dates   = Object.keys(dateMap).sort();
+  const daily   = dates.map(d => dateMap[d]);
+  const products = Object.values(prodMap);
+
+  const totIn  = products.reduce((s,p)=>s+p.in,0);
+  const totOut = products.reduce((s,p)=>s+p.out,0);
+  const totStk = products.reduce((s,p)=>s+p.stock,0);
+
+  // 기간 표시
+  const period = dates.length ? `${dates[0]} ~ ${dates[dates.length-1]}` : '-';
+
+  return { period, dates, daily, products, totals:{in:totIn, out:totOut, stock:totStk, products:products.length} };
+}
+
+// ── 렌더링 ──────────────────────────────────────────────────
+function render() {
+  const d = G.data;
+  if (!d) return;
+
+  // 헤더
+  document.getElementById('period-sub').textContent = `기간: ${d.period}`;
+  document.getElementById('status-badge').textContent = `${d.totals.products}개 상품`;
+  document.getElementById('status-badge').className = 'badge';
+
+  // KPI
+  const fmt = v => v == null ? '-' : v.toLocaleString();
+  document.getElementById('kpi-in').innerHTML      = `${fmt(d.totals.in)}<span class="kpi-unit">개</span>`;
+  document.getElementById('kpi-out').innerHTML     = `${fmt(d.totals.out)}<span class="kpi-unit">개</span>`;
+  document.getElementById('kpi-stock').innerHTML   = `${fmt(d.totals.stock)}<span class="kpi-unit">개</span>`;
+  document.getElementById('kpi-prods').innerHTML   = `${fmt(d.totals.products)}<span class="kpi-unit">종</span>`;
+  document.getElementById('kpi-in-sub').textContent  = `${d.dates.length}일 기준`;
+  document.getElementById('kpi-out-sub').textContent = `${d.dates.length}일 기준`;
+  document.getElementById('kpi-stock-sub').textContent = '최신 현재재고 합산';
+  document.getElementById('kpi-prods-sub').textContent = `입출고 발생 상품`;
+
+  // 빈 상태 숨김
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('chart-section').style.display = 'block';
+
+  renderCharts();
+  renderRank();
+}
+
+function renderCharts() {
+  const d = G.data;
+  const labels = d.dates;
+
+  const chartCfgBase = (label, data, color) => ({
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ label, data, backgroundColor: color+'99', borderColor: color, borderWidth: 1, borderRadius: 4 }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${ctx.parsed.y.toLocaleString()}개` } }
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: '#f1f5f9' }, ticks: { callback: v => v >= 1000 ? (v/1000)+'k' : v } }
+      }
+    }
+  });
+
+  // 입고 차트
+  if (charts.in) charts.in.destroy();
+  charts.in = new Chart(document.getElementById('chart-in'), chartCfgBase('입고수량', d.daily.map(r=>r.in), '#059669'));
+
+  // 출고 차트
+  if (charts.out) charts.out.destroy();
+  charts.out = new Chart(document.getElementById('chart-out'), chartCfgBase('출고수량', d.daily.map(r=>r.out), '#dc2626'));
+}
+
+function setRankMode(mode, el) {
+  G.rankMode = mode;
+  G.rankSort = { col: mode, dir: -1 };
+  document.querySelectorAll('.rank-filter-group .rank-filter-btn').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderRank();
+}
+
+function setRankSort(col) {
+  if (G.rankSort.col === col) G.rankSort.dir *= -1;
+  else { G.rankSort.col = col; G.rankSort.dir = -1; }
+  renderRank();
+}
+
+function renderRank() {
+  const d = G.data;
+  if (!d) return;
+
+  const search = (document.getElementById('rank-search')?.value||'').trim().toLowerCase();
+  const { col, dir } = G.rankSort;
+
+  let prods = d.products.filter(p => !search || p.name.toLowerCase().includes(search));
+  prods = [...prods].sort((a,b) => {
+    if (col === 'name') return a.name.localeCompare(b.name,'ko') * dir;
+    return ((a[col]??-Infinity) - (b[col]??-Infinity)) * dir;
+  });
+
+  document.getElementById('rank-count').textContent = search ? `${prods.length} / ${d.products.length}개` : `총 ${d.products.length}개`;
+
+  const arr = s => s === col ? (dir===-1?'▼':'▲') : '⇅';
+  const cls = s => s === col ? ' active' : '';
+  const sth = (label, key, align='right', w='') => `<th class="sort-th" onclick="setRankSort('${key}')" style="text-align:${align};${w?'width:'+w+';':''}background:#f8fafc">${label}<span class="sort-arrow${cls(key)}">${arr(key)}</span></th>`;
+
+  let html = `<thead><tr style="background:#f8fafc;font-size:11px;color:#64748b">
+    <th style="text-align:center;width:36px;background:#f8fafc">#</th>
+    ${sth('상품명','name','left','220px')}
+    <th style="text-align:left;width:140px;background:#f8fafc">공급처</th>
+    ${sth('전월재고','prev','right','70px')}
+    ${sth('입고','in','right','70px')}
+    ${sth('출고','out','right','70px')}
+    ${sth('현재재고','stock','right','70px')}
+  </tr></thead><tbody>`;
+
+  // 합계행
+  const totIn  = prods.reduce((s,p)=>s+p.in,0);
+  const totOut = prods.reduce((s,p)=>s+p.out,0);
+  const totStk = prods.reduce((s,p)=>s+p.stock,0);
+  const totPrev= prods.reduce((s,p)=>s+p.prev,0);
+  html += `<tr style="background:#f0fdf4;font-weight:700;border-top:2px solid #a7f3d0;border-bottom:2px solid #a7f3d0">
+    <td style="color:#059669;font-size:11px">합계</td>
+    <td style="color:#059669;font-size:12px">총 ${prods.length}개 상품</td>
+    <td></td>
+    <td style="color:#6d28d9;font-size:12px">${totPrev.toLocaleString()}</td>
+    <td style="color:#1d4ed8;font-size:12px;font-weight:700">${totIn.toLocaleString()}</td>
+    <td style="color:#b91c1c;font-size:12px;font-weight:700">${totOut.toLocaleString()}</td>
+    <td style="color:#059669;font-size:12px;font-weight:700">${totStk.toLocaleString()}</td>
+  </tr>`;
+
+  if (!prods.length) {
+    html += `<tr><td colspan="7" style="padding:24px;text-align:center;color:#94a3b8">검색 결과 없음</td></tr>`;
+  } else {
+    prods.forEach((p,i) => {
+      const bg = i%2===0?'#fff':'#f8fafc';
+      const nm = search ? p.name.replace(new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m=>`<mark style="background:#fef08a;border-radius:2px">${m}</mark>`) : p.name;
+      html += `<tr style="border-bottom:1px solid #f1f5f9;background:${bg}">
+        <td style="color:#94a3b8;font-size:11px">${i+1}</td>
+        <td style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.name}">${nm}</td>
+        <td style="font-size:11px;color:#64748b;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.supplier||'-'}</td>
+        <td style="font-size:12px;color:${p.prev?'#6d28d9':'#94a3b8'}">${p.prev?p.prev.toLocaleString():'-'}</td>
+        <td style="font-size:12px;color:${p.in?'#1d4ed8':'#94a3b8'};font-weight:${p.in?'600':'400'}">${p.in?p.in.toLocaleString():'-'}</td>
+        <td style="font-size:12px;color:${p.out?'#b91c1c':'#94a3b8'};font-weight:${p.out?'600':'400'}">${p.out?p.out.toLocaleString():'-'}</td>
+        <td style="font-size:12px;color:${p.stock?'#059669':'#94a3b8'};font-weight:${p.stock?'600':'400'}">${p.stock?p.stock.toLocaleString():'-'}</td>
+      </tr>`;
+    });
+  }
+  html += '</tbody>';
+  document.getElementById('t-rank').innerHTML = html;
+}
+
+function showTab(i, el) {
+  document.querySelectorAll('.section').forEach((s,j)=>s.classList.toggle('active',j===i));
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+  if (i===0 && G.data) { setTimeout(()=>{ Object.values(charts).forEach(c=>c&&c.resize()); },50); }
+}
+</script>
+</body>
+</html>
