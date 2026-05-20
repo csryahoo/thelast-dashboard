@@ -146,6 +146,7 @@ tr:hover td { background:#f8fafc; }
       <div class="es-icon">📦</div>
       <div style="font-size:14px;font-weight:600">CSV 파일을 불러오세요</div>
       <div style="font-size:12px">셀메이트 stk_inoutList_*.csv 파일을 업로드하면<br>일별 입출고 차트가 표시됩니다</div>
+      <div id="dbg-pd" style="margin-top:12px;font-size:11px;padding:6px 14px;border-radius:6px;font-weight:700"></div>
     </div>
     <div id="chart-section" style="display:none">
       <div class="chart-card">
@@ -185,11 +186,26 @@ window.__PD__={"period":"05/04 ~ 05/19","dates":["05/04","05/06","05/07","05/08"
 const G = { data:null, rankMode:'out', rankSort:{col:'out',dir:-1} };
 const charts = {};
 
+// ── 디버그: 데이터 주입 상태 표시 ──────────────────────────
+function _showDbg() {
+  const el = document.getElementById('dbg-pd');
+  if (!el) return;
+  if (window.__PD__) {
+    el.style.cssText = 'background:#d1fae5;color:#065f46;margin-top:12px;font-size:11px;padding:6px 14px;border-radius:6px;font-weight:700';
+    el.textContent = '✓ 서버 데이터 있음 (' + (window.__PD__.totals?.products || '?') + '개 상품) — render() 호출 중...';
+  } else {
+    el.style.cssText = 'background:#fee2e2;color:#991b1b;margin-top:12px;font-size:11px;padding:6px 14px;border-radius:6px;font-weight:700';
+    el.textContent = '✗ __PD__ = null (데이터 미주입)';
+  }
+}
+
 // ── 데이터 주입(배포) 모드 ──────────────────────────────────
 if (window.__PD__) {
   G.data = window.__PD__;
-  document.addEventListener('DOMContentLoaded', function() { render(); });
-  if (document.readyState !== 'loading') render();
+  _showDbg();
+  render();
+} else {
+  document.addEventListener('DOMContentLoaded', _showDbg);
 }
 
 // ── CSV 파일 업로드 ──────────────────────────────────────────
