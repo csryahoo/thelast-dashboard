@@ -562,7 +562,7 @@
     loading.classList.remove('hide');
     document.getElementById('loading-text').textContent = cfg.title + ' 불러오는 중...';
 
-    document.getElementById('dash-frame').src = cfg.file;
+    document.getElementById('dash-frame').src = cfg.file + '?v=' + Date.now();
   }
 
   // 이전 버전 호환
