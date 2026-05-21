@@ -307,6 +307,10 @@
       <span class="icon">🔄</span>
       <span>입출고 현황</span>
     </div>
+    <div class="nav-item" id="nav-loan" onclick="loadDash('loan')">
+      <span class="icon">🏦</span>
+      <span>대출 현황</span>
+    </div>
   </div>
 
   <div class="sidebar-footer">
@@ -417,6 +421,25 @@
           </div>
         </div>
 
+        <!-- 대출현황 카드 -->
+        <div class="dash-card" style="border-top:3px solid #6366f1" onclick="loadDash('loan')">
+          <span class="dash-card-icon">🏦</span>
+          <div class="dash-card-title">대출 현황</div>
+          <div class="dash-card-desc">
+            법인 대출 잔액·금리·만기일 관리,<br>
+            D-day 알림 및 상환 원장
+          </div>
+          <div class="dash-card-tags">
+            <span class="dash-tag" style="background:rgba(99,102,241,.08);color:#6366f1;border-color:rgba(99,102,241,.2)">대출잔액</span>
+            <span class="dash-tag" style="background:rgba(99,102,241,.08);color:#6366f1;border-color:rgba(99,102,241,.2)">만기 D-day</span>
+            <span class="dash-tag" style="background:rgba(99,102,241,.08);color:#6366f1;border-color:rgba(99,102,241,.2)">상환원장</span>
+          </div>
+          <div class="dash-card-footer">
+            <span class="dash-launch" style="color:#6366f1">열기 →</span>
+            <span class="dash-updated">2026.05 기준</span>
+          </div>
+        </div>
+
       </div>
 
       <!-- 하단 quick info -->
@@ -479,6 +502,10 @@
     <span class="bn-icon">📦</span>
     <span class="bn-label">재고</span>
   </div>
+  <div class="bn-item" id="bn-loan" onclick="loadDash('loan')">
+    <span class="bn-icon">🏦</span>
+    <span class="bn-label">대출</span>
+  </div>
 </div>
 
 <script>
@@ -510,6 +537,13 @@
       nav: 'nav-inout',
       bn: 'bn-inout',
       label: '🔄 입출고 현황'
+    },
+    loan: {
+      file: 'loan.html',
+      title: '대출 현황',
+      nav: 'nav-loan',
+      bn: 'bn-loan',
+      label: '🏦 대출 현황'
     }
   };
 
