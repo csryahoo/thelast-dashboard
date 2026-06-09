@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주식회사 더라스트 · 2025 재무분석 대시보드</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#1F3864; --navy2:#2E4D7B; --bg:#f4f6fa; --card:#ffffff;
+    --ink:#1a2233; --muted:#6b7688; --line:#e3e8f0;
+    --good:#1a9d6b; --goodbg:#e3f5ec; --warn:#c77d12; --warnbg:#fdf3e2;
+    --bad:#c0392b; --badbg:#fbe9e7; --accent:#3d6fd4;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Malgun Gothic','Apple SD Gothic Neo',Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;padding:28px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header{background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;border-radius:16px;padding:26px 30px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;box-shadow:0 6px 22px rgba(31,56,100,.18)}
+  header h1{font-size:23px;font-weight:700;letter-spacing:-.3px}
+  header .sub{opacity:.82;font-size:13px;margin-top:6px}
+  .grade{text-align:right}
+  .grade .lab{font-size:12px;opacity:.8}
+  .grade .val{font-size:30px;font-weight:800;line-height:1.1}
+  .grade .desc{font-size:12px;opacity:.85;max-width:230px}
+  .summary{background:var(--card);border-radius:14px;padding:18px 22px;margin:16px 0;border:1px solid var(--line);font-size:14px}
+  .summary b{color:var(--navy)}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:16px 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .kpi .t{font-size:12px;color:var(--muted)}
+  .kpi .v{font-size:21px;font-weight:800;margin-top:6px;color:var(--navy)}
+  .kpi .d{font-size:11.5px;color:var(--muted);margin-top:4px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin:16px 0}
+  h2{font-size:16px;color:var(--navy);margin-bottom:4px;display:flex;align-items:center;gap:9px}
+  h2 .bar{width:5px;height:18px;background:var(--accent);border-radius:3px}
+  .h2sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+  .ratio{display:grid;grid-template-columns:140px 110px 1fr 86px;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)}
+  .ratio:last-child{border-bottom:none}
+  .ratio .name{font-weight:600;font-size:13.5px}
+  .ratio .name small{display:block;color:var(--muted);font-weight:400;font-size:11px}
+  .ratio .num{font-size:18px;font-weight:800;color:var(--navy)}
+  .track{position:relative;height:13px;background:#eef1f7;border-radius:7px;overflow:hidden}
+  .fill{position:absolute;left:0;top:0;height:100%;border-radius:7px}
+  .mark{position:absolute;top:-3px;width:2px;height:19px;background:#33415c}
+  .mark span{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:9.5px;color:#33415c;white-space:nowrap}
+  .badge{font-size:12px;font-weight:700;text-align:center;padding:5px 0;border-radius:7px}
+  .b-good{background:var(--goodbg);color:var(--good)} .b-warn{background:var(--warnbg);color:var(--warn)} .b-bad{background:var(--badbg);color:var(--bad)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .mini{background:#f8fafd;border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-align:center}
+  .mini .t{font-size:12px;color:var(--muted)} .mini .v{font-size:22px;font-weight:800;color:var(--navy);margin-top:5px} .mini .d{font-size:11px;color:var(--muted);margin-top:3px}
+  .chartbox{position:relative;height:260px}
+  .chartbox.sm{height:230px}
+  .findings li{margin:9px 0;padding-left:6px;font-size:13.5px}
+  .findings .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;margin-right:8px;vertical-align:middle}
+  .t-str{background:var(--goodbg);color:var(--good)} .t-risk{background:var(--badbg);color:var(--bad)} .t-watch{background:var(--warnbg);color:var(--warn)}
+  .note{font-size:11.5px;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+  table.fin{width:100%;border-collapse:collapse;font-size:13px}
+  table.fin th,table.fin td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right}
+  table.fin th:first-child,table.fin td:first-child{text-align:left}
+  table.fin thead th{background:#f1f4fa;color:var(--navy);font-size:12px}
+  table.fin tr.sum td{font-weight:800;background:#f8fafd}
+  @media(max-width:820px){.kpis,.grid2,.grid3{grid-template-columns:1fr 1fr}.ratio{grid-template-columns:1fr 1fr;}.ratio .track{grid-column:1/-1}}
+  @media print{body{background:#fff;padding:0}section,header,.kpi,.summary{box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>주식회사 더라스트 — 2025년 재무분석 대시보드</h1>
+      <div class="sub">표준재무제표 기준 · 결산기준일 2025년 12월 31일 · 단위: 원 · 업종 기준: 의류제조</div>
+    </div>
+    <div class="grade">
+      <div class="lab">종합 진단</div>
+      <div class="val">안정 · 저수익</div>
+      <div class="desc">재무 안정성 매우 우수, 수익성(영업이익률) 개선 과제</div>
+    </div>
+  </header>
+
+  <div class="summary">
+    <b>요약.</b> 부채비율 97%·자기자본비율 51%·유동비율 297%로 <b>재무 안정성은 동종업종 대비 매우 우수</b>합니다.
+    반면 매출 189억 원에 영업이익은 1.7억 원(<b>영업이익률 0.9%</b>)에 그쳐, <b>판관비 부담(매출의 41.4%)</b>이 수익성의 핵심 과제입니다.
+    당기순이익 3.03억 원은 이자·잡이익 등 영업외수익(2.26억)에 상당 부분 의존합니다.
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="t">매출액</div><div class="v">189.0억</div><div class="d">18,904,904,053원</div></div>
+    <div class="kpi"><div class="t">영업이익</div><div class="v">1.69억</div><div class="d">영업이익률 0.9%</div></div>
+    <div class="kpi"><div class="t">당기순이익</div><div class="v">3.03억</div><div class="d">순이익률 1.6% · ROE 8.8%</div></div>
+    <div class="kpi"><div class="t">부채비율</div><div class="v">97.3%</div><div class="d">기준 150% 이하 · 매우 양호</div></div>
+  </div>
+
+  <!-- 안정성 -->
+  <section>
+    <h2><span class="bar"></span>1. 재무 안정성</h2>
+    <div class="h2sub">막대 = 실적값, 세로선 = 의류제조 권장 기준선. 색상 = 기준 대비 양호/주의 판정.</div>
+    <div id="stab"></div>
+  </section>
+
+  <!-- 수익성 -->
+  <section>
+    <h2><span class="bar"></span>2. 수익성</h2>
+    <div class="h2sub">매출에서 이익이 형성되는 단계와 자본 수익률.</div>
+    <div class="grid2">
+      <div class="chartbox"><canvas id="waterfall"></canvas></div>
+      <div>
+        <div class="grid3" style="margin-bottom:14px">
+          <div class="mini"><div class="t">매출총이익률</div><div class="v">42.3%</div><div class="d">우수</div></div>
+          <div class="mini"><div class="t">영업이익률</div><div class="v" style="color:var(--warn)">0.9%</div><div class="d">낮음</div></div>
+          <div class="mini"><div class="t">순이익률</div><div class="v">1.6%</div><div class="d">영업외수익 기여</div></div>
+        </div>
+        <div class="grid2">
+          <div class="mini"><div class="t">ROE (자기자본이익률)</div><div class="v">8.8%</div><div class="d">순이익/자기자본</div></div>
+          <div class="mini"><div class="t">ROA (총자산이익률)</div><div class="v">4.5%</div><div class="d">순이익/총자산</div></div>
+        </div>
+        <p class="note" style="border:none;padding:0;margin-top:12px">매출총이익률 42%는 양호하나, 판관비가 매출총이익의 98%를 소진하여 영업이익으로 거의 남지 않습니다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 활동성 -->
+  <section>
+    <h2><span class="bar"></span>3. 활동성 · 현금흐름 효율</h2>
+    <div class="h2sub">연말 잔액 기준 회전율(근사치)과 현금전환주기.</div>
+    <div class="grid2">
+      <div class="grid3">
+        <div class="mini"><div class="t">총자산회전율</div><div class="v">2.80<small style="font-size:13px">회</small></div><div class="d">자산 효율 양호</div></div>
+        <div class="mini"><div class="t">매출채권 회수기간</div><div class="v">23.7<small style="font-size:13px">일</small></div><div class="d">15.4회전 · 빠름</div></div>
+        <div class="mini"><div class="t">재고 보유일수</div><div class="v">89.8<small style="font-size:13px">일</small></div><div class="d">4.06회전</div></div>
+        <div class="mini"><div class="t">매입채무 지급기간</div><div class="v">27.3<small style="font-size:13px">일</small></div><div class="d">13.4회전</div></div>
+        <div class="mini" style="grid-column:span 2;background:#eef3fc;border-color:#cdd9f0"><div class="t">현금전환주기 (CCC)</div><div class="v">86.3<small style="font-size:13px">일</small></div><div class="d">재고 89.8 + 채권 23.7 − 채무 27.3</div></div>
+      </div>
+      <div class="chartbox"><canvas id="ccc"></canvas></div>
+    </div>
+    <p class="note">재고 보유일수(약 90일)가 현금전환주기의 대부분을 차지합니다 — 의류 시즌 재고 특성을 감안하더라도 재고 효율 관리가 운전자본의 핵심 레버입니다.</p>
+  </section>
+
+  <!-- 구성 -->
+  <section>
+    <h2><span class="bar"></span>4. 재무구조 구성</h2>
+    <div class="grid3">
+      <div><div class="h2sub" style="text-align:center">자산 구성 (총 67.5억)</div><div class="chartbox sm"><canvas id="assets"></canvas></div></div>
+      <div><div class="h2sub" style="text-align:center">자본조달 구성 (총 67.5억)</div><div class="chartbox sm"><canvas id="cap"></canvas></div></div>
+      <div><div class="h2sub" style="text-align:center">주요 판매관리비 (총 78.3억)</div><div class="chartbox sm"><canvas id="sga"></canvas></div></div>
+    </div>
+  </section>
+
+  <!-- 발견 -->
+  <section>
+    <h2><span class="bar"></span>5. 핵심 발견 및 제언</h2>
+    <ul class="findings" style="list-style:none">
+      <li><span class="tag t-str">강점</span><b>탄탄한 자본구조.</b> 부채비율 97%, 자기자본비율 51%, 차입금의존도 25%로 차입 부담이 낮고 이익잉여금 33억이 축적돼 있습니다.</li>
+      <li><span class="tag t-str">강점</span><b>높은 단기 지급능력.</b> 유동비율 297%·당좌비율 154%로 단기 채무 상환에 여유가 큽니다.</li>
+      <li><span class="tag t-risk">과제</span><b>낮은 영업이익률(0.9%).</b> 매출총이익률은 42%로 양호하나 판관비가 매출의 41%를 차지합니다. 지급수수료(약 12.9억, 채널수수료 추정)·광고선전비(약 12.0억)가 큰 비중 — 채널별 수익성 점검과 마케팅 ROI 관리가 필요합니다.</li>
+      <li><span class="tag t-watch">점검</span><b>주주·임원·직원 단기대여금 11.2억.</b> 총자산의 약 16.5%가 특수관계자 대여금입니다. 회수 가능성·이자율 적정성(가지급금 인정이자) 측면에서 관리가 필요합니다.</li>
+      <li><span class="tag t-watch">점검</span><b>이익의 영업외 의존.</b> 법인세차감전이익 3.31억 중 영업이익은 1.69억뿐이며 나머지는 이자·잡이익에서 발생 — 본업 수익력 강화가 과제입니다.</li>
+      <li><span class="tag t-watch">점검</span><b>재고 보유일수 약 90일.</b> 운전자본의 핵심 항목으로, 시즌 소진율·악성재고 관리가 현금흐름 개선의 지렛대입니다.</li>
+    </ul>
+    <p class="note">본 분석은 업로드된 2025년 표준재무제표증명(일반법인용, 단일 연도) 기준입니다. <b>성장성(매출·이익 증감) 및 추세 분석은 2024년 비교 자료가 필요</b>합니다 — 전년 재무제표를 추가로 주시면 YoY 분석과 추세 차트를 더할 수 있습니다. 활동성 비율은 연말 잔액 기준 근사치이며, 판관비 세부 항목 금액은 손익계산서에서 추출한 값입니다.</p>
+  </section>
+</div>
+
+<script>
+const KRW=v=>v.toLocaleString('ko-KR');
+const 억=v=>(v/1e8);
+// ---- 안정성 ----
+const stab=[
+ {name:'부채비율',sub:'부채÷자기자본',val:97.3,unit:'%',bench:150,benchTxt:'150% 이하',max:300,lowerGood:true,status:'good'},
+ {name:'자기자본비율',sub:'자기자본÷총자산',val:50.7,unit:'%',bench:40,benchTxt:'40% 이상',max:100,lowerGood:false,status:'good'},
+ {name:'유동비율',sub:'유동자산÷유동부채',val:297.0,unit:'%',bench:130,benchTxt:'130% 이상',max:320,lowerGood:false,status:'good'},
+ {name:'당좌비율',sub:'당좌자산÷유동부채',val:153.8,unit:'%',bench:80,benchTxt:'80% 이상',max:320,lowerGood:false,status:'good'},
+ {name:'이자보상배율',sub:'영업이익÷이자비용',val:3.96,unit:'배',bench:3,benchTxt:'3배 이상',max:6,lowerGood:false,status:'good'},
+ {name:'차입금의존도',sub:'총차입금÷총자산',val:25.2,unit:'%',bench:30,benchTxt:'30% 이하',max:60,lowerGood:true,status:'good'},
+];
+const col={good:'#1a9d6b',warn:'#c77d12',bad:'#c0392b'},colb={good:'b-good',warn:'b-warn',bad:'b-bad'},lab={good:'양호',warn:'주의',bad:'위험'};
+document.getElementById('stab').innerHTML=stab.map(r=>{
+  const pct=Math.min(r.val/r.max*100,100), bpct=Math.min(r.bench/r.max*100,100);
+  return `<div class="ratio">
+    <div class="name">${r.name}<small>${r.sub}</small></div>
+    <div class="num">${r.val.toLocaleString()}${r.unit}</div>
+    <div class="track"><div class="fill" style="width:${pct}%;background:${col[r.status]}"></div>
+      <div class="mark" style="left:${bpct}%"><span>기준 ${r.benchTxt}</span></div></div>
+    <div class="badge ${colb[r.status]}">${lab[r.status]}</div></div>`;
+}).join('');
+
+Chart.defaults.font.family="'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
+Chart.defaults.font.size=12;
+
+// ---- 수익성 워터폴 ----
+const wf=[['매출액',18904904053],['(−)매출원가',10906476960],['매출총이익',7998427093],['(−)판매관리비',7829598014],['영업이익',168829079],['(+)영업외손익',162545474],['당기순이익',302575343]];
+new Chart(document.getElementById('waterfall'),{type:'bar',
+ data:{labels:wf.map(x=>x[0]),datasets:[{data:wf.map(x=>억(x[1])),
+   backgroundColor:['#2E4D7B','#c0392b','#3d6fd4','#c0392b','#c77d12','#1a9d6b','#1a9d6b']}]},
+ options:{plugins:{legend:{display:false},title:{display:true,text:'손익 단계 (억원)'},
+   tooltip:{callbacks:{label:c=>KRW(wf[c.dataIndex][1])+'원'}}},
+   scales:{y:{ticks:{callback:v=>v+'억'}}}}});
+
+// ---- CCC ----
+new Chart(document.getElementById('ccc'),{type:'bar',
+ data:{labels:['재고 보유','매출채권 회수','매입채무 지급(−)','= 현금전환주기'],
+   datasets:[{data:[89.8,23.7,-27.3,86.3],backgroundColor:['#c77d12','#3d6fd4','#1a9d6b','#2E4D7B']}]},
+ options:{indexAxis:'y',plugins:{legend:{display:false},title:{display:true,text:'현금전환주기 구성 (일)'}},
+   scales:{x:{ticks:{callback:v=>v+'일'}}}}});
+
+// ---- 자산 구성 ----
+new Chart(document.getElementById('assets'),{type:'doughnut',
+ data:{labels:['당좌자산','재고자산','비유동자산','기타유동'],
+   datasets:[{data:[2947348576,2683253431,1056232801,61496239],
+   backgroundColor:['#2E4D7B','#c77d12','#3d6fd4','#9fb3d4']}]},
+ options:{plugins:{legend:{position:'bottom',labels:{boxWidth:12,padding:8}},
+   tooltip:{callbacks:{label:c=>c.label+' '+KRW(c.raw)+'원'}}}}});
+
+// ---- 자본조달 ----
+new Chart(document.getElementById('cap'),{type:'doughnut',
+ data:{labels:['유동부채','비유동부채(차입)','자본금','이익잉여금'],
+   datasets:[{data:[1916397450,1412244200,110000000,3309899399],
+   backgroundColor:['#c0392b','#e08e6d','#1a9d6b','#7cc6a3']}]},
+ options:{plugins:{legend:{position:'bottom',labels:{boxWidth:12,padding:8}},
+   tooltip:{callbacks:{label:c=>c.label+' '+KRW(c.raw)+'원'}}}}});
+
+// ---- 판관비 ----
+const sga=[['급여',2806729486],['지급수수료',1292567153],['광고선전비',1203650290],['지급임차료',618327440],['감가상각비',316482131],['소모품비',309636938],['기타',1282204576]];
+new Chart(document.getElementById('sga'),{type:'bar',
+ data:{labels:sga.map(x=>x[0]),datasets:[{data:sga.map(x=>억(x[1])),backgroundColor:'#3d6fd4'}]},
+ options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>KRW(sga[c.dataIndex][1])+'원'}}},
+   scales:{x:{ticks:{callback:v=>v+'억'}}}}});
+</script>
+</body>
+</html>
