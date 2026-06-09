@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주식회사 더라스트 · 2026년 5월 현금흐름 분석</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#0e3a53; --navy2:#155e75; --bg:#f4f6fa; --card:#fff;
+    --ink:#1a2233; --muted:#6b7688; --line:#e3e8f0;
+    --in:#1a9d6b; --out:#c0392b; --invest:#c77d12; --fin:#6366f1; --accent:#0891b2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Malgun Gothic','Apple SD Gothic Neo',Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;padding:28px}
+  .wrap{max-width:1180px;margin:0 auto}
+  header{background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;border-radius:16px;padding:26px 30px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;box-shadow:0 6px 22px rgba(14,58,83,.18)}
+  header h1{font-size:23px;font-weight:700;letter-spacing:-.3px}
+  header .sub{opacity:.84;font-size:13px;margin-top:6px}
+  .grade{text-align:right}
+  .grade .lab{font-size:12px;opacity:.8}
+  .grade .val{font-size:30px;font-weight:800;line-height:1.1}
+  .grade .desc{font-size:12px;opacity:.85;max-width:240px}
+  .summary{background:var(--card);border-radius:14px;padding:18px 22px;margin:16px 0;border:1px solid var(--line);font-size:14px}
+  .summary b{color:var(--navy)}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:16px 0}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .kpi .t{font-size:12px;color:var(--muted)}
+  .kpi .v{font-size:21px;font-weight:800;margin-top:6px}
+  .kpi .d{font-size:11.5px;color:var(--muted);margin-top:4px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin:16px 0}
+  h2{font-size:16px;color:var(--navy);margin-bottom:4px;display:flex;align-items:center;gap:9px}
+  h2 .bar{width:5px;height:18px;background:var(--accent);border-radius:3px}
+  .h2sub{font-size:12px;color:var(--muted);margin-bottom:16px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .chartbox{position:relative;height:300px}
+  .chartbox.sm{height:270px}
+  table.cf{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.cf th,table.cf td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:right}
+  table.cf td:first-child,table.cf th:first-child{text-align:left}
+  table.cf thead th{background:#eef4f7;color:var(--navy);font-size:12px}
+  table.cf tr.act td{font-weight:800;background:#f6fafc}
+  table.cf tr.tot td{font-weight:800;background:var(--navy);color:#fff;font-size:15px}
+  table.cf .pos{color:var(--in)} table.cf .neg{color:var(--out)}
+  .findings li{margin:9px 0;font-size:13.5px}
+  .findings .tag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;margin-right:8px}
+  .t-in{background:#e3f5ec;color:var(--in)} .t-out{background:#fbe9e7;color:var(--out)} .t-watch{background:#fdf3e2;color:var(--invest)}
+  .note{font-size:11.5px;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+  @media(max-width:820px){.kpis,.grid2{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>주식회사 더라스트 — 2026년 5월 현금흐름 분석</h1>
+      <div class="sub">통장 거래내역 직접법 · 조회기간 2026.05.01~05.31 · 1,250건 · 단위: 원 · 계좌간 내부이체 제외</div>
+    </div>
+    <div class="grade">
+      <div class="lab">5월 순현금흐름</div>
+      <div class="val" style="color:#ffd5cf">−5.33억</div>
+      <div class="desc">생산 매입 집중에 따른 운전자본 유출 (계절적)</div>
+    </div>
+  </header>
+
+  <div class="summary">
+    <b>요약.</b> 5월은 매출 입금 약 <b>16.2억 원</b>이 들어왔으나, 원재료·제품·주얼리 등 <b>생산 매입에 약 13.9억 원</b>이 집중 지출되며 영업활동에서 −3.92억 원의 현금이 빠져나갔습니다.
+    여기에 차입금 상환 0.87억, 특수관계자 대여·설비 0.54억이 더해져 <b>5월 한 달 순현금 −5.33억 원</b>입니다.
+    매출 자체가 부진한 것이 아니라 <b>시즌 생산을 위한 선투입(운전자본) 성격</b>으로, 단월 수치로 안정성을 단정하긴 어렵습니다.
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="t">총 현금유입</div><div class="v" style="color:var(--in)">17.7억</div><div class="d">1,771,448,906원</div></div>
+    <div class="kpi"><div class="t">총 현금유출</div><div class="v" style="color:var(--out)">21.6억</div><div class="d">2,163,261,816원 (영업)</div></div>
+    <div class="kpi"><div class="t">영업활동 현금흐름</div><div class="v" style="color:var(--out)">−3.92억</div><div class="d">매출유입 − 운영·매입</div></div>
+    <div class="kpi"><div class="t">순현금흐름</div><div class="v" style="color:var(--out)">−5.33억</div><div class="d">영업+투자+재무</div></div>
+  </div>
+
+  <!-- 활동별 -->
+  <section>
+    <h2><span class="bar"></span>1. 활동별 현금흐름 (직접법 요약)</h2>
+    <div class="h2sub">계좌간 내부이체(입금 4.88억/출금 4.89억, 거의 상계)는 제외했습니다.</div>
+    <div class="grid2">
+      <div class="chartbox"><canvas id="actChart"></canvas></div>
+      <div>
+        <table class="cf">
+          <thead><tr><th>구분</th><th>유입</th><th>유출</th><th>순현금흐름</th></tr></thead>
+          <tbody>
+            <tr class="act"><td>영업활동</td><td>1,771,448,906</td><td>2,163,261,816</td><td class="neg">−391,812,910</td></tr>
+            <tr class="act"><td>투자활동</td><td>0</td><td>54,340,000</td><td class="neg">−54,340,000</td></tr>
+            <tr class="act"><td>재무활동</td><td>0</td><td>86,744,405</td><td class="neg">−86,744,405</td></tr>
+            <tr class="tot"><td>순현금흐름</td><td colspan="2"></td><td>−532,897,315</td></tr>
+          </tbody>
+        </table>
+        <p class="note" style="border:none;padding:0;margin-top:12px">투자활동 = 특수관계자 단기대여 4,860만 + 대표 사용분 266만 + 유형자산 취득 308만. 재무활동 = 차입금 상환 8,674만. 이자비용(471만)은 영업활동에 포함.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 유입/유출 구성 -->
+  <section>
+    <h2><span class="bar"></span>2. 현금 유입·유출 구성</h2>
+    <div class="grid2">
+      <div><div class="h2sub" style="text-align:center">매출 유입 채널 (순, 억원)</div><div class="chartbox sm"><canvas id="inChart"></canvas></div></div>
+      <div><div class="h2sub" style="text-align:center">영업 비용 유출 상위 (순, 억원)</div><div class="chartbox sm"><canvas id="outChart"></canvas></div></div>
+    </div>
+    <p class="note">유입은 PG·온라인 채널(케이지이니시스 5.12억, 스마트스토어 3.84억, 네이버페이 2.85억)이 주도. 유출은 생산 매입(원재료 7.51억·제품 3.28억·주얼리 1.95억·오리지널샘플 1.13억)이 대부분.</p>
+  </section>
+
+  <!-- 발견 -->
+  <section>
+    <h2><span class="bar"></span>3. 핵심 발견</h2>
+    <ul class="findings" style="list-style:none">
+      <li><span class="tag t-out">유출집중</span><b>생산 매입 선투입.</b> 원재료·제품·주얼리·오리지널샘플 등 재고·생산 매입이 약 13.9억 원으로 5월 유출의 64%를 차지 — 시즌 생산을 위한 운전자본 투입입니다.</li>
+      <li><span class="tag t-in">유입양호</span><b>다채널 매출 회수.</b> 매출 입금 16.2억이 PG·자사몰·플랫폼·오프라인 지점에 고르게 분산되어 회수는 원활합니다.</li>
+      <li><span class="tag t-watch">점검</span><b>특수관계자 대여 4,860만 원.</b> 대표·주임종 단기채권으로 5월에도 현금이 유출됐습니다. 연간 재무제표상 단기대여금 11.2억과 연결되는 항목으로 지속 모니터링이 필요합니다.</li>
+      <li><span class="tag t-watch">점검</span><b>단월 −5.33억의 해석.</b> 매입 시점과 매출 회수 시점의 시차에서 비롯된 것으로, 월별 추이로 봐야 정확합니다. 다른 월 통장내역을 더 주시면 <b>월별 현금흐름 추세</b>를 만들 수 있습니다.</li>
+    </ul>
+    <p class="note">본 분석은 2026년 5월 통장 거래내역(라벨링본) 직접법 기준입니다. 활동 분류는 회계 관행에 따른 것으로, 특수관계자 대여는 투자활동, 차입금 상환은 재무활동, 이자지급은 영업활동으로 분류했습니다. 외화계좌는 KRW 환산액을 사용했습니다.</p>
+  </section>
+</div>
+
+<script>
+const KRW=v=>Math.round(v).toLocaleString('ko-KR');
+const 억=v=>v/1e8;
+Chart.defaults.font.family="'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
+Chart.defaults.font.size=12;
+
+// 활동별
+new Chart(document.getElementById('actChart'),{type:'bar',
+ data:{labels:['영업활동','투자활동','재무활동','순현금흐름'],
+  datasets:[{data:[-391812910,-54340000,-86744405,-532897315].map(억),
+   backgroundColor:['#c0392b','#c77d12','#6366f1','#0e3a53']}]},
+ options:{plugins:{legend:{display:false},title:{display:true,text:'활동별 순현금흐름 (억원)'},
+   tooltip:{callbacks:{label:c=>KRW([-391812910,-54340000,-86744405,-532897315][c.dataIndex])+'원'}}},
+   scales:{y:{ticks:{callback:v=>v+'억'}}}}});
+
+// 유입 채널
+const inD=[['케이지이니시스',511980539],['스마트스토어',383757209],['네이버페이(결제형)',234443703],['지점카드매출',104191319],['SSF',99198399],['현금영수증',89701549],['압구정지점',59626305],['해외매출',52360795],['네이버페이(주문형)',50980465],['기타채널',37016596]];
+new Chart(document.getElementById('inChart'),{type:'bar',
+ data:{labels:inD.map(x=>x[0]),datasets:[{data:inD.map(x=>억(x[1])),backgroundColor:'#1a9d6b'}]},
+ options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>KRW(inD[c.dataIndex][1])+'원'}}},
+   scales:{x:{ticks:{callback:v=>v+'억'}}}}});
+
+// 유출 항목
+const outD=[['원재료 등',750595742],['제품',327892030],['주얼리',195174210],['컨설팅용역',115658795],['오리지널 샘플',113199222],['임차료',49525085],['4대보험',48313230],['기타 영업비용',44759990],['촬영',41340290],['근로소득세',37398310],['온라인 광고',30088494],['기타',261124391]];
+new Chart(document.getElementById('outChart'),{type:'bar',
+ data:{labels:outD.map(x=>x[0]),datasets:[{data:outD.map(x=>억(x[1])),backgroundColor:'#c0392b'}]},
+ options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>KRW(outD[c.dataIndex][1])+'원'}}},
+   scales:{x:{ticks:{callback:v=>v+'억'}}}}});
+</script>
+</body>
+</html>
