@@ -316,6 +316,15 @@
       <span>재무분석</span>
       <span class="badge">2025</span>
     </div>
+    <div class="nav-item" id="nav-cash" onclick="loadDash('cash')">
+      <span class="icon">💵</span>
+      <span>현금흐름</span>
+      <span class="badge">26.05</span>
+    </div>
+    <div class="nav-item" id="nav-seat" onclick="loadDash('seat')">
+      <span class="icon">🪑</span>
+      <span>자리배치도</span>
+    </div>
   </div>
 
   <div class="sidebar-footer">
@@ -464,6 +473,44 @@
           </div>
         </div>
 
+        <!-- 현금흐름 카드 -->
+        <div class="dash-card" style="border-top:3px solid #1a9d6b" onclick="loadDash('cash')">
+          <span class="dash-card-icon">💵</span>
+          <div class="dash-card-title">현금흐름</div>
+          <div class="dash-card-desc">
+            통장 거래내역 직접법 현금흐름,<br>
+            영업·투자·재무 활동별 분석
+          </div>
+          <div class="dash-card-tags">
+            <span class="dash-tag" style="background:rgba(26,157,107,.08);color:#0f7a52;border-color:rgba(26,157,107,.2)">활동별</span>
+            <span class="dash-tag" style="background:rgba(26,157,107,.08);color:#0f7a52;border-color:rgba(26,157,107,.2)">유입·유출</span>
+            <span class="dash-tag" style="background:rgba(26,157,107,.08);color:#0f7a52;border-color:rgba(26,157,107,.2)">통장연동</span>
+          </div>
+          <div class="dash-card-footer">
+            <span class="dash-launch" style="color:#0f7a52">열기 →</span>
+            <span class="dash-updated">2026.05 기준</span>
+          </div>
+        </div>
+
+        <!-- 자리배치도 카드 -->
+        <div class="dash-card" style="border-top:3px solid #a78bfa" onclick="loadDash('seat')">
+          <span class="dash-card-icon">🪑</span>
+          <div class="dash-card-title">자리배치도</div>
+          <div class="dash-card-desc">
+            본사 좌석 배치 현황, 팀별 구역 구분,<br>
+            이름·직책·부서명·색상 직접 편집
+          </div>
+          <div class="dash-card-tags">
+            <span class="dash-tag" style="background:rgba(167,139,250,.08);color:#7c3aed;border-color:rgba(167,139,250,.2)">팀별 구역</span>
+            <span class="dash-tag" style="background:rgba(167,139,250,.08);color:#7c3aed;border-color:rgba(167,139,250,.2)">직접 편집</span>
+            <span class="dash-tag" style="background:rgba(167,139,250,.08);color:#7c3aed;border-color:rgba(167,139,250,.2)">자동저장</span>
+          </div>
+          <div class="dash-card-footer">
+            <span class="dash-launch" style="color:#7c3aed">열기 →</span>
+            <span class="dash-updated">본사 기준</span>
+          </div>
+        </div>
+
       </div>
 
       <!-- 하단 quick info -->
@@ -479,7 +526,7 @@
           <div class="quick-icon">🗂️</div>
           <div>
             <div class="quick-label">대시보드</div>
-            <div class="quick-value">6개 통합</div>
+            <div class="quick-value">8개 통합</div>
           </div>
         </div>
         <div class="quick-card">
@@ -534,6 +581,14 @@
     <span class="bn-icon">📈</span>
     <span class="bn-label">재무분석</span>
   </div>
+  <div class="bn-item" id="bn-cash" onclick="loadDash('cash')">
+    <span class="bn-icon">💵</span>
+    <span class="bn-label">현금흐름</span>
+  </div>
+  <div class="bn-item" id="bn-seat" onclick="loadDash('seat')">
+    <span class="bn-icon">🪑</span>
+    <span class="bn-label">자리배치</span>
+  </div>
 </div>
 
 <script>
@@ -579,15 +634,27 @@
       nav: 'nav-fin',
       bn: 'bn-fin',
       label: '📈 재무분석 (2025 연간)'
+    },
+    cash: {
+      file: 'cashflow.html',
+      title: '현금흐름',
+      nav: 'nav-cash',
+      bn: 'bn-cash',
+      label: '💵 현금흐름 (2026.05)'
+    },
+    seat: {
+      file: 'seat.html',
+      title: '자리배치도',
+      nav: 'nav-seat',
+      bn: 'bn-seat',
+      label: '🪑 자리배치도'
     }
   };
 
   let currentDash = null;
 
   function setNavActive(key) {
-    // 사이드바 nav
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    // 하단 탭
     document.querySelectorAll('.bn-item').forEach(el => el.classList.remove('active'));
 
     if (key === 'home') {
