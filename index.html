@@ -311,6 +311,11 @@
       <span class="icon">🏦</span>
       <span>대출 현황</span>
     </div>
+    <div class="nav-item" id="nav-fin" onclick="loadDash('fin')">
+      <span class="icon">📈</span>
+      <span>재무분석</span>
+      <span class="badge">2025</span>
+    </div>
   </div>
 
   <div class="sidebar-footer">
@@ -440,6 +445,25 @@
           </div>
         </div>
 
+        <!-- 재무분석 카드 -->
+        <div class="dash-card" style="border-top:3px solid #0891b2" onclick="loadDash('fin')">
+          <span class="dash-card-icon">📈</span>
+          <div class="dash-card-title">재무분석</div>
+          <div class="dash-card-desc">
+            표준재무제표 기반 안정성·수익성·활동성<br>
+            비율 분석 및 재무구조 진단
+          </div>
+          <div class="dash-card-tags">
+            <span class="dash-tag" style="background:rgba(8,145,178,.08);color:#0e7490;border-color:rgba(8,145,178,.2)">안정성</span>
+            <span class="dash-tag" style="background:rgba(8,145,178,.08);color:#0e7490;border-color:rgba(8,145,178,.2)">수익성</span>
+            <span class="dash-tag" style="background:rgba(8,145,178,.08);color:#0e7490;border-color:rgba(8,145,178,.2)">비율분석</span>
+          </div>
+          <div class="dash-card-footer">
+            <span class="dash-launch" style="color:#0e7490">열기 →</span>
+            <span class="dash-updated">2025 연간</span>
+          </div>
+        </div>
+
       </div>
 
       <!-- 하단 quick info -->
@@ -455,7 +479,7 @@
           <div class="quick-icon">🗂️</div>
           <div>
             <div class="quick-label">대시보드</div>
-            <div class="quick-value">4개 통합</div>
+            <div class="quick-value">6개 통합</div>
           </div>
         </div>
         <div class="quick-card">
@@ -506,6 +530,10 @@
     <span class="bn-icon">🏦</span>
     <span class="bn-label">대출</span>
   </div>
+  <div class="bn-item" id="bn-fin" onclick="loadDash('fin')">
+    <span class="bn-icon">📈</span>
+    <span class="bn-label">재무분석</span>
+  </div>
 </div>
 
 <script>
@@ -544,6 +572,13 @@
       nav: 'nav-loan',
       bn: 'bn-loan',
       label: '🏦 대출 현황'
+    },
+    fin: {
+      file: 'finance.html',
+      title: '재무분석',
+      nav: 'nav-fin',
+      bn: 'bn-fin',
+      label: '📈 재무분석 (2025 연간)'
     }
   };
 
