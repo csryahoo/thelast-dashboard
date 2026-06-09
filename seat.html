@@ -12,6 +12,9 @@ body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);
 .topbar{height:52px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50;}
 .topbar-title{font-size:14px;font-weight:700;color:#1e293b;flex:1;}
 .topbar-hint{font-size:11px;color:var(--mu);background:var(--bg);padding:4px 10px;border-radius:6px;border:1px solid var(--border);}
+.btn-share{padding:6px 14px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:none;}
+.btn-share:hover{background:#047857;}
+.btn-share.on{display:inline-block;}
 .page{padding:20px 24px 32px;}
 .sec-label{font-size:9.5px;font-weight:700;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
 .mgmt-row{display:flex;gap:10px;align-items:flex-start;}
@@ -62,7 +65,8 @@ body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);
 <div class="topbar">
   <span style="font-size:18px">🪑</span>
   <div class="topbar-title">본사 자리 배치도</div>
-  <span class="topbar-hint no-print">클릭하면 수정 · 자동저장</span>
+  <span class="topbar-hint no-print" id="sync-hint">로딩 중...</span>
+  <button class="btn-share no-print" id="btn-share" onclick="shareSave()">🌐 공유 저장</button>
 </div>
 <div class="page">
 <div class="sec-label">경영진</div>
@@ -176,6 +180,9 @@ body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);
   </div>
 </div>
 <script>
+// GitHub 설정 (배포.py에서 주입)
+window.__GH__={"user":"csryahoo","repo":"thelast-dashboard","branch":"main"};
+
 const CM={'c-mgmt':'#c9b8e8','c-sup':'#a8d4b4','c-mkt':'#f4b8c8','c-md':'#f5ce80','c-web':'#88d4a0','c-design':'#f4a898','c-smgmt':'#80ccd8'};
 const BM={'tb-mgmt':'c-mgmt','tb-sup':'c-sup','tb-mkt':'c-mkt','tb-md':'c-md','tb-web':'c-web','tb-smgmt':'c-smgmt','tb-design':'c-design'};
 
@@ -193,7 +200,6 @@ function apC(){
   }
 }
 
-// 각 team-block에 + 버튼 동적 생성
 function initAddBtns(){
   document.querySelectorAll('.team-block').forEach(block=>{
     const btn=document.createElement('button');
@@ -204,7 +210,6 @@ function initAddBtns(){
   });
 }
 
-// 블록에서 b-XXX 클래스 추출
 function getBCls(block){
   const d=block.querySelector('.desk');
   if(!d)return'mgmt';
@@ -212,32 +217,133 @@ function getBCls(block){
   return'mgmt';
 }
 
-function sst(){
+// ── 상태 스냅샷 / 복원 ─────────────────────────────────────────
+function snapshot(){
   const s={d:[],h:[],l:[],c:{...CM}};
   document.querySelectorAll('.desk').forEach(e=>s.d.push({n:e.querySelector('.name').textContent,r:e.querySelector('.role').textContent}));
   document.querySelectorAll('.team-header').forEach(e=>s.h.push(e.textContent.trim()));
   document.querySelectorAll('.ll').forEach(e=>s.l.push(e.textContent.trim()));
+  return s;
+}
+function applyState(s){
+  const ds=document.querySelectorAll('.desk');
+  (s.d||[]).forEach((d,i)=>{if(!ds[i])return;ds[i].querySelector('.name').textContent=d.n;ds[i].querySelector('.role').textContent=d.r;});
+  const hs=document.querySelectorAll('.team-header');
+  (s.h||[]).forEach((h,i)=>{if(hs[i])hs[i].textContent=h;});
+  const ls=document.querySelectorAll('.ll');
+  (s.l||[]).forEach((l,i)=>{if(ls[i])ls[i].textContent=l;});
+  if(s.c){Object.assign(CM,s.c);apC();}
+}
+
+// ── 로컬 자동저장 ───────────────────────────────────────────────
+function sst(){
+  localStorage.setItem('sv1',JSON.stringify(snapshot()));
+}
+
+// ── GitHub에서 로드 ─────────────────────────────────────────────
+async function lst(){
+  const hint=document.getElementById('sync-hint');
+  const shareBtn=document.getElementById('btn-share');
+
+  if(window.__GH__){
+    shareBtn.classList.add('on');
+    const{user,repo,branch}=window.__GH__;
+    try{
+      const r=await fetch(
+        `https://raw.githubusercontent.com/${user}/${repo}/${branch}/seat_data.json?t=${Date.now()}`,
+        {cache:'no-store'}
+      );
+      if(r.ok){
+        const s=await r.json();
+        applyState(s);
+        localStorage.setItem('sv1',JSON.stringify(s));
+        const ts=s._ts?new Date(s._ts).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}):'';
+        hint.textContent=ts?`GitHub 동기화 · ${ts}`:'GitHub 동기화 완료';
+        hint.style.color='#059669';
+        return;
+      }
+    }catch(e){console.warn('GitHub 로드 실패, 로컬 사용',e);}
+    hint.textContent='로컬 데이터 (GitHub 연결 필요)';
+  } else {
+    hint.textContent='클릭하면 수정';
+    hint.style.color='';
+  }
+
+  // fallback: localStorage
+  const r=localStorage.getItem('sv1');
+  if(!r)return;
+  try{applyState(JSON.parse(r));}catch(e){}
+}
+
+// ── GitHub 토큰 설정 (브라우저 localStorage에 보관) ───────────────
+function getToken(){return localStorage.getItem('__GH_TOKEN__');}
+function setToken(t){localStorage.setItem('__GH_TOKEN__',t.trim());}
+function promptToken(cb){
+  const v=prompt('GitHub Personal Access Token을 입력하세요.\n(Settings → Developer settings → Personal access tokens)\n한 번만 입력하면 이 브라우저에 저장됩니다.');
+  if(v&&v.trim()){setToken(v);cb(v.trim());}
+}
+
+// ── GitHub 공유 저장 ────────────────────────────────────────────
+async function shareSave(){
+  if(!window.__GH__){toast('GitHub 설정 없음 (배포.py 재실행 필요)');return;}
+  const token=getToken();
+  if(!token){promptToken(t=>{ if(t) shareSave(); }); return;}
+
+  const btn=document.getElementById('btn-share');
+  btn.textContent='저장 중...';btn.disabled=true;
+
+  const s=snapshot();
+  s._ts=new Date().toISOString();
   localStorage.setItem('sv1',JSON.stringify(s));
-  toast('저장됨');
-}
-function lst(){
-  const r=localStorage.getItem('sv1');if(!r)return;
+
+  const{user,repo,branch}=window.__GH__;
+  const path='seat_data.json';
+  const content=btoa(unescape(encodeURIComponent(JSON.stringify(s,null,2))));
+
   try{
-    const s=JSON.parse(r);
-    const ds=document.querySelectorAll('.desk');
-    (s.d||[]).forEach((d,i)=>{if(!ds[i])return;ds[i].querySelector('.name').textContent=d.n;ds[i].querySelector('.role').textContent=d.r;});
-    const hs=document.querySelectorAll('.team-header');
-    (s.h||[]).forEach((h,i)=>{if(hs[i])hs[i].textContent=h;});
-    const ls=document.querySelectorAll('.ll');
-    (s.l||[]).forEach((l,i)=>{if(ls[i])ls[i].textContent=l;});
-    if(s.c){Object.assign(CM,s.c);apC();}
-  }catch(e){}
+    // 현재 SHA 조회
+    const r1=await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${path}`,{
+      headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json'}
+    });
+    const sha=r1.ok?(await r1.json()).sha:null;
+
+    // 파일 PUT
+    const body={message:`자리배치도 업데이트 ${s._ts.slice(0,16)}`,content,branch};
+    if(sha)body.sha=sha;
+    const r2=await fetch(`https://api.github.com/repos/${user}/${repo}/contents/${path}`,{
+      method:'PUT',
+      headers:{Authorization:`token ${token}`,Accept:'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify(body)
+    });
+
+    if(r2.ok){
+      toast('🌐 공유 저장됨 — 모두에게 반영됩니다');
+      const hint=document.getElementById('sync-hint');
+      const ts=new Date(s._ts).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      hint.textContent=`GitHub 동기화 · ${ts}`;
+      hint.style.color='#059669';
+    }else if(r2.status===401){
+      localStorage.removeItem('__GH_TOKEN__');
+      toast('토큰 만료 — 다시 클릭해서 새 토큰 입력');
+    }else{
+      const err=await r2.text();
+      console.error('GitHub 저장 실패',r2.status,err);
+      toast('저장 실패 ✗ (콘솔 확인)');
+    }
+  }catch(e){
+    console.error(e);
+    toast('네트워크 오류 ✗');
+  }finally{
+    btn.textContent='🌐 공유 저장';btn.disabled=false;
+  }
 }
+
 function rst(){if(!confirm('초기화할까요?'))return;localStorage.removeItem('sv1');location.reload();}
+
 function toast(m){
   let t=document.getElementById('_t');
   if(!t){t=document.createElement('div');t.id='_t';t.style.cssText='position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;opacity:0;transition:opacity .3s;z-index:999;pointer-events:none';document.body.appendChild(t);}
-  t.textContent='✓ '+m;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',1600);
+  t.textContent=m;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',2200);
 }
 
 let cE=null,cT=null,cBlock=null;
@@ -290,7 +396,6 @@ function openAdd(block){
 function delDesk(){
   if(!cE||cT!=='d')return;
   if(!confirm('이 자리를 삭제할까요?'))return;
-  // desk-row 안에 있는 경우 row도 정리
   const row=cE.parentElement;
   cE.remove();
   if(row&&row.classList.contains('desk-row')&&row.querySelectorAll('.desk').length===0)row.remove();
@@ -313,7 +418,6 @@ function sav(){
     desk.className=`desk b-${bcls}`;
     desk.onclick=function(){eD(this);};
     desk.innerHTML=`<div class="name">${document.getElementById('mN').value||'공석'}</div><div class="role">${document.getElementById('mR').value}</div>`;
-    // + 버튼 앞에 삽입
     const addBtn=cBlock.querySelector('.btn-add');
     cBlock.insertBefore(desk,addBtn||null);
     apC();
