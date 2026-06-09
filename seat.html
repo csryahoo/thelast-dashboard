@@ -24,15 +24,14 @@ body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);
 .team-block:hover{box-shadow:0 3px 12px rgba(0,0,0,.08);}
 .team-header{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:8px;text-align:center;color:#1e293b;display:block;width:100%;cursor:pointer;transition:opacity .15s;}
 .team-header:hover{opacity:.8;}
+.sub-divider{height:1px;background:var(--cb);margin:6px 0 8px;}
+.sub-label{font-size:9.5px;font-weight:700;color:var(--mu);letter-spacing:0.5px;padding:0 2px;margin-bottom:6px;}
 .desk{background:var(--bg);border-radius:8px;padding:7px 10px;margin-bottom:6px;text-align:center;cursor:pointer;transition:all .15s;min-height:46px;min-width:90px;display:flex;flex-direction:column;justify-content:center;border:1.5px solid transparent;}
 .desk:hover{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.1);border-color:rgba(0,0,0,.08);}
 .desk .name{font-size:12px;font-weight:600;color:#1e293b;}
 .desk .role{font-size:10px;color:var(--mu);margin-top:2px;}
 .desk-row{display:flex;gap:6px;margin-bottom:6px;}
 .desk-row .desk{flex:1;margin-bottom:0;min-width:72px;}
-.design-group{flex-shrink:0;border:2px dashed #f4a898;border-radius:14px;padding:14px 8px 8px;position:relative;}
-.design-group-label{position:absolute;top:-10px;left:12px;background:var(--bg);padding:0 7px;font-size:9.5px;font-weight:700;color:#d07060;letter-spacing:0.5px;}
-.design-group .team-block{box-shadow:none;}
 .legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px;padding:12px 14px;background:var(--card);border:1px solid var(--cb);border-radius:10px;}
 .legend-item{display:flex;align-items:center;gap:6px;cursor:pointer;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:500;transition:background .15s;border:1px solid transparent;}
 .legend-item:hover{background:var(--bg);border-color:var(--border);}
@@ -55,7 +54,7 @@ body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);
 .cp{flex:1;height:32px;border-radius:6px;border:1px solid #e2e8f0;}
 .mb{display:flex;gap:8px;margin-top:8px;}
 .mb .btn{flex:1;padding:9px;font-size:13px;}
-@media print{body{background:#fff;}.mo,.no-print{display:none!important;}.design-group{border-style:solid;}}
+@media print{body{background:#fff;}.mo,.no-print{display:none!important;}}
 </style><style id="cs"></style></head>
 <body>
 <div class="topbar">
@@ -121,12 +120,13 @@ body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);
       <div class="desk b-smgmt" onclick="eD(this)"><div class="name">김지회</div><div class="role"></div></div>
     </div>
   </div>
-  <!-- 어패럴디자인팀 그룹 wrapper -->
-  <div class="design-group">
-    <span class="design-group-label">어패럴디자인팀</span>
+  <!-- 어패럴디자인팀: 하나의 team-block, 내부 두 열 -->
+  <div class="team-block" id="tb-design" style="min-width:280px">
+    <div class="team-header c-design" onclick="eH(this)">어패럴디자인팀</div>
     <div style="display:flex;gap:10px;align-items:flex-start;">
-      <div class="team-block" id="tb-design" style="min-width:150px">
-        <div class="team-header c-design" onclick="eH(this)">디자이너</div>
+      <!-- 왼쪽: 디자이너 그룹 -->
+      <div style="flex:1;">
+        <div class="sub-label">디자이너</div>
         <div class="desk b-design" onclick="eD(this)"><div class="name">안혜미</div><div class="role">이패럼팀장</div></div>
         <div class="desk-row">
           <div class="desk b-design" onclick="eD(this)"><div class="name">조성원</div><div class="role"></div></div>
@@ -137,7 +137,11 @@ body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);
           <div class="desk b-design" onclick="eD(this)"><div class="name">정수안</div><div class="role"></div></div>
         </div>
       </div>
-      <div class="team-block" id="tb-design2" style="min-width:85px">
+      <!-- 구분선 -->
+      <div style="width:1px;background:var(--cb);align-self:stretch;margin-top:4px;"></div>
+      <!-- 오른쪽: 이은영·김가원 -->
+      <div>
+        <div class="sub-label" style="visibility:hidden;">ㅤ</div>
         <div class="desk b-design" onclick="eD(this)"><div class="name">이은영</div><div class="role"></div></div>
         <div class="desk b-design" onclick="eD(this)"><div class="name">김가원</div><div class="role"></div></div>
       </div>
@@ -176,25 +180,8 @@ body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);
 </div>
 <script>
 const CM={'c-mgmt':'#c9b8e8','c-sup':'#a8d4b4','c-mkt':'#f4b8c8','c-md':'#f5ce80','c-web':'#88d4a0','c-design':'#f4a898','c-smgmt':'#80ccd8'};
-const BM={'tb-mgmt':'c-mgmt','tb-sup':'c-sup','tb-mkt':'c-mkt','tb-md':'c-md','tb-web':'c-web','tb-smgmt':'c-smgmt','tb-design':'c-design','tb-design2':'c-design'};
-function apC(){
-  let c='';
-  for(const[k,v]of Object.entries(CM)){
-    c+=`.team-header.${k},.sub-header.${k}{background:${v}28;color:#1e293b;}`;
-    c+=`.legend-dot.${k}{background-color:${v};}`;
-    c+=`.b-${k.slice(2)}{border-color:${v}66;}`;
-  }
-  document.getElementById('cs').textContent=c;
-  for(const[id,k]of Object.entries(BM)){
-    const el=document.getElementById(id);
-    if(el)el.style.borderTopColor=CM[k]||'#e2e8f0';
-  }
-  // design-group 테두리 색상도 동기화
-  const dg=document.querySelector('.design-group');
-  if(dg)dg.style.borderColor=CM['c-design']||'#f4a898';
-  const lbl=document.querySelector('.design-group-label');
-  if(lbl)lbl.style.color=CM['c-design']||'#f4a898';
-}
+const BM={'tb-mgmt':'c-mgmt','tb-sup':'c-sup','tb-mkt':'c-mkt','tb-md':'c-md','tb-web':'c-web','tb-smgmt':'c-smgmt','tb-design':'c-design'};
+function apC(){let c='';for(const[k,v]of Object.entries(CM)){c+=`.team-header.${k},.sub-header.${k}{background:${v}28;color:#1e293b;}`;c+=`.legend-dot.${k}{background-color:${v};}`;c+=`.b-${k.slice(2)}{border-color:${v}66;}`;}document.getElementById('cs').textContent=c;for(const[id,k]of Object.entries(BM)){const el=document.getElementById(id);if(el)el.style.borderTopColor=CM[k]||'#e2e8f0';}}
 function sst(){const s={d:[],h:[],l:[],c:{...CM}};document.querySelectorAll('.desk').forEach(e=>s.d.push({n:e.querySelector('.name').textContent,r:e.querySelector('.role').textContent}));document.querySelectorAll('.team-header').forEach(e=>s.h.push(e.textContent.trim()));document.querySelectorAll('.ll').forEach(e=>s.l.push(e.textContent.trim()));localStorage.setItem('sv1',JSON.stringify(s));toast('저장됨');}
 function lst(){const r=localStorage.getItem('sv1');if(!r)return;try{const s=JSON.parse(r);const ds=document.querySelectorAll('.desk');(s.d||[]).forEach((d,i)=>{if(!ds[i])return;ds[i].querySelector('.name').textContent=d.n;ds[i].querySelector('.role').textContent=d.r;});const hs=document.querySelectorAll('.team-header');(s.h||[]).forEach((h,i)=>{if(hs[i])hs[i].textContent=h;});const ls=document.querySelectorAll('.ll');(s.l||[]).forEach((l,i)=>{if(ls[i])ls[i].textContent=l;});if(s.c){Object.assign(CM,s.c);apC();}}catch(e){}}
 function rst(){if(!confirm('초기화할까요?'))return;localStorage.removeItem('sv1');location.reload();}
