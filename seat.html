@@ -5,154 +5,231 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>본사 자리 배치도</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --bg:          #f0f2f7;
+    --card-bg:     #ffffff;
+    --border:      rgba(0,0,0,0.08);
+    --card-border: rgba(0,0,0,0.06);
+    --accent:      #2563eb;
+    --text:        #1a202c;
+    --muted:       #64748b;
+    --hover:       rgba(37,99,235,0.06);
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; background: #f8f8f8; padding: 30px; }
-  h1 { font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #222; }
 
-  /* 전체 세로 레이아웃 */
-  .layout { display: flex; flex-direction: column; gap: 0; }
-
-  /* 경영진 영역 */
-  .mgmt-section {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 10px;
-    border-radius: 10px 10px 0 0;
+  body {
+    font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13px;
+    min-height: 100vh;
   }
 
-  /* 구분선 */
+  /* ── 상단 바 ── */
+  .topbar {
+    height: 52px;
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 12px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-icon { font-size: 18px; }
+  .topbar-title {
+    font-size: 14px; font-weight: 700;
+    color: #1e293b; flex: 1;
+  }
+  .topbar-hint {
+    font-size: 11px; color: var(--muted);
+    background: var(--bg);
+    padding: 4px 10px; border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+
+  /* ── 본문 ── */
+  .page { padding: 20px 24px 32px; }
+
+  /* ── 섹션 라벨 ── */
+  .sec-label {
+    font-size: 9.5px; font-weight: 700; color: var(--muted);
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* ── 경영진 행 ── */
+  .mgmt-row { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 0; }
+
+  /* ── 구분선 ── */
   .divider {
-    height: 3px;
-    background: repeating-linear-gradient(90deg, #aaa 0, #aaa 8px, transparent 8px, transparent 14px);
-    margin: 0;
-    opacity: 0.5;
+    display: flex; align-items: center; gap: 10px;
+    margin: 16px 0;
+    color: var(--muted); font-size: 10px; font-weight: 700;
+    letter-spacing: 1.5px;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--border);
   }
 
-  /* 팀 영역 */
-  .team-section {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-    align-items: flex-start;
-    padding: 10px;
-    border-radius: 0 0 10px 10px;
-  }
+  /* ── 팀 행 ── */
+  .team-row { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
 
+  /* ── 팀 블록 (카드) ── */
   .team-block {
-    border-radius: 8px;
-    padding: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-top: 3px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s;
   }
+  .team-block:hover { box-shadow: 0 3px 12px rgba(0,0,0,0.08); }
 
+  /* ── 팀 헤더 ── */
   .team-header {
-    text-align: center;
-    font-size: 12px;
-    font-weight: bold;
-    padding: 5px 6px;
-    border-radius: 4px;
-    margin-bottom: 6px;
-    color: #333;
+    font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 20px;
+    margin-bottom: 8px; text-align: center;
+    color: #1e293b; display: block; width: 100%;
+    cursor: pointer;
+    transition: opacity 0.15s;
   }
+  .team-header:hover { opacity: 0.8; }
 
   .sub-header {
-    text-align: center;
-    font-size: 11px;
-    font-weight: bold;
-    padding: 4px;
-    border-radius: 4px;
-    margin-bottom: 5px;
-    color: #333;
-    margin-top: 6px;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px;
+    margin: 8px 0 6px; text-align: center;
+    color: #1e293b; display: block; width: 100%;
+    cursor: pointer;
+    transition: opacity 0.15s;
   }
+  .sub-header:hover { opacity: 0.8; }
 
-  /* 개인 책상 */
+  /* ── 책상 ── */
   .desk {
-    background: #fff;
-    border-radius: 5px;
-    padding: 6px 8px;
-    margin-bottom: 5px;
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 7px 10px;
+    margin-bottom: 6px;
     text-align: center;
     cursor: pointer;
-    transition: box-shadow 0.15s;
-    min-height: 44px;
+    transition: all 0.15s;
+    min-height: 46px;
     min-width: 90px;
     display: flex;
     flex-direction: column;
     justify-content: center;
+    border: 1.5px solid transparent;
   }
-  .desk:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-  .desk .name { font-size: 12px; font-weight: bold; color: #222; }
-  .desk .role { font-size: 10px; color: #666; margin-top: 2px; }
-
-  /* 나란히 배치 */
-  .desk-row { display: flex; gap: 5px; margin-bottom: 5px; }
-  .desk-row .desk { flex: 1; margin-bottom: 0; min-width: 70px; }
-
-  /* 섹션 라벨 */
-  .section-label {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    font-size: 11px;
-    font-weight: bold;
-    color: #555;
-    padding: 6px 4px;
-    border-radius: 4px;
-    letter-spacing: 2px;
-    align-self: stretch;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 22px;
-    opacity: 0.6;
+  .desk:hover {
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    border-color: rgba(0,0,0,0.08);
   }
+  .desk .name { font-size: 12px; font-weight: 600; color: #1e293b; }
+  .desk .role { font-size: 10px; color: var(--muted); margin-top: 2px; }
 
-  /* 범례 */
-  .legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; font-size: 11px; color: #444; }
-  .legend-item { display: flex; align-items: center; gap: 5px; cursor: pointer; padding: 3px 6px; border-radius: 4px; transition: background 0.15s; }
-  .legend-item:hover { background: rgba(0,0,0,0.06); }
-  .legend-dot { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; }
+  /* ── 나란히 ── */
+  .desk-row { display: flex; gap: 6px; margin-bottom: 6px; }
+  .desk-row .desk { flex: 1; margin-bottom: 0; min-width: 72px; }
 
-  /* 편집 모달 */
+  /* ── 범례 ── */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-top: 18px; padding: 12px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 6px;
+    cursor: pointer; padding: 5px 10px;
+    border-radius: 20px; font-size: 11px; font-weight: 500;
+    color: var(--text); transition: background 0.15s;
+    border: 1px solid transparent;
+  }
+  .legend-item:hover { background: var(--bg); border-color: var(--border); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── 액션 버튼 ── */
+  .action-row { display: flex; gap: 8px; margin-top: 14px; }
+  .btn {
+    padding: 8px 20px; border: none; border-radius: 8px;
+    font-size: 12px; cursor: pointer; font-family: inherit;
+    font-weight: 600; transition: all 0.15s;
+  }
+  .btn-primary { background: #1e293b; color: #fff; }
+  .btn-primary:hover { background: #0f172a; }
+  .btn-secondary {
+    background: var(--card-bg); color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--bg); }
+
+  /* ── 편집 모달 ── */
   .modal-overlay {
-    display: none; position: fixed; top:0; left:0; width:100%; height:100%;
-    background: rgba(0,0,0,0.3); z-index: 100; align-items: center; justify-content: center;
+    display: none; position: fixed; inset: 0;
+    background: rgba(15,23,42,0.35); z-index: 200;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
   }
   .modal-overlay.active { display: flex; }
-  .modal { background: #fff; border-radius: 10px; padding: 24px; min-width: 260px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
-  .modal h3 { font-size: 14px; margin-bottom: 14px; color: #333; }
-  .modal input[type="text"] { width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; margin-bottom: 8px; font-family: inherit; }
-  .modal input[type="text"]:focus { outline: none; border-color: #888; }
-  .color-row { display: none; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .color-row label { font-size: 12px; color: #555; white-space: nowrap; }
-  .color-row input[type="color"] { width: 48px; height: 32px; border: 1px solid #ddd; border-radius: 5px; padding: 2px; cursor: pointer; }
-  .color-preview { flex: 1; height: 32px; border-radius: 5px; border: 1px solid #ddd; transition: background 0.2s; }
-  .modal-btns { display: flex; gap: 8px; margin-top: 6px; }
-  .btn { flex: 1; padding: 8px; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; font-family: inherit; }
-  .btn-save { background: #444; color: #fff; }
-  .btn-save:hover { background: #222; }
-  .btn-cancel { background: #eee; color: #444; }
-  .btn-cancel:hover { background: #ddd; }
+  .modal {
+    background: var(--card-bg); border-radius: 14px;
+    padding: 24px; min-width: 280px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+    border: 1px solid var(--border);
+  }
+  .modal h3 { font-size: 14px; font-weight: 700; margin-bottom: 16px; color: #1e293b; }
+  .modal input[type="text"] {
+    width: 100%; padding: 9px 12px;
+    border: 1px solid #e2e8f0; border-radius: 8px;
+    font-size: 13px; margin-bottom: 10px; font-family: inherit;
+    color: var(--text); background: var(--bg); transition: border 0.15s;
+  }
+  .modal input[type="text"]:focus { outline: none; border-color: var(--accent); background: #fff; }
+  .color-row { display: none; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .color-row label { font-size: 12px; color: var(--muted); white-space: nowrap; font-weight: 500; }
+  .color-row input[type="color"] { width: 44px; height: 32px; border: 1px solid #e2e8f0; border-radius: 6px; padding: 2px; cursor: pointer; }
+  .color-preview { flex: 1; height: 32px; border-radius: 6px; border: 1px solid #e2e8f0; }
+  .modal-btns { display: flex; gap: 8px; margin-top: 8px; }
+  .modal-btns .btn { flex: 1; padding: 9px; font-size: 13px; }
 
   @media print {
-    body { padding: 15px; background: #fff; }
+    body { background: #fff; }
+    .topbar { box-shadow: none; }
     .modal-overlay, .no-print { display: none !important; }
-    .desk { cursor: default; }
+    .desk { cursor: default; background: #f8fafc; }
+    .desk:hover { box-shadow: none; }
+    .team-block { box-shadow: none; }
   }
 </style>
 <style id="colorStyle"></style>
 </head>
 <body>
 
-<h1>본사 자리 배치도</h1>
+<!-- 상단 바 -->
+<div class="topbar">
+  <span class="topbar-icon">🪑</span>
+  <div class="topbar-title">본사 자리 배치도</div>
+  <span class="topbar-hint no-print">클릭하면 수정 · 자동저장</span>
+</div>
 
-<div class="layout">
+<div class="page">
 
-  <!-- ════════════ 경영진 영역 ════════════ -->
-  <div class="mgmt-section c-mgmt">
-    <div class="section-label">경영진</div>
-    <div class="team-block c-mgmt" style="display:flex; flex-direction:column; gap:0; padding:4px;">
-      <div class="team-header c-mgmt" onclick="editHeader(this)" style="cursor:pointer;">경영진</div>
-      <div style="display:flex; gap:6px;">
+  <!-- ═══ 경영진 ═══ -->
+  <div class="sec-label">경영진</div>
+  <div class="mgmt-row">
+    <div class="team-block" id="tb-mgmt" style="min-width:200px;">
+      <div class="team-header c-mgmt" onclick="editHeader(this)">경영진</div>
+      <div style="display:flex;gap:6px;">
         <div class="desk b-mgmt" onclick="editDesk(this)">
           <div class="name">김나연</div>
           <div class="role">총괄운영이사</div>
@@ -166,15 +243,14 @@
   </div>
 
   <!-- 구분선 -->
-  <div class="divider"></div>
+  <div class="divider">팀</div>
 
-  <!-- ════════════ 팀 영역 ════════════ -->
-  <div class="team-section" style="background:#f0f0f0; border-radius:0 0 10px 10px;">
-    <div class="section-label" style="color:#555;">팀</div>
+  <!-- ═══ 팀 ═══ -->
+  <div class="team-row">
 
     <!-- 경영지원 -->
-    <div class="team-block c-sup" style="min-width:110px;">
-      <div class="team-header c-sup" onclick="editHeader(this)" style="cursor:pointer;">경영지원</div>
+    <div class="team-block" id="tb-sup" style="min-width:110px;">
+      <div class="team-header c-sup" onclick="editHeader(this)">경영지원</div>
       <div class="desk b-sup" onclick="editDesk(this)">
         <div class="name">최성령</div>
         <div class="role">팀장</div>
@@ -186,8 +262,8 @@
     </div>
 
     <!-- 마케팅 -->
-    <div class="team-block c-mkt" style="min-width:165px;">
-      <div class="team-header c-mkt" onclick="editHeader(this)" style="cursor:pointer;">마케팅</div>
+    <div class="team-block" id="tb-mkt" style="min-width:165px;">
+      <div class="team-header c-mkt" onclick="editHeader(this)">마케팅</div>
       <div class="desk-row">
         <div class="desk b-mkt" onclick="editDesk(this)">
           <div class="name">박하은</div>
@@ -211,8 +287,8 @@
     </div>
 
     <!-- MD -->
-    <div class="team-block c-md" style="min-width:165px;">
-      <div class="team-header c-md" onclick="editHeader(this)" style="cursor:pointer;">MD</div>
+    <div class="team-block" id="tb-md" style="min-width:165px;">
+      <div class="team-header c-md" onclick="editHeader(this)">MD</div>
       <div class="desk b-md" onclick="editDesk(this)">
         <div class="name">오혜린</div>
         <div class="role">팀장</div>
@@ -240,8 +316,8 @@
     </div>
 
     <!-- 웹디자인 -->
-    <div class="team-block c-web" style="min-width:110px;">
-      <div class="team-header c-web" onclick="editHeader(this)" style="cursor:pointer;">웹디자인</div>
+    <div class="team-block" id="tb-web" style="min-width:110px;">
+      <div class="team-header c-web" onclick="editHeader(this)">웹디자인</div>
       <div class="desk b-web" onclick="editDesk(this)">
         <div class="name">박미연</div>
         <div class="role">팀장</div>
@@ -252,65 +328,6 @@
       </div>
     </div>
 
-    <!-- 생산관리팀 + 생산 -->
-    <div class="team-block c-smgmt" style="min-width:165px;">
-      <div class="team-header c-smgmt" onclick="editHeader(this)" style="cursor:pointer;">생산관리팀</div>
-      <div class="desk b-smgmt" onclick="editDesk(this)">
-        <div class="name">조유주</div>
-        <div class="role">잡화팀장</div>
-      </div>
-
-      <div class="desk-row">
-        <div class="desk b-prod" onclick="editDesk(this)">
-          <div class="name">공석</div>
-          <div class="role"></div>
-        </div>
-        <div class="desk b-prod" onclick="editDesk(this)">
-          <div class="name">조보영</div>
-          <div class="role">팀장</div>
-        </div>
-      </div>
-      <div class="desk-row">
-        <div class="desk b-prod" onclick="editDesk(this)">
-          <div class="name">김혜진</div>
-          <div class="role"></div>
-        </div>
-        <div class="desk b-prod" onclick="editDesk(this)">
-          <div class="name">김지회</div>
-          <div class="role"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 이패럼 디자이너 -->
-    <div class="team-block c-design" style="min-width:165px;">
-      <div class="team-header c-design" onclick="editHeader(this)" style="cursor:pointer;">디자이너</div>
-      <div class="desk b-design" onclick="editDesk(this)">
-        <div class="name">안혜미</div>
-        <div class="role">이패럼팀장</div>
-      </div>
-      <div class="desk-row">
-        <div class="desk b-design" onclick="editDesk(this)">
-          <div class="name">조성원</div>
-          <div class="role"></div>
-        </div>
-        <div class="desk b-design" onclick="editDesk(this)">
-          <div class="name">정소정</div>
-          <div class="role"></div>
-        </div>
-      </div>
-      <div class="desk-row">
-        <div class="desk b-design" onclick="editDesk(this)">
-          <div class="name">장새롬</div>
-          <div class="role"></div>
-        </div>
-        <div class="desk b-design" onclick="editDesk(this)">
-          <div class="name">정수안</div>
-          <div class="role"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 독립 자리 -->
-    <div class="team-block c-design" style="min-width:90px;">
-      <div class="desk b-d
+    <!-- 생산관리팀 -->
+    <div class="team-block" id="tb-smgmt" style="min-width:165px;">
+      <div class="team-header c-smgmt" onclick="editHeader(this)
