@@ -5,214 +5,181 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>본사 자리 배치도</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
-  :root{--bg:#f0f2f7;--card-bg:#fff;--border:rgba(0,0,0,0.08);--card-border:rgba(0,0,0,0.06);--accent:#2563eb;--text:#1a202c;--muted:#64748b;}
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);color:var(--text);font-size:13px;min-height:100vh;}
-  .topbar{height:52px;background:var(--card-bg);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50;}
-  .topbar-title{font-size:14px;font-weight:700;color:#1e293b;flex:1;}
-  .topbar-hint{font-size:11px;color:var(--muted);background:var(--bg);padding:4px 10px;border-radius:6px;border:1px solid var(--border);}
-  .page{padding:20px 24px 32px;}
-  .sec-label{font-size:9.5px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
-  .mgmt-row{display:flex;gap:10px;align-items:flex-start;}
-  .divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:1.5px;}
-  .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
-  .team-row{display:flex;gap:10px;align-items:flex-start;overflow-x:auto;padding-bottom:6px;}
-  .team-row::-webkit-scrollbar{height:4px;}
-  .team-row::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px;}
-  .team-block{background:var(--card-bg);border:1px solid var(--card-border);border-top:3px solid #e2e8f0;border-radius:12px;padding:10px;box-shadow:0 1px 4px rgba(0,0,0,0.05);transition:box-shadow 0.2s;flex-shrink:0;}
-  .team-block:hover{box-shadow:0 3px 12px rgba(0,0,0,0.08);}
-  .team-header{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:8px;text-align:center;color:#1e293b;display:block;width:100%;cursor:pointer;transition:opacity 0.15s;}
-  .team-header:hover{opacity:0.8;}
-  .sub-header{font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;margin:8px 0 6px;text-align:center;color:#1e293b;display:block;width:100%;cursor:pointer;}
-  .desk{background:var(--bg);border-radius:8px;padding:7px 10px;margin-bottom:6px;text-align:center;cursor:pointer;transition:all 0.15s;min-height:46px;min-width:90px;display:flex;flex-direction:column;justify-content:center;border:1.5px solid transparent;}
-  .desk:hover{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.1);border-color:rgba(0,0,0,0.08);}
-  .desk .name{font-size:12px;font-weight:600;color:#1e293b;}
-  .desk .role{font-size:10px;color:var(--muted);margin-top:2px;}
-  .desk-row{display:flex;gap:6px;margin-bottom:6px;}
-  .desk-row .desk{flex:1;margin-bottom:0;min-width:72px;}
-  .legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px;padding:12px 14px;background:var(--card-bg);border:1px solid var(--card-border);border-radius:10px;}
-  .legend-item{display:flex;align-items:center;gap:6px;cursor:pointer;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:500;color:var(--text);transition:background 0.15s;border:1px solid transparent;}
-  .legend-item:hover{background:var(--bg);border-color:var(--border);}
-  .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-  .action-row{display:flex;gap:8px;margin-top:14px;}
-  .btn{padding:8px 20px;border:none;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;transition:all 0.15s;}
-  .btn-primary{background:#1e293b;color:#fff;}
-  .btn-primary:hover{background:#0f172a;}
-  .btn-secondary{background:var(--card-bg);color:var(--muted);border:1px solid var(--border);}
-  .btn-secondary:hover{background:var(--bg);}
-  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,0.35);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
-  .modal-overlay.active{display:flex;}
-  .modal{background:var(--card-bg);border-radius:14px;padding:24px;min-width:280px;box-shadow:0 20px 60px rgba(0,0,0,0.18);border:1px solid var(--border);}
-  .modal h3{font-size:14px;font-weight:700;margin-bottom:16px;color:#1e293b;}
-  .modal input[type="text"]{width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;margin-bottom:10px;font-family:inherit;color:var(--text);background:var(--bg);}
-  .modal input[type="text"]:focus{outline:none;border-color:var(--accent);background:#fff;}
-  .color-row{display:none;align-items:center;gap:10px;margin-bottom:12px;}
-  .color-row label{font-size:12px;color:var(--muted);white-space:nowrap;font-weight:500;}
-  .color-row input[type="color"]{width:44px;height:32px;border:1px solid #e2e8f0;border-radius:6px;padding:2px;cursor:pointer;}
-  .color-preview{flex:1;height:32px;border-radius:6px;border:1px solid #e2e8f0;}
-  .modal-btns{display:flex;gap:8px;margin-top:8px;}
-  .modal-btns .btn{flex:1;padding:9px;font-size:13px;}
-  @media print{body{background:#fff;}.modal-overlay,.no-print{display:none!important;}.desk{cursor:default;}}
-</style>
-<style id="colorStyle"></style>
-</head>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+:root{--bg:#f0f2f7;--card:#fff;--border:rgba(0,0,0,.08);--cb:rgba(0,0,0,.06);--ac:#2563eb;--tx:#1a202c;--mu:#64748b;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);color:var(--tx);font-size:13px;}
+.topbar{height:52px;background:var(--card);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px;position:sticky;top:0;z-index:50;}
+.topbar-title{font-size:14px;font-weight:700;color:#1e293b;flex:1;}
+.topbar-hint{font-size:11px;color:var(--mu);background:var(--bg);padding:4px 10px;border-radius:6px;border:1px solid var(--border);}
+.page{padding:20px 24px 32px;}
+.sec-label{font-size:9.5px;font-weight:700;color:var(--mu);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;}
+.mgmt-row{display:flex;gap:10px;align-items:flex-start;}
+.divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--mu);font-size:10px;font-weight:700;letter-spacing:1.5px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.team-row{display:flex;gap:10px;align-items:flex-start;overflow-x:auto;padding-bottom:6px;}
+.team-row::-webkit-scrollbar{height:4px;}
+.team-row::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px;}
+.team-block{background:var(--card);border:1px solid var(--cb);border-top:3px solid #e2e8f0;border-radius:12px;padding:10px;box-shadow:0 1px 4px rgba(0,0,0,.05);flex-shrink:0;transition:box-shadow .2s;}
+.team-block:hover{box-shadow:0 3px 12px rgba(0,0,0,.08);}
+.team-header{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:8px;text-align:center;color:#1e293b;display:block;width:100%;cursor:pointer;transition:opacity .15s;}
+.team-header:hover{opacity:.8;}
+.desk{background:var(--bg);border-radius:8px;padding:7px 10px;margin-bottom:6px;text-align:center;cursor:pointer;transition:all .15s;min-height:46px;min-width:90px;display:flex;flex-direction:column;justify-content:center;border:1.5px solid transparent;}
+.desk:hover{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.1);border-color:rgba(0,0,0,.08);}
+.desk .name{font-size:12px;font-weight:600;color:#1e293b;}
+.desk .role{font-size:10px;color:var(--mu);margin-top:2px;}
+.desk-row{display:flex;gap:6px;margin-bottom:6px;}
+.desk-row .desk{flex:1;margin-bottom:0;min-width:72px;}
+.legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px;padding:12px 14px;background:var(--card);border:1px solid var(--cb);border-radius:10px;}
+.legend-item{display:flex;align-items:center;gap:6px;cursor:pointer;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:500;transition:background .15s;border:1px solid transparent;}
+.legend-item:hover{background:var(--bg);border-color:var(--border);}
+.legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.action-row{display:flex;gap:8px;margin-top:14px;}
+.btn{padding:8px 20px;border:none;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;}
+.btn-p{background:#1e293b;color:#fff;}
+.btn-p:hover{background:#0f172a;}
+.btn-s{background:var(--card);color:var(--mu);border:1px solid var(--border);}
+.btn-s:hover{background:var(--bg);}
+.mo{display:none;position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+.mo.on{display:flex;}
+.md{background:var(--card);border-radius:14px;padding:24px;min-width:280px;box-shadow:0 20px 60px rgba(0,0,0,.18);border:1px solid var(--border);}
+.md h3{font-size:14px;font-weight:700;margin-bottom:16px;color:#1e293b;}
+.md input[type=text]{width:100%;padding:9px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;margin-bottom:10px;font-family:inherit;background:var(--bg);}
+.md input[type=text]:focus{outline:none;border-color:var(--ac);background:#fff;}
+.cr{display:none;align-items:center;gap:10px;margin-bottom:12px;}
+.cr label{font-size:12px;color:var(--mu);white-space:nowrap;font-weight:500;}
+.cr input[type=color]{width:44px;height:32px;border:1px solid #e2e8f0;border-radius:6px;padding:2px;cursor:pointer;}
+.cp{flex:1;height:32px;border-radius:6px;border:1px solid #e2e8f0;}
+.mb{display:flex;gap:8px;margin-top:8px;}
+.mb .btn{flex:1;padding:9px;font-size:13px;}
+@media print{body{background:#fff;}.mo,.no-print{display:none!important;}}
+</style><style id="cs"></style></head>
 <body>
 <div class="topbar">
-  <span style="font-size:18px;">&#x1F6CF;</span>
-  <div class="topbar-title">&#48376;&#49324; &#51088;&#47532; &#48176;&#52824;&#46020;</div>
-  <span class="topbar-hint no-print">&#53364;&#47533;&#54616;&#47732; &#49688;&#51221; &middot; &#51088;&#46041;&#51200;&#51109;</span>
+  <span style="font-size:18px">🪑</span>
+  <div class="topbar-title">본사 자리 배치도</div>
+  <span class="topbar-hint no-print">클릭하면 수정 · 자동저장</span>
 </div>
 <div class="page">
-  <div class="sec-label">&#44221;&#50689;&#51652;</div>
-  <div class="mgmt-row">
-    <div class="team-block" id="tb-mgmt" style="min-width:200px;">
-      <div class="team-header c-mgmt" onclick="editHeader(this)">&#44221;&#50689;&#51652;</div>
-      <div style="display:flex;gap:6px;">
-        <div class="desk b-mgmt" onclick="editDesk(this)"><div class="name">&#44608;&#45208;&#50672;</div><div class="role">&#51185;&#44292;&#50868;&#50689;&#51060;&#49324;</div></div>
-        <div class="desk b-mgmt" onclick="editDesk(this)"><div class="name">&#51060;&#51648;&#50672;</div><div class="role">&#48512;&#45824;&#54364;</div></div>
-      </div>
+<div class="sec-label">경영진</div>
+<div class="mgmt-row">
+  <div class="team-block" id="tb-mgmt" style="min-width:200px">
+    <div class="team-header c-mgmt" onclick="eH(this)">경영진</div>
+    <div style="display:flex;gap:6px">
+      <div class="desk b-mgmt" onclick="eD(this)"><div class="name">김나연</div><div class="role">총괄운영이사</div></div>
+      <div class="desk b-mgmt" onclick="eD(this)"><div class="name">이지연</div><div class="role">부대표</div></div>
     </div>
-  </div>
-  <div class="divider">&#54300;</div>
-  <div class="team-row">
-    <div class="team-block" id="tb-sup" style="min-width:110px;">
-      <div class="team-header c-sup" onclick="editHeader(this)">&#44221;&#50689;&#51648;&#50896;</div>
-      <div class="desk b-sup" onclick="editDesk(this)"><div class="name">&#52572;&#49457;&#47161;</div><div class="role">&#54300;&#51109;</div></div>
-      <div class="desk b-sup" onclick="editDesk(this)"><div class="name">&#44608;&#48120;&#51221;</div><div class="role"></div></div>
-    </div>
-    <div class="team-block" id="tb-mkt" style="min-width:165px;">
-      <div class="team-header c-mkt" onclick="editHeader(this)">&#47560;&#52992;&#54021;</div>
-      <div class="desk-row">
-        <div class="desk b-mkt" onclick="editDesk(this)"><div class="name">&#48176;&#54616;&#51008;</div><div class="role"></div></div>
-        <div class="desk b-mkt" onclick="editDesk(this)"><div class="name">&#49436;&#49688;&#48124;</div><div class="role">&#54300;&#51109;</div></div>
-      </div>
-      <div class="desk-row">
-        <div class="desk b-mkt" onclick="editDesk(this)"><div class="name">&#51060;&#51652;&#51452;</div><div class="role"></div></div>
-        <div class="desk b-mkt" onclick="editDesk(this)"><div class="name">&#44277;&#49437;</div><div class="role"></div></div>
-      </div>
-    </div>
-    <div class="team-block" id="tb-md" style="min-width:165px;">
-      <div class="team-header c-md" onclick="editHeader(this)">MD</div>
-      <div class="desk b-md" onclick="editDesk(this)"><div class="name">&#50724;&#54812;&#47536;</div><div class="role">&#54300;&#51109;</div></div>
-      <div class="desk-row">
-        <div class="desk b-md" onclick="editDesk(this)"><div class="name">&#44608;&#51648;&#54868;</div><div class="role"></div></div>
-        <div class="desk b-md" onclick="editDesk(this)"><div class="name">&#44608;&#49436;&#51221;</div><div class="role"></div></div>
-      </div>
-      <div class="desk-row">
-        <div class="desk b-md" onclick="editDesk(this)"><div class="name">&#54620;&#45768;&#47000;</div><div class="role"></div></div>
-        <div class="desk b-md" onclick="editDesk(this)"><div class="name">&#44277;&#49437;</div><div class="role"></div></div>
-      </div>
-    </div>
-    <div class="team-block" id="tb-web" style="min-width:110px;">
-      <div class="team-header c-web" onclick="editHeader(this)">&#50937;&#46356;&#51088;&#51064;</div>
-      <div class="desk b-web" onclick="editDesk(this)"><div class="name">&#48149;&#48120;&#50672;</div><div class="role">&#54300;&#51109;</div></div>
-      <div class="desk b-web" onclick="editDesk(this)"><div class="name">&#52572;&#51648;&#54140;</div><div class="role"></div></div>
-    </div>
-    <div class="team-block" id="tb-smgmt" style="min-width:165px;">
-      <div class="team-header c-smgmt" onclick="editHeader(this)">&#49373;&#49328;&#44288;&#47532;&#54300;</div>
-      <div class="desk b-smgmt" onclick="editDesk(this)"><div class="name">&#51312;&#50976;&#51452;</div><div class="role">&#51316;&#54868;&#54300;&#51109;</div></div>
-      <div class="desk-row">
-        <div class="desk b-prod" onclick="editDesk(this)"><div class="name">&#44277;&#49437;</div><div class="role"></div></div>
-        <div class="desk b-prod" onclick="editDesk(this)"><div class="name">&#51312;&#48372;&#50689;</div><div class="role">&#54300;&#51109;</div></div>
-      </div>
-      <div class="desk-row">
-        <div class="desk b-prod" onclick="editDesk(this)"><div class="name">&#44608;&#54644;&#51652;</div><div class="role"></div></div>
-        <div class="desk b-prod" onclick="editDesk(this)"><div class="name">&#44608;&#51648;&#54924;</div><div class="role"></div></div>
-      </div>
-    </div>
-    <div class="team-block" id="tb-design" style="min-width:165px;">
-      <div class="team-header c-design" onclick="editHeader(this)">&#46356;&#51088;&#51060;&#45320;</div>
-      <div class="desk b-design" onclick="editDesk(this)"><div class="name">&#50504;&#54644;&#48120;</div><div class="role">&#51060;&#54328;&#47492;&#54300;&#51109;</div></div>
-      <div class="desk-row">
-        <div class="desk b-design" onclick="editDesk(this)"><div class="name">&#51312;&#49457;&#50896;</div><div class="role"></div></div>
-        <div class="desk b-design" onclick="editDesk(this)"><div class="name">&#51221;&#49548;&#51221;</div><div class="role"></div></div>
-      </div>
-      <div class="desk-row">
-        <div class="desk b-design" onclick="editDesk(this)"><div class="name">&#51109;&#49352;&#47871;</div><div class="role"></div></div>
-        <div class="desk b-design" onclick="editDesk(this)"><div class="name">&#51221;&#49688;&#50504;</div><div class="role"></div></div>
-      </div>
-    </div>
-    <div class="team-block" style="min-width:90px;border-top-color:#cbd5e1;">
-      <div class="desk b-design" onclick="editDesk(this)" style="margin-top:28px;"><div class="name">&#51060;&#51008;&#50689;</div><div class="role"></div></div>
-      <div class="desk b-design" onclick="editDesk(this)"><div class="name">&#44608;&#44032;&#50896;</div><div class="role"></div></div>
-    </div>
-  </div>
-  <div class="legend no-print">
-    <div class="legend-item" onclick="editLegend(this)"><div class="legend-dot c-mgmt" data-cls="c-mgmt"></div><span class="legend-label">&#44221;&#50689;&#51652;</span></div>
-    <div class="legend-item" onclick="editLegend(this)"><div class="legend-dot c-sup" data-cls="c-sup"></div><span class="legend-label">&#44221;&#50689;&#51648;&#50896;</span></div>
-    <div class="legend-item" onclick="editLegend(this)"><div class="legend-dot c-mkt" data-cls="c-mkt"></div><span class="legend-label">&#47560;&#52992;&#54021;</span></div>
-    <div class="legend-item" onclick="editLegend(this)"><div class="legend-dot c-md" data-cls="c-md"></div><span class="legend-label">MD</span></div>
-    <div class="legend-item" onclick="editLegend(this)"><div class="legend-dot c-web" data-cls="c-web"></div><span class="legend-label">&#50937;&#46356;&#51088;&#51064;</span></div>
-    <div class="legend-item" onclick="editLegend(this)"><div class="legend-dot c-smgmt" data-cls="c-smgmt"></div><span class="legend-label">&#49373;&#49328;&#44288;&#47532;&#54300;</span></div>
-    <div class="legend-item" onclick="editLegend(this)"><div class="legend-dot c-design" data-cls="c-design"></div><span class="legend-label">&#46356;&#51088;&#51060;&#45320;</span></div>
-  </div>
-  <div class="action-row no-print">
-    <button class="btn btn-primary" onclick="window.print()">&#128424; &#51064;&#49587;</button>
-    <button class="btn btn-secondary" onclick="resetState()">&#8617; &#52488;&#44592;&#54868;</button>
   </div>
 </div>
-<div class="modal-overlay" id="modal">
-  <div class="modal">
-    <h3 id="modalTitle">&#49688;&#51221;</h3>
-    <input type="text" id="editName" placeholder="&#51060;&#47492; / &#48512;&#49436;&#47749;" />
-    <input type="text" id="editRole" placeholder="&#51649;&#52293; (&#49440;&#53469;)" />
-    <div class="color-row" id="colorRow">
-      <label>&#49353;&#49345;</label>
-      <input type="color" id="editColor" oninput="document.getElementById('colorPreview').style.background=this.value" />
-      <div class="color-preview" id="colorPreview"></div>
+<div class="divider">팀</div>
+<div class="team-row">
+  <div class="team-block" id="tb-sup" style="min-width:110px">
+    <div class="team-header c-sup" onclick="eH(this)">경영지원</div>
+    <div class="desk b-sup" onclick="eD(this)"><div class="name">최성령</div><div class="role">팀장</div></div>
+    <div class="desk b-sup" onclick="eD(this)"><div class="name">김미정</div><div class="role"></div></div>
+  </div>
+  <div class="team-block" id="tb-mkt" style="min-width:165px">
+    <div class="team-header c-mkt" onclick="eH(this)">마케팅</div>
+    <div class="desk-row">
+      <div class="desk b-mkt" onclick="eD(this)"><div class="name">박하은</div><div class="role"></div></div>
+      <div class="desk b-mkt" onclick="eD(this)"><div class="name">서수민</div><div class="role">팀장</div></div>
     </div>
-    <div class="modal-btns">
-      <button class="btn btn-secondary" onclick="closeModal()">&#52712;&#49548;</button>
-      <button class="btn btn-primary" onclick="saveEdit()">&#51200;&#51109;</button>
+    <div class="desk-row">
+      <div class="desk b-mkt" onclick="eD(this)"><div class="name">이진주</div><div class="role"></div></div>
+      <div class="desk b-mkt" onclick="eD(this)"><div class="name">공석</div><div class="role"></div></div>
+    </div>
+  </div>
+  <div class="team-block" id="tb-md" style="min-width:165px">
+    <div class="team-header c-md" onclick="eH(this)">MD</div>
+    <div class="desk b-md" onclick="eD(this)"><div class="name">오혜린</div><div class="role">팀장</div></div>
+    <div class="desk-row">
+      <div class="desk b-md" onclick="eD(this)"><div class="name">김지홍</div><div class="role"></div></div>
+      <div class="desk b-md" onclick="eD(this)"><div class="name">김서정</div><div class="role"></div></div>
+    </div>
+    <div class="desk-row">
+      <div class="desk b-md" onclick="eD(this)"><div class="name">한니래</div><div class="role"></div></div>
+      <div class="desk b-md" onclick="eD(this)"><div class="name">공석</div><div class="role"></div></div>
+    </div>
+  </div>
+  <div class="team-block" id="tb-web" style="min-width:110px">
+    <div class="team-header c-web" onclick="eH(this)">웹디자인</div>
+    <div class="desk b-web" onclick="eD(this)"><div class="name">박미연</div><div class="role">팀장</div></div>
+    <div class="desk b-web" onclick="eD(this)"><div class="name">최지혜</div><div class="role"></div></div>
+  </div>
+  <div class="team-block" id="tb-smgmt" style="min-width:165px">
+    <div class="team-header c-smgmt" onclick="eH(this)">생산관리팀</div>
+    <div class="desk b-smgmt" onclick="eD(this)"><div class="name">조유주</div><div class="role">잡화팀장</div></div>
+    <div class="desk-row">
+      <div class="desk b-prod" onclick="eD(this)"><div class="name">공석</div><div class="role"></div></div>
+      <div class="desk b-prod" onclick="eD(this)"><div class="name">조보영</div><div class="role">팀장</div></div>
+    </div>
+    <div class="desk-row">
+      <div class="desk b-prod" onclick="eD(this)"><div class="name">김혜진</div><div class="role"></div></div>
+      <div class="desk b-prod" onclick="eD(this)"><div class="name">김지회</div><div class="role"></div></div>
+    </div>
+  </div>
+  <div class="team-block" id="tb-design" style="min-width:185px">
+    <div class="team-header c-design" onclick="eH(this)">어패럴디자인팀</div>
+    <div class="desk b-design" onclick="eD(this)"><div class="name">안혜미</div><div class="role">이패럼팀장</div></div>
+    <div class="desk-row">
+      <div class="desk b-design" onclick="eD(this)"><div class="name">조성원</div><div class="role"></div></div>
+      <div class="desk b-design" onclick="eD(this)"><div class="name">정소정</div><div class="role"></div></div>
+    </div>
+    <div class="desk-row">
+      <div class="desk b-design" onclick="eD(this)"><div class="name">장새롬</div><div class="role"></div></div>
+      <div class="desk b-design" onclick="eD(this)"><div class="name">정수안</div><div class="role"></div></div>
+    </div>
+    <div class="desk-row">
+      <div class="desk b-design" onclick="eD(this)"><div class="name">이은영</div><div class="role"></div></div>
+      <div class="desk b-design" onclick="eD(this)"><div class="name">김가원</div><div class="role"></div></div>
+    </div>
+  </div>
+</div>
+<div class="legend no-print">
+  <div class="legend-item" onclick="eLg(this)"><div class="legend-dot c-mgmt" data-cls="c-mgmt"></div><span class="ll">경영진</span></div>
+  <div class="legend-item" onclick="eLg(this)"><div class="legend-dot c-sup" data-cls="c-sup"></div><span class="ll">경영지원</span></div>
+  <div class="legend-item" onclick="eLg(this)"><div class="legend-dot c-mkt" data-cls="c-mkt"></div><span class="ll">마케팅</span></div>
+  <div class="legend-item" onclick="eLg(this)"><div class="legend-dot c-md" data-cls="c-md"></div><span class="ll">MD</span></div>
+  <div class="legend-item" onclick="eLg(this)"><div class="legend-dot c-web" data-cls="c-web"></div><span class="ll">웹디자인</span></div>
+  <div class="legend-item" onclick="eLg(this)"><div class="legend-dot c-smgmt" data-cls="c-smgmt"></div><span class="ll">생산관리팀</span></div>
+  <div class="legend-item" onclick="eLg(this)"><div class="legend-dot c-design" data-cls="c-design"></div><span class="ll">어패럴디자인팀</span></div>
+</div>
+<div class="action-row no-print">
+  <button class="btn btn-p" onclick="window.print()">🖨️ 인쇄</button>
+  <button class="btn btn-s" onclick="rst()">↩ 초기화</button>
+</div>
+</div>
+<div class="mo" id="mo">
+  <div class="md">
+    <h3 id="mT">수정</h3>
+    <input type="text" id="mN" placeholder="이름"/>
+    <input type="text" id="mR" placeholder="직책"/>
+    <div class="cr" id="cR">
+      <label>색상</label>
+      <input type="color" id="mC" oninput="document.getElementById('mP').style.background=this.value"/>
+      <div class="cp" id="mP"></div>
+    </div>
+    <div class="mb">
+      <button class="btn btn-s" onclick="cls()">취소</button>
+      <button class="btn btn-p" onclick="sav()">저장</button>
     </div>
   </div>
 </div>
 <script>
-  const colorMap={'c-mgmt':'#c9b8e8','c-sup':'#a8d4b4','c-mkt':'#f4b8c8','c-md':'#f5ce80','c-web':'#88d4a0','c-design':'#f4a898','c-prod':'#80ccd8','c-smgmt':'#80ccd8'};
-  const blockMap={'tb-mgmt':'c-mgmt','tb-sup':'c-sup','tb-mkt':'c-mkt','tb-md':'c-md','tb-web':'c-web','tb-smgmt':'c-smgmt','tb-design':'c-design'};
-  function applyColors(){
-    let css='';
-    for(const[cls,color]of Object.entries(colorMap)){
-      css+=`.team-header.${cls},.sub-header.${cls}{background:${color}28;color:#1e293b;}`;
-      css+=`.legend-dot.${cls}{background-color:${color};}`;
-      css+=`.b-${cls.slice(2)}{border-color:${color}66;}`;
-    }
-    document.getElementById('colorStyle').textContent=css;
-    for(const[id,cls]of Object.entries(blockMap)){const el=document.getElementById(id);if(el)el.style.borderTopColor=colorMap[cls]||'#e2e8f0';}
-  }
-  function saveState(){
-    const state={desks:[],headers:[],legends:[],colors:{...colorMap}};
-    document.querySelectorAll('.desk').forEach(el=>state.desks.push({name:el.querySelector('.name').textContent,role:el.querySelector('.role').textContent}));
-    document.querySelectorAll('.team-header,.sub-header').forEach(el=>state.headers.push(el.textContent.trim()));
-    document.querySelectorAll('.legend-label').forEach(el=>state.legends.push(el.textContent.trim()));
-    localStorage.setItem('seating_v1',JSON.stringify(state));
-    showToast('저장됨');
-  }
-  function loadState(){
-    const raw=localStorage.getItem('seating_v1');if(!raw)return;
-    try{
-      const state=JSON.parse(raw);
-      const desks=document.querySelectorAll('.desk');
-      (state.desks||[]).forEach((d,i)=>{if(!desks[i])return;desks[i].querySelector('.name').textContent=d.name;desks[i].querySelector('.role').textContent=d.role;});
-      const headers=document.querySelectorAll('.team-header,.sub-header');
-      (state.headers||[]).forEach((h,i)=>{if(headers[i])headers[i].textContent=h;});
-      const legends=document.querySelectorAll('.legend-label');
-      (state.legends||[]).forEach((l,i)=>{if(legends[i])legends[i].textContent=l;});
-      if(state.colors){Object.assign(colorMap,state.colors);applyColors();}
-    }catch(e){console.error(e);}
-  }
-  function resetState(){if(!confirm('모든 수정사항을 초기화할까요?'))return;localStorage.removeItem('seating_v1');location.reload();}
-  function showToast(msg){let t=document.getElementById('_toast');if(!t){t=document.createElement('div');t.id='_toast';t.style.cssText='position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;opacity:0;transition:opacity 0.3s;z-index:999;pointer-events:none;';document.body.appendChild(t);}t.textContent='&#10003; '+msg;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>{t.style.opacity='0';},1600);}
-  applyColors();loadState();
-  let currentEl=null,currentType=null;
-  function editDesk(el){currentEl=el;currentType='desk';document.getElementById('modalTitle').textContent='자리 정보 수정';document.getElementById('editName').placeholder='이름';document.getElementById('editName').value=el.querySelector('.name').textContent;document.getElementById('editRole').value=el.querySelector('.role').textContent;document.getElementById('editRole').style.display='';document.getElementById('colorRow').style.display='none';document.getElementById('modal').classList.add('active');setTimeout(()=>document.getElementById('editName').focus(),80);}
-  function editHeader(el){currentEl=el;currentType='header';document.getElementById('modalTitle').textContent='부서명 수정';document.getElementById('editName').placeholder='부서명';document.getElementById('editName').value=el.textContent.trim();document.getElementById('editRole').style.display='none';document.getElementById('colorRow').style.display='none';document.getElementById('modal').classList.add('active');setTimeout(()=>document.getElementById('editName').focus(),80);}
-  function editLegend(el){currentEl=el;currentType='legend';const dot=el.querySelector('.legend-dot');const cls=dot.dataset.cls;const color=colorMap[cls]||'#cccccc';document.getElementById('modalTitle').textContent='범례 수정';document.getElementById('editName').placeholder='범례 이름';document.getElementById('editName').value=el.querySelector('.legend-label').textContent.trim();document.getElementById('editRole').style.display='none';document.getElementById('editColor').value=color;document.getElementById('colorPreview').style.background=color;document.getElementById('colorRow').style.display='flex';document.getElementById('modal').classList.add('active');setTimeout(()=>document.getElementById('editName').focus(),80);}
-  function saveEdit(){if(!currentEl)return;if(currentType==='desk'){currentEl.querySelector('.name').textContent=document.getElementById('editName').value;currentEl.querySelector('.role').textContent=document.getElementById('editRole').value;}else if(currentType==='header'){currentEl.textContent=document.getElementById('editName').value;}else if(currentType==='legend'){const cls=currentEl.querySelector('.legend-dot').dataset.cls;colorMap[cls]=document.getElementById('editColor').value;currentEl.querySelector('.legend-label').textContent=document.getElementById('editName').value;applyColors();}saveState();closeModal();}
-  function closeModal(){document.getElementById('modal').classList.remove('active');document.getElementById('editRole').style.display='';document.getElementById('colorRow').style.display='none';currentEl=null;currentType=null;}
-  document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))closeModal();});
-  document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('modal').classList.contains('active'))saveEdit();if(e.key==='Escape')closeModal();});
-</script>
-</body>
-</html>
+const CM={'c-mgmt':'#c9b8e8','c-sup':'#a8d4b4','c-mkt':'#f4b8c8','c-md':'#f5ce80','c-web':'#88d4a0','c-design':'#f4a898','c-prod':'#80ccd8','c-smgmt':'#80ccd8'};
+const BM={'tb-mgmt':'c-mgmt','tb-sup':'c-sup','tb-mkt':'c-mkt','tb-md':'c-md','tb-web':'c-web','tb-smgmt':'c-smgmt','tb-design':'c-design'};
+function apC(){let c='';for(const[k,v]of Object.entries(CM)){c+=`.team-header.${k},.sub-header.${k}{background:${v}28;color:#1e293b;}`;c+=`.legend-dot.${k}{background-color:${v};}`;c+=`.b-${k.slice(2)}{border-color:${v}66;}`;}document.getElementById('cs').textContent=c;for(const[id,k]of Object.entries(BM)){const el=document.getElementById(id);if(el)el.style.borderTopColor=CM[k]||'#e2e8f0';}}
+function sst(){const s={d:[],h:[],l:[],c:{...CM}};document.querySelectorAll('.desk').forEach(e=>s.d.push({n:e.querySelector('.name').textContent,r:e.querySelector('.role').textContent}));document.querySelectorAll('.team-header').forEach(e=>s.h.push(e.textContent.trim()));document.querySelectorAll('.ll').forEach(e=>s.l.push(e.textContent.trim()));localStorage.setItem('sv1',JSON.stringify(s));toast('저장됨');}
+function lst(){const r=localStorage.getItem('sv1');if(!r)return;try{const s=JSON.parse(r);const ds=document.querySelectorAll('.desk');(s.d||[]).forEach((d,i)=>{if(!ds[i])return;ds[i].querySelector('.name').textContent=d.n;ds[i].querySelector('.role').textContent=d.r;});const hs=document.querySelectorAll('.team-header');(s.h||[]).forEach((h,i)=>{if(hs[i])hs[i].textContent=h;});const ls=document.querySelectorAll('.ll');(s.l||[]).forEach((l,i)=>{if(ls[i])ls[i].textContent=l;});if(s.c){Object.assign(CM,s.c);apC();}}catch(e){}}
+function rst(){if(!confirm('초기화할까요?'))return;localStorage.removeItem('sv1');location.reload();}
+function toast(m){let t=document.getElementById('_t');if(!t){t=document.createElement('div');t.id='_t';t.style.cssText='position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;opacity:0;transition:opacity .3s;z-index:999;pointer-events:none';document.body.appendChild(t);}t.textContent='✓ '+m;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',1600);}
+apC();lst();
+let cE=null,cT=null;
+function eD(el){cE=el;cT='d';document.getElementById('mT').textContent='자리 수정';document.getElementById('mN').placeholder='이름';document.getElementById('mN').value=el.querySelector('.name').textContent;document.getElementById('mR').value=el.querySelector('.role').textContent;document.getElementById('mR').style.display='';document.getElementById('cR').style.display='none';document.getElementById('mo').classList.add('on');setTimeout(()=>document.getElementById('mN').focus(),80);}
+function eH(el){cE=el;cT='h';document.getElementById('mT').textContent='부서명 수정';document.getElementById('mN').placeholder='부서명';document.getElementById('mN').value=el.textContent.trim();document.getElementById('mR').style.display='none';document.getElementById('cR').style.display='none';document.getElementById('mo').classList.add('on');setTimeout(()=>document.getElementById('mN').focus(),80);}
+function eLg(el){cE=el;cT='l';const d=el.querySelector('.legend-dot');const k=d.dataset.cls;const v=CM[k]||'#ccc';document.getElementById('mT').textContent='범례 수정';document.getElementById('mN').placeholder='범례 이름';document.getElementById('mN').value=el.querySelector('.ll').textContent.trim();document.getElementById('mR').style.display='none';document.getElementById('mC').value=v;document.getElementById('mP').style.background=v;document.getElementById('cR').style.display='flex';document.getElementById('mo').classList.add('on');setTimeout(()=>document.getElementById('mN').focus(),80);}
+function sav(){if(!cE)return;if(cT==='d'){cE.querySelector('.name').textContent=document.getElementById('mN').value;cE.querySelector('.role').textContent=document.getElementById('mR').value;}else if(cT==='h'){cE.textContent=document.getElementById('mN').value;}else if(cT==='l'){const k=cE.querySelector('.legend-dot').dataset.cls;CM[k]=document.getElementById('mC').value;cE.querySelector('.ll').textContent=document.getElementById('mN').value;apC();}sst();cls();}
+function cls(){document.getElementById('mo').classList.remove('on');document.getElementById('mR').style.display='';document.getElementById('cR').style.display='none';cE=null;cT=null;}
+document.getElementById('mo').addEventListener('click',e=>{if(e.target===document.getElementById('mo'))cls();});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('mo').classList.contains('on'))sav();if(e.key==='Escape')cls();});
+</script></body></html>
