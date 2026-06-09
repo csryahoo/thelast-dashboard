@@ -24,14 +24,14 @@ body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);
 .team-block:hover{box-shadow:0 3px 12px rgba(0,0,0,.08);}
 .team-header{font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:8px;text-align:center;color:#1e293b;display:block;width:100%;cursor:pointer;transition:opacity .15s;}
 .team-header:hover{opacity:.8;}
-.sub-divider{height:1px;background:var(--cb);margin:6px 0 8px;}
-.sub-label{font-size:9.5px;font-weight:700;color:var(--mu);letter-spacing:0.5px;padding:0 2px;margin-bottom:6px;}
 .desk{background:var(--bg);border-radius:8px;padding:7px 10px;margin-bottom:6px;text-align:center;cursor:pointer;transition:all .15s;min-height:46px;min-width:90px;display:flex;flex-direction:column;justify-content:center;border:1.5px solid transparent;}
 .desk:hover{background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.1);border-color:rgba(0,0,0,.08);}
 .desk .name{font-size:12px;font-weight:600;color:#1e293b;}
 .desk .role{font-size:10px;color:var(--mu);margin-top:2px;}
 .desk-row{display:flex;gap:6px;margin-bottom:6px;}
 .desk-row .desk{flex:1;margin-bottom:0;min-width:72px;}
+.btn-add{width:100%;margin-top:4px;padding:5px 0;border:1.5px dashed #cbd5e1;border-radius:8px;background:transparent;color:#94a3b8;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;letter-spacing:0.3px;}
+.btn-add:hover{border-color:#94a3b8;color:#475569;background:var(--bg);}
 .legend{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px;padding:12px 14px;background:var(--card);border:1px solid var(--cb);border-radius:10px;}
 .legend-item{display:flex;align-items:center;gap:6px;cursor:pointer;padding:5px 10px;border-radius:20px;font-size:11px;font-weight:500;transition:background .15s;border:1px solid transparent;}
 .legend-item:hover{background:var(--bg);border-color:var(--border);}
@@ -54,6 +54,8 @@ body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);
 .cp{flex:1;height:32px;border-radius:6px;border:1px solid #e2e8f0;}
 .mb{display:flex;gap:8px;margin-top:8px;}
 .mb .btn{flex:1;padding:9px;font-size:13px;}
+.del-btn{width:100%;margin-top:6px;padding:7px;border:1px solid #fecaca;border-radius:8px;background:transparent;color:#ef4444;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
+.del-btn:hover{background:#fef2f2;}
 @media print{body{background:#fff;}.mo,.no-print{display:none!important;}}
 </style><style id="cs"></style></head>
 <body>
@@ -120,13 +122,10 @@ body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);
       <div class="desk b-smgmt" onclick="eD(this)"><div class="name">김지회</div><div class="role"></div></div>
     </div>
   </div>
-  <!-- 어패럴디자인팀: 하나의 team-block, 내부 두 열 -->
   <div class="team-block" id="tb-design" style="min-width:280px">
     <div class="team-header c-design" onclick="eH(this)">어패럴디자인팀</div>
     <div style="display:flex;gap:10px;align-items:flex-start;">
-      <!-- 왼쪽: 디자이너 그룹 -->
       <div style="flex:1;">
-        <div class="sub-label">디자이너</div>
         <div class="desk b-design" onclick="eD(this)"><div class="name">안혜미</div><div class="role">이패럼팀장</div></div>
         <div class="desk-row">
           <div class="desk b-design" onclick="eD(this)"><div class="name">조성원</div><div class="role"></div></div>
@@ -137,11 +136,8 @@ body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);
           <div class="desk b-design" onclick="eD(this)"><div class="name">정수안</div><div class="role"></div></div>
         </div>
       </div>
-      <!-- 구분선 -->
       <div style="width:1px;background:var(--cb);align-self:stretch;margin-top:4px;"></div>
-      <!-- 오른쪽: 이은영·김가원 -->
       <div>
-        <div class="sub-label" style="visibility:hidden;">ㅤ</div>
         <div class="desk b-design" onclick="eD(this)"><div class="name">이은영</div><div class="role"></div></div>
         <div class="desk b-design" onclick="eD(this)"><div class="name">김가원</div><div class="role"></div></div>
       </div>
@@ -176,23 +172,165 @@ body{font-family:'Noto Sans KR','Malgun Gothic',sans-serif;background:var(--bg);
       <button class="btn btn-s" onclick="cls()">취소</button>
       <button class="btn btn-p" onclick="sav()">저장</button>
     </div>
+    <button class="del-btn" id="delBtn" onclick="delDesk()" style="display:none">🗑 이 자리 삭제</button>
   </div>
 </div>
 <script>
 const CM={'c-mgmt':'#c9b8e8','c-sup':'#a8d4b4','c-mkt':'#f4b8c8','c-md':'#f5ce80','c-web':'#88d4a0','c-design':'#f4a898','c-smgmt':'#80ccd8'};
 const BM={'tb-mgmt':'c-mgmt','tb-sup':'c-sup','tb-mkt':'c-mkt','tb-md':'c-md','tb-web':'c-web','tb-smgmt':'c-smgmt','tb-design':'c-design'};
-function apC(){let c='';for(const[k,v]of Object.entries(CM)){c+=`.team-header.${k},.sub-header.${k}{background:${v}28;color:#1e293b;}`;c+=`.legend-dot.${k}{background-color:${v};}`;c+=`.b-${k.slice(2)}{border-color:${v}66;}`;}document.getElementById('cs').textContent=c;for(const[id,k]of Object.entries(BM)){const el=document.getElementById(id);if(el)el.style.borderTopColor=CM[k]||'#e2e8f0';}}
-function sst(){const s={d:[],h:[],l:[],c:{...CM}};document.querySelectorAll('.desk').forEach(e=>s.d.push({n:e.querySelector('.name').textContent,r:e.querySelector('.role').textContent}));document.querySelectorAll('.team-header').forEach(e=>s.h.push(e.textContent.trim()));document.querySelectorAll('.ll').forEach(e=>s.l.push(e.textContent.trim()));localStorage.setItem('sv1',JSON.stringify(s));toast('저장됨');}
-function lst(){const r=localStorage.getItem('sv1');if(!r)return;try{const s=JSON.parse(r);const ds=document.querySelectorAll('.desk');(s.d||[]).forEach((d,i)=>{if(!ds[i])return;ds[i].querySelector('.name').textContent=d.n;ds[i].querySelector('.role').textContent=d.r;});const hs=document.querySelectorAll('.team-header');(s.h||[]).forEach((h,i)=>{if(hs[i])hs[i].textContent=h;});const ls=document.querySelectorAll('.ll');(s.l||[]).forEach((l,i)=>{if(ls[i])ls[i].textContent=l;});if(s.c){Object.assign(CM,s.c);apC();}}catch(e){}}
+
+function apC(){
+  let c='';
+  for(const[k,v]of Object.entries(CM)){
+    c+=`.team-header.${k}{background:${v}28;color:#1e293b;}`;
+    c+=`.legend-dot.${k}{background-color:${v};}`;
+    c+=`.b-${k.slice(2)}{border-color:${v}66;}`;
+  }
+  document.getElementById('cs').textContent=c;
+  for(const[id,k]of Object.entries(BM)){
+    const el=document.getElementById(id);
+    if(el)el.style.borderTopColor=CM[k]||'#e2e8f0';
+  }
+}
+
+// 각 team-block에 + 버튼 동적 생성
+function initAddBtns(){
+  document.querySelectorAll('.team-block').forEach(block=>{
+    const btn=document.createElement('button');
+    btn.className='btn-add no-print';
+    btn.textContent='+ 자리 추가';
+    btn.onclick=()=>openAdd(block);
+    block.appendChild(btn);
+  });
+}
+
+// 블록에서 b-XXX 클래스 추출
+function getBCls(block){
+  const d=block.querySelector('.desk');
+  if(!d)return'mgmt';
+  for(const c of d.classList)if(c.startsWith('b-'))return c.slice(2);
+  return'mgmt';
+}
+
+function sst(){
+  const s={d:[],h:[],l:[],c:{...CM}};
+  document.querySelectorAll('.desk').forEach(e=>s.d.push({n:e.querySelector('.name').textContent,r:e.querySelector('.role').textContent}));
+  document.querySelectorAll('.team-header').forEach(e=>s.h.push(e.textContent.trim()));
+  document.querySelectorAll('.ll').forEach(e=>s.l.push(e.textContent.trim()));
+  localStorage.setItem('sv1',JSON.stringify(s));
+  toast('저장됨');
+}
+function lst(){
+  const r=localStorage.getItem('sv1');if(!r)return;
+  try{
+    const s=JSON.parse(r);
+    const ds=document.querySelectorAll('.desk');
+    (s.d||[]).forEach((d,i)=>{if(!ds[i])return;ds[i].querySelector('.name').textContent=d.n;ds[i].querySelector('.role').textContent=d.r;});
+    const hs=document.querySelectorAll('.team-header');
+    (s.h||[]).forEach((h,i)=>{if(hs[i])hs[i].textContent=h;});
+    const ls=document.querySelectorAll('.ll');
+    (s.l||[]).forEach((l,i)=>{if(ls[i])ls[i].textContent=l;});
+    if(s.c){Object.assign(CM,s.c);apC();}
+  }catch(e){}
+}
 function rst(){if(!confirm('초기화할까요?'))return;localStorage.removeItem('sv1');location.reload();}
-function toast(m){let t=document.getElementById('_t');if(!t){t=document.createElement('div');t.id='_t';t.style.cssText='position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;opacity:0;transition:opacity .3s;z-index:999;pointer-events:none';document.body.appendChild(t);}t.textContent='✓ '+m;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',1600);}
-apC();lst();
-let cE=null,cT=null;
-function eD(el){cE=el;cT='d';document.getElementById('mT').textContent='자리 수정';document.getElementById('mN').placeholder='이름';document.getElementById('mN').value=el.querySelector('.name').textContent;document.getElementById('mR').value=el.querySelector('.role').textContent;document.getElementById('mR').style.display='';document.getElementById('cR').style.display='none';document.getElementById('mo').classList.add('on');setTimeout(()=>document.getElementById('mN').focus(),80);}
-function eH(el){cE=el;cT='h';document.getElementById('mT').textContent='부서명 수정';document.getElementById('mN').placeholder='부서명';document.getElementById('mN').value=el.textContent.trim();document.getElementById('mR').style.display='none';document.getElementById('cR').style.display='none';document.getElementById('mo').classList.add('on');setTimeout(()=>document.getElementById('mN').focus(),80);}
-function eLg(el){cE=el;cT='l';const d=el.querySelector('.legend-dot');const k=d.dataset.cls;const v=CM[k]||'#ccc';document.getElementById('mT').textContent='범례 수정';document.getElementById('mN').placeholder='범례 이름';document.getElementById('mN').value=el.querySelector('.ll').textContent.trim();document.getElementById('mR').style.display='none';document.getElementById('mC').value=v;document.getElementById('mP').style.background=v;document.getElementById('cR').style.display='flex';document.getElementById('mo').classList.add('on');setTimeout(()=>document.getElementById('mN').focus(),80);}
-function sav(){if(!cE)return;if(cT==='d'){cE.querySelector('.name').textContent=document.getElementById('mN').value;cE.querySelector('.role').textContent=document.getElementById('mR').value;}else if(cT==='h'){cE.textContent=document.getElementById('mN').value;}else if(cT==='l'){const k=cE.querySelector('.legend-dot').dataset.cls;CM[k]=document.getElementById('mC').value;cE.querySelector('.ll').textContent=document.getElementById('mN').value;apC();}sst();cls();}
-function cls(){document.getElementById('mo').classList.remove('on');document.getElementById('mR').style.display='';document.getElementById('cR').style.display='none';cE=null;cT=null;}
+function toast(m){
+  let t=document.getElementById('_t');
+  if(!t){t=document.createElement('div');t.id='_t';t.style.cssText='position:fixed;bottom:20px;right:20px;background:#1e293b;color:#fff;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;opacity:0;transition:opacity .3s;z-index:999;pointer-events:none';document.body.appendChild(t);}
+  t.textContent='✓ '+m;t.style.opacity='1';clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',1600);
+}
+
+let cE=null,cT=null,cBlock=null;
+
+function eD(el){
+  cE=el;cT='d';
+  document.getElementById('mT').textContent='자리 수정';
+  document.getElementById('mN').value=el.querySelector('.name').textContent;
+  document.getElementById('mR').value=el.querySelector('.role').textContent;
+  document.getElementById('mR').style.display='';
+  document.getElementById('cR').style.display='none';
+  document.getElementById('delBtn').style.display='';
+  document.getElementById('mo').classList.add('on');
+  setTimeout(()=>document.getElementById('mN').focus(),80);
+}
+function eH(el){
+  cE=el;cT='h';
+  document.getElementById('mT').textContent='부서명 수정';
+  document.getElementById('mN').value=el.textContent.trim();
+  document.getElementById('mR').style.display='none';
+  document.getElementById('cR').style.display='none';
+  document.getElementById('delBtn').style.display='none';
+  document.getElementById('mo').classList.add('on');
+  setTimeout(()=>document.getElementById('mN').focus(),80);
+}
+function eLg(el){
+  cE=el;cT='l';
+  const d=el.querySelector('.legend-dot');const k=d.dataset.cls;const v=CM[k]||'#ccc';
+  document.getElementById('mT').textContent='범례 수정';
+  document.getElementById('mN').value=el.querySelector('.ll').textContent.trim();
+  document.getElementById('mR').style.display='none';
+  document.getElementById('mC').value=v;
+  document.getElementById('mP').style.background=v;
+  document.getElementById('cR').style.display='flex';
+  document.getElementById('delBtn').style.display='none';
+  document.getElementById('mo').classList.add('on');
+  setTimeout(()=>document.getElementById('mN').focus(),80);
+}
+function openAdd(block){
+  cBlock=block;cT='add';
+  document.getElementById('mT').textContent='자리 추가';
+  document.getElementById('mN').value='';
+  document.getElementById('mR').value='';
+  document.getElementById('mR').style.display='';
+  document.getElementById('cR').style.display='none';
+  document.getElementById('delBtn').style.display='none';
+  document.getElementById('mo').classList.add('on');
+  setTimeout(()=>document.getElementById('mN').focus(),80);
+}
+function delDesk(){
+  if(!cE||cT!=='d')return;
+  if(!confirm('이 자리를 삭제할까요?'))return;
+  // desk-row 안에 있는 경우 row도 정리
+  const row=cE.parentElement;
+  cE.remove();
+  if(row&&row.classList.contains('desk-row')&&row.querySelectorAll('.desk').length===0)row.remove();
+  sst();cls();
+}
+function sav(){
+  if(cT==='d'){
+    cE.querySelector('.name').textContent=document.getElementById('mN').value||'공석';
+    cE.querySelector('.role').textContent=document.getElementById('mR').value;
+  }else if(cT==='h'){
+    cE.textContent=document.getElementById('mN').value;
+  }else if(cT==='l'){
+    const k=cE.querySelector('.legend-dot').dataset.cls;
+    CM[k]=document.getElementById('mC').value;
+    cE.querySelector('.ll').textContent=document.getElementById('mN').value;
+    apC();
+  }else if(cT==='add'&&cBlock){
+    const bcls=getBCls(cBlock);
+    const desk=document.createElement('div');
+    desk.className=`desk b-${bcls}`;
+    desk.onclick=function(){eD(this);};
+    desk.innerHTML=`<div class="name">${document.getElementById('mN').value||'공석'}</div><div class="role">${document.getElementById('mR').value}</div>`;
+    // + 버튼 앞에 삽입
+    const addBtn=cBlock.querySelector('.btn-add');
+    cBlock.insertBefore(desk,addBtn||null);
+    apC();
+  }
+  sst();cls();
+}
+function cls(){
+  document.getElementById('mo').classList.remove('on');
+  document.getElementById('mR').style.display='';
+  document.getElementById('cR').style.display='none';
+  document.getElementById('delBtn').style.display='none';
+  cE=null;cT=null;cBlock=null;
+}
 document.getElementById('mo').addEventListener('click',e=>{if(e.target===document.getElementById('mo'))cls();});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&document.getElementById('mo').classList.contains('on'))sav();if(e.key==='Escape')cls();});
+
+apC();
+initAddBtns();
+lst();
 </script></body></html>
