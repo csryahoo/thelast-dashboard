@@ -187,7 +187,7 @@ tr:hover td { background:#f8fafc; }
   <!-- TAB 1: 상품별 순위 -->
   <div class="section" id="tab-1">
     <div class="rank-filter-bar">
-      <input class="rank-search" id="rank-search" type="text" placeholder="🔍 상품명 검색..." oninput="renderRank()" autocomplete="off">
+      <input class="rank-search" id="rank-search" type="text" placeholder="🔍 상품명 / 공급처 검색..." oninput="renderRank()" autocomplete="off">
       <div class="rank-filter-group">
         <button class="rank-filter-btn active" onclick="setRankMode('out',this)">출고 기준</button>
         <button class="rank-filter-btn" onclick="setRankMode('in',this)">입고 기준</button>
@@ -205,7 +205,7 @@ tr:hover td { background:#f8fafc; }
   <!-- TAB 2: 일별 피벗 -->
   <div class="section" id="tab-2">
     <div class="rank-filter-bar">
-      <input class="rank-search" id="pivot-search" type="text" placeholder="🔍 상품명 검색..." oninput="renderPivot()" autocomplete="off">
+      <input class="rank-search" id="pivot-search" type="text" placeholder="🔍 상품명 / 공급처 검색..." oninput="renderPivot()" autocomplete="off">
       <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:#64748b;cursor:pointer;user-select:none">
         <input type="checkbox" id="pivot-show-zero" onchange="renderPivot()">
         재고이동 없는 상품 포함
@@ -478,7 +478,11 @@ function renderRank() {
   const search = (document.getElementById('rank-search')?.value||'').trim().toLowerCase();
   const { col, dir } = G.rankSort;
 
-  let prods = d.products.filter(p => !search || p.name.toLowerCase().includes(search));
+  const hl = t => search ? t.replace(new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m=>`<mark style="background:#fef08a;border-radius:2px">${m}</mark>`) : t;
+
+  let prods = d.products.filter(p => !search ||
+    p.name.toLowerCase().includes(search) ||
+    (p.supplier||'').toLowerCase().includes(search));
   prods = [...prods].sort((a,b) => {
     if (col === 'name') return a.name.localeCompare(b.name,'ko') * dir;
     return ((a[col]??-Infinity) - (b[col]??-Infinity)) * dir;
@@ -520,11 +524,12 @@ function renderRank() {
   } else {
     prods.forEach((p,i) => {
       const bg = i%2===0?'#fff':'#f8fafc';
-      const nm = search ? p.name.replace(new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m=>`<mark style="background:#fef08a;border-radius:2px">${m}</mark>`) : p.name;
+      const nm = hl(p.name);
+      const sp = hl(p.supplier||'-');
       html += `<tr style="border-bottom:1px solid #f1f5f9;background:${bg}">
         <td style="color:#94a3b8;font-size:11px">${i+1}</td>
         <td style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.name}">${nm}</td>
-        <td style="font-size:11px;color:#64748b;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.supplier||'-'}</td>
+        <td style="font-size:11px;color:#64748b;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${sp}</td>
         <td style="font-size:12px;color:${p.prev?'#6d28d9':'#94a3b8'}">${p.prev?p.prev.toLocaleString():'-'}</td>
         <td style="font-size:12px;color:${p.in?'#1d4ed8':'#94a3b8'};font-weight:${p.in?'600':'400'}">${p.in?p.in.toLocaleString():'-'}</td>
         <td style="font-size:12px;color:${p.out?'#b91c1c':'#94a3b8'};font-weight:${p.out?'600':'400'}">${p.out?p.out.toLocaleString():'-'}</td>
@@ -551,7 +556,8 @@ function renderPivot() {
   const { col, dir } = G.pivotSort;
 
   let prods = d.products.filter(p => (showZero || p.in > 0 || p.out > 0) &&
-                                      (!search || p.name.toLowerCase().includes(search)));
+                                      (!search || p.name.toLowerCase().includes(search) ||
+                                       (p.supplier||'').toLowerCase().includes(search)));
 
   // 정렬
   function pval(p, key) {
@@ -616,16 +622,17 @@ function renderPivot() {
   </tr>`;
 
   // ── 데이터행 ──
+  const hlP = t => search ? t.replace(new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m=>`<mark style="background:#fef08a;border-radius:2px">${m}</mark>`) : t;
+
   let rows = '';
   prods.forEach((p, i) => {
-    const nm = search
-      ? p.name.replace(new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m=>`<mark style="background:#fef08a;border-radius:2px">${m}</mark>`)
-      : p.name;
+    const nm = hlP(p.name);
+    const sp = hlP(p.supplier||'-');
     const bg = i % 2 === 0 ? '' : 'background:#fafafa';
     rows += `<tr style="${bg}">
       <td class="s0" style="color:#94a3b8;font-size:11px;${bg}">${i+1}</td>
       <td class="s1" title="${p.name}" style="${bg}">${nm}</td>
-      <td class="s2" style="color:#64748b;font-size:11px;${bg}">${p.supplier||'-'}</td>
+      <td class="s2" style="color:#64748b;font-size:11px;${bg}">${sp}</td>
       <td class="col-prev" style="color:${p.prev?'#6d28d9':'#cbd5e1'}">${fmt(p.prev)}</td>`;
     for (const dt of dates) {
       const di = p.d?.[dt]?.i || 0;
