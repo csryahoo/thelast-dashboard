@@ -13,7 +13,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Malgun Gothic','Apple SD Gothic Neo',Arial,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;padding:28px}
-.wrap{max-width:1180px;margin:0 auto}
+.wrap{max-width:1200px;margin:0 auto}
 header{background:linear-gradient(120deg,var(--navy),var(--navy2));color:#fff;border-radius:16px;padding:26px 30px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;box-shadow:0 6px 22px rgba(14,58,83,.18)}
 header h1{font-size:23px;font-weight:700;letter-spacing:-.3px}
 header .sub{opacity:.84;font-size:13px;margin-top:6px}
@@ -41,16 +41,9 @@ table.cf tr.tot td{font-weight:800;background:var(--navy);color:#fff;font-size:1
 table.cf tr.sub td{font-size:12.5px;color:var(--muted)}
 table.cf .pos{color:var(--in)} table.cf .neg{color:var(--out)}
 .tabs{display:flex;gap:8px;margin:16px 0 4px}
-.tab{padding:9px 18px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:13.5px;font-weight:700;cursor:pointer}
+.tab{padding:9px 22px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:13.5px;font-weight:700;cursor:pointer;transition:all .15s}
+.tab:hover{background:#f0f5f8}
 .tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
-.pl-table{width:100%;border-collapse:collapse;font-size:13px}
-.pl-table th{background:#eef4f7;color:var(--navy);font-size:12px;padding:9px 12px;text-align:right}
-.pl-table th:first-child{text-align:left}
-.pl-table td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:right}
-.pl-table td:first-child{text-align:left}
-.pl-table tr.bold td{font-weight:800;background:#f6fafc}
-.pl-table tr.sep td{background:#f0f5f8;color:var(--muted);font-size:11.5px;font-style:italic}
-.pl-table .pos{color:var(--in)} .pl-table .neg{color:var(--out)}
 .bridge{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:14px 0}
 .bridge-item{background:var(--bg);border-radius:10px;padding:12px;text-align:center;border:1px solid var(--line)}
 .bridge-item .bl{font-size:11px;color:var(--muted);margin-bottom:4px}
@@ -59,11 +52,62 @@ table.cf .pos{color:var(--in)} table.cf .neg{color:var(--out)}
 .bridge-item.hl .bl{color:rgba(255,255,255,.7)}
 .note{font-size:11.5px;color:var(--muted);margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
 .no-data{padding:60px;text-align:center;color:var(--muted);font-size:14px}
+
+/* ─── 현금흐름표 탭 ─── */
+.cft-table{width:100%;border-collapse:collapse;font-size:13px}
+.cft-table td{padding:8px 12px;border-bottom:1px solid var(--line)}
+.cft-table td:last-child{text-align:right;white-space:nowrap}
+.cft-lv0{background:#0e3a53;color:#fff;font-weight:800;font-size:13.5px}
+.cft-lv0 td{border-color:#1a5276}
+.cft-lv1{background:#eef4f7;font-weight:700;color:var(--navy)}
+.cft-lv2 td:first-child{padding-left:28px}
+.cft-lv2{color:var(--ink)}
+.cft-lv3{color:var(--muted);font-size:12px}
+.cft-lv3 td:first-child{padding-left:52px}
+.cft-null{color:#aaa;font-style:italic}
+.pos{color:var(--in)} .neg{color:var(--out)}
+
+/* ─── 세부내역 탭 ─── */
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.filter-bar .fb-label{font-size:12px;color:var(--muted);margin-right:4px}
+.filter-chip{padding:5px 14px;border-radius:20px;border:1px solid var(--line);background:#fff;color:var(--muted);font-size:12px;cursor:pointer;transition:all .12s}
+.filter-chip:hover{border-color:var(--accent);color:var(--accent)}
+.filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.dt-section{margin-bottom:22px}
+.dt-section-hdr{background:#eef4f7;color:var(--navy);font-weight:700;font-size:13px;padding:9px 14px;border-radius:8px 8px 0 0;border:1px solid var(--line)}
+.dt-table{width:100%;border-collapse:collapse;font-size:13px;border:1px solid var(--line);border-top:none}
+.dt-table td{padding:8px 12px;border-bottom:1px solid var(--line)}
+.dt-table td:last-child{text-align:right;white-space:nowrap}
+.dt-lv2 td:first-child{font-weight:700;background:#f9fbfc}
+.dt-lv3 td:first-child{padding-left:26px;color:var(--muted);font-size:12px}
+.dt-lv3{background:#fff}
+
 @media(max-width:820px){.kpis,.grid2,.bridge{grid-template-columns:1fr 1fr}}
+@media(max-width:540px){.kpis,.bridge{grid-template-columns:1fr 1fr}.tabs{flex-wrap:wrap}}
+
+/* 13주 자금예측 */
+.fc-controls{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:12px;font-size:13px;color:#334155}
+.fc-controls input{width:88px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-family:inherit;text-align:right}
+.fc-controls button{padding:6px 12px;border:1px solid var(--line);border-radius:6px;background:#f6fafc;cursor:pointer;font-family:inherit;font-weight:600;color:#475569}
+.fc-alert{font-size:13.5px;font-weight:600;padding:11px 15px;border-radius:9px;margin-top:8px}
+.fc-alert.ok{background:#e3f5ec;color:#0f7a52}.fc-alert.warn{background:#fdf3e2;color:#9a5d0a}.fc-alert.bad{background:#fbe9e7;color:#b3261e}
+.fctw{overflow:auto;border:1px solid var(--line);border-radius:10px}
+table.fc-table{border-collapse:collapse;font-size:12px;white-space:nowrap;min-width:1040px}
+table.fc-table th,table.fc-table td{border:1px solid #e8edf3;padding:5px 7px;text-align:right}
+table.fc-table thead th{position:sticky;top:0;background:#eef4f7;color:#0e3a53;font-size:11px;line-height:1.3}
+table.fc-table th:first-child,table.fc-table td:first-child{text-align:left;position:sticky;left:0;background:#fff;z-index:1;min-width:188px;font-weight:600}
+table.fc-table thead th:first-child{z-index:2;background:#eef4f7}
+table.fc-table input{width:56px;border:1px solid #dbe2ec;border-radius:4px;padding:3px 4px;text-align:right;font-family:inherit;font-size:11.5px;color:#0000ff}
+table.fc-table tr.calc td,table.fc-table tr.sumin td,table.fc-table tr.sumout td,table.fc-table tr.net td{background:#f8fafd;font-weight:600}
+table.fc-table tr.sumin td:first-child{color:#0f7a52}
+table.fc-table tr.sumout td:first-child{color:#b3261e}
+table.fc-table tr.bal td{font-weight:800;background:#eef4f7;color:#0e3a53}
+table.fc-table td.bneg{background:#fbe9e7;color:#b3261e}
+table.fc-table td.bwarn{background:#fdf3e2;color:#9a5d0a}
 </style>
 </head>
 <body>
-<script>window.__PD__={"month":"2026-05","month_ko":"2026년 5월","begin_cash":0,"end_cash":0,"op_cf":0,"non_op_cf":0,"fx_effect":0,"net_cf":0,"sales":1652280299,"cogs":-1453894696,"gross_profit":0,"sga":-561986903,"card":0,"op_profit":-389770112,"net_profit":-393845660,"loan_out":-135344405,"asset_out":-3380000,"internal":-466450,"sales_channels":[{"name":"자사몰 매출","val":914016970},{"name":"마켓플레이스 매출","val":482955608},{"name":"한남 오프라인 스토어","val":118151261},{"name":"현대백화점","val":84795665},{"name":"해외매출","val":52360795}],"top_outflows":[{"name":"원재료 등","val":852013102},{"name":"제품","val":284573304},{"name":"주얼리","val":195174210},{"name":"지급수수료","val":161965118},{"name":"세금과공과","val":116790880},{"name":"오리지널 샘플","val":108381222},{"name":"광고선전비","val":106672784},{"name":"임차료","val":50425385},{"name":"운반비","val":39019355},{"name":"급여","val":28177632}],"pl_rows":[{"label":"매출","val":1652280299,"lv":0,"bold":true},{"label":"매출원가","val":-1453894696,"lv":1},{"label":"매출총이익","val":0,"lv":0,"bold":true},{"label":"판매비와관리비","val":-561986903,"lv":1},{"label":"법인카드 대금","val":0,"lv":1},{"label":"영업이익","val":-389770112,"lv":0,"bold":true},{"label":"영업외수익","val":632921,"lv":1},{"label":"영업외비용","val":-4708469,"lv":1},{"label":"당기순이익","val":-393845660,"lv":0,"bold":true},{"label":"── 비영업활동 ──","val":null,"lv":0},{"label":"대출 상환·집행","val":-135344405,"lv":1},{"label":"자산 취득 및 처분","val":-3380000,"lv":1}]};</script>
+<script>window.__PD__={"month":"2026-05","month_ko":"2026년 5월","begin_cash":0,"end_cash":0,"op_cf":-393845660,"non_op_cf":-139190855,"fx_effect":0,"net_cf":-533036515,"sales":1652280299,"cogs":-1453894696,"gross_profit":198385603,"sga":-561986903,"card":-26168812,"op_profit":-389770112,"net_profit":-393845660,"loan_out":-135344405,"asset_out":-3380000,"internal":-466450,"sales_channels":[{"name":"자사몰 매출","val":914016970},{"name":"마켓플레이스 매출","val":482955608},{"name":"한남 오프라인 스토어","val":118151261},{"name":"현대백화점","val":84795665},{"name":"해외매출","val":52360795}],"top_outflows":[{"name":"원재료 등","val":852013102},{"name":"제품","val":284573304},{"name":"주얼리","val":195174210},{"name":"지급수수료","val":161965118},{"name":"세금과공과","val":116790880},{"name":"오리지널 샘플","val":108381222},{"name":"광고선전비","val":106672784},{"name":"임차료","val":50425385},{"name":"운반비","val":39019355},{"name":"급여","val":28177632}],"cf_items":[{"lv":0,"label":"영업활동 현금흐름","val":null},{"lv":1,"label":"매출","val":1652280299},{"lv":2,"label":"자사몰 매출","val":914016970},{"lv":3,"label":"케이지이니시스","val":511980539},{"lv":3,"label":"네이버페이(결제형)","val":234443703},{"lv":3,"label":"카카오페이","val":18693193},{"lv":3,"label":"현금영수증","val":97250571},{"lv":3,"label":"네이버페이(주문형)","val":50980465},{"lv":3,"label":"현금매출(택배비)","val":668499},{"lv":2,"label":"한남 오프라인 스토어","val":118151261},{"lv":3,"label":"지점카드매출","val":104191319},{"lv":3,"label":"지점 현금영수증","val":13959942},{"lv":2,"label":"현대백화점","val":84795665},{"lv":3,"label":"압구정지점","val":59626305},{"lv":3,"label":"무역센터점","val":25169360},{"lv":2,"label":"마켓플레이스 매출","val":482955608},{"lv":3,"label":"SSF","val":99198399},{"lv":3,"label":"스마트스토어","val":383757209},{"lv":2,"label":"해외매출","val":52360795},{"lv":1,"label":"매출원가","val":-1453894696},{"lv":2,"label":"제조매입","val":-1258720486},{"lv":3,"label":"원재료 등","val":-852013102},{"lv":3,"label":"제품","val":-284573304},{"lv":3,"label":"오리지널 샘플","val":-108381222},{"lv":3,"label":"통관/검사/기타비용","val":-13752858},{"lv":2,"label":"상품매입","val":-195174210},{"lv":3,"label":"주얼리","val":-195174210},{"lv":1,"label":"매출총이익율","val":198385603},{"lv":0,"label":"판매비와관리비","val":-561986903},{"lv":1,"label":"급여","val":-28177632},{"lv":2,"label":"직원급여","val":-11734760},{"lv":2,"label":"사업소득","val":-16442872},{"lv":3,"label":"모델","val":-6257372},{"lv":3,"label":"라이브 지원","val":-1643900},{"lv":3,"label":"기타 사업소득","val":-8541600},{"lv":1,"label":"퇴직급여","val":-21356356},{"lv":2,"label":"그 외 거래처","val":-21356356},{"lv":1,"label":"복리후생비","val":-257380},{"lv":2,"label":"식대 및 간식대","val":-257380},{"lv":1,"label":"보험료","val":-2700000},{"lv":2,"label":"화재보험","val":-2700000},{"lv":1,"label":"지급수수료","val":-161965118},{"lv":2,"label":"해외 세일즈 용역","val":-28700760},{"lv":3,"label":"빅터코퍼레이션","val":-28700760},{"lv":2,"label":"시설관리용역","val":-4151800},{"lv":3,"label":"케어존","val":-1210000},{"lv":3,"label":"A.M크린","val":-495000},{"lv":3,"label":"크린몬","val":-770000},{"lv":3,"label":"에스케이쉴더스 논현지점","val":-77000},{"lv":3,"label":"에스케이쉴더스 용산지점","val":-371800},{"lv":3,"label":"에스케이쉴더스 동부지점","val":-1023000},{"lv":3,"label":"세스코","val":-205000},{"lv":2,"label":"컨설팅용역","val":-115658795},{"lv":3,"label":"플라이스(PLYS)","val":-6600000},{"lv":3,"label":"스튜디오노트(studio knot)","val":-99000000},{"lv":3,"label":"더봄 노무법인","val":-220000},{"lv":3,"label":"시연디자인","val":-2970000},{"lv":3,"label":"블리츠씰(Blitz SEAL)","val":-5280000},{"lv":3,"label":"휘도 세무회계","val":-660000},{"lv":3,"label":"특허법인 다래","val":-928795},{"lv":2,"label":"서비스구독","val":-2773302},{"lv":3,"label":"엘지전자","val":-70700},{"lv":3,"label":"채널코퍼레이션","val":-113625},{"lv":3,"label":"셀메이트","val":-569250},{"lv":3,"label":"플렉스","val":-495000},{"lv":3,"label":"그 외 거래처","val":-1524727},{"lv":2,"label":"금융수수료","val":362108},{"lv":3,"label":"한국정보인증","val":-110000},{"lv":3,"label":"그 외 거래처","val":472108},{"lv":2,"label":"인력채용서비스","val":-13000},{"lv":3,"label":"그 외 거래처","val":-13000},{"lv":2,"label":"기타 수수료","val":-11029569},{"lv":3,"label":"세이브카","val":-1550000},{"lv":3,"label":"글로벌텍스프리","val":-4005209},{"lv":3,"label":"서울벤처스","val":-1496000},{"lv":3,"label":"그 외 거래처","val":-3978360},{"lv":1,"label":"광고선전비","val":-106672784},{"lv":2,"label":"촬영","val":-41340290},{"lv":3,"label":"키본컬렉티브","val":-1136500},{"lv":3,"label":"에이인원 (Ain1 Inc.)","val":-6600000},{"lv":3,"label":"문성민","val":-3905000},{"lv":3,"label":"노네임","val":-500500},{"lv":3,"label":"더프레이즈스튜디오","val":-16878290},{"lv":3,"label":"제이에스뷰티랩","val":-1980000},{"lv":3,"label":"모델디렉터스","val":-1870000},{"lv":3,"label":"더플랫","val":-3300000},{"lv":3,"label":"에이셋(A.SSET Co.,Ltd.)","val":-3520000},{"lv":3,"label":"그마음","val":-1650000},{"lv":2,"label":"마케팅","val":-65332494},{"lv":3,"label":"온라인 광고","val":-32838494},{"lv":3,"label":"오프라인 광고","val":-6094000},{"lv":3,"label":"영상제작","val":-26400000},{"lv":1,"label":"차량유지비","val":-946000},{"lv":2,"label":"주유비","val":-306000},{"lv":3,"label":"대표님","val":-306000},{"lv":2,"label":"주차비","val":-640000},{"lv":3,"label":"아인","val":-640000},{"lv":1,"label":"도서인쇄비","val":-58050},{"lv":2,"label":"성원애드피아","val":-58050},{"lv":1,"label":"임차료","val":-53793035},{"lv":2,"label":"임차료","val":-50425385},{"lv":3,"label":"본사 임차료","val":-32900763},{"lv":3,"label":"물류실 임차료","val":-16624322},{"lv":3,"label":"기타 임차료","val":-900300},{"lv":2,"label":"비품대여","val":-805700},{"lv":3,"label":"복합기","val":-479600},{"lv":3,"label":"커피머신","val":-236800},{"lv":3,"label":"정수기","val":-89300},{"lv":2,"label":"리스료","val":-2561950},{"lv":3,"label":"롯데캐피탈","val":-523130},{"lv":3,"label":"에스케이렌터카","val":-835500},{"lv":3,"label":"그 외 거래처","val":-1203320},{"lv":1,"label":"통신비","val":-736630},{"lv":2,"label":"에스케이텔레콤","val":-50000},{"lv":2,"label":"케이티","val":-635830},{"lv":2,"label":"케이티 에이치씨엔 동작방송","val":-50800},{"lv":1,"label":"운반비","val":-39019355},{"lv":2,"label":"국내 운반비","val":-35636697},{"lv":3,"label":"배송비","val":-27738097},{"lv":3,"label":"퀵 및 기타운반","val":-7898600},{"lv":2,"label":"해외 운반비","val":-3382658},{"lv":3,"label":"CJ GLS","val":-3382658},{"lv":1,"label":"세금과공과","val":-116790880},{"lv":2,"label":"4대보험","val":-48313230},{"lv":2,"label":"부가세","val":-25000000},{"lv":2,"label":"원천세","val":-41771810},{"lv":3,"label":"근로소득세","val":-37398310},{"lv":3,"label":"사업소득세","val":-576220},{"lv":3,"label":"지방소득세","val":-3797280},{"lv":2,"label":"주민세","val":-1269840},{"lv":2,"label":"과태료","val":-436000},{"lv":1,"label":"소모품비","val":-26148063},{"lv":2,"label":"택배박스","val":-21757908},{"lv":3,"label":"한길패키지","val":-14263508},{"lv":3,"label":"탑팩(TOP PACK)","val":-6710000},{"lv":3,"label":"그 외 거래처","val":-784400},{"lv":2,"label":"촬영장비","val":-1340500},{"lv":3,"label":"인터내셔널브이에이치","val":-1264000},{"lv":3,"label":"에이치케이툴스렌탈(HK tools rental)","val":-76500},{"lv":2,"label":"운영 소모품","val":-3049655},{"lv":3,"label":"본사","val":-3049655},{"lv":1,"label":"수도광열비","val":-2740},{"lv":2,"label":"그 외 거래처","val":-2740},{"lv":1,"label":"여비교통비","val":-35500},{"lv":2,"label":"교통비","val":-35500},{"lv":3,"label":"본사","val":-33000},{"lv":3,"label":"물류/CS","val":-2500},{"lv":1,"label":"전력비","val":-502380},{"lv":2,"label":"한국전력공사","val":-489440},{"lv":2,"label":"아인","val":-12940},{"lv":1,"label":"보관료","val":-451000},{"lv":2,"label":"월드물류보관서비스","val":-451000},{"lv":1,"label":"기타판매비와관리비","val":-2374000},{"lv":2,"label":"대표자 사용분","val":-2374000},{"lv":1,"label":"신용카드 대금","val":-26168812},{"lv":2,"label":"우리카드","val":-12919523},{"lv":2,"label":"하나카드(주)","val":-8328379},{"lv":2,"label":"비씨카드(주)","val":-1945420},{"lv":2,"label":"그 외 거래처","val":-2975490},{"lv":0,"label":"영업이익","val":-389770112},{"lv":0,"label":"영업외수익","val":632921},{"lv":1,"label":"잡이익","val":632921},{"lv":2,"label":"텍스프리 마케팅 지원","val":503284},{"lv":2,"label":"기타(잡이익)","val":129637},{"lv":0,"label":"영업외비용","val":-4708469},{"lv":1,"label":"이자비용","val":-4708469},{"lv":2,"label":"그 외 거래처","val":-4708469},{"lv":0,"label":"당기순이익","val":-393845660},{"lv":0,"label":"비영업활동 현금흐름","val":null},{"lv":0,"label":"대출","val":-135344405},{"lv":1,"label":"차입금","val":-86744405},{"lv":2,"label":"클로브2호","val":-86499907},{"lv":2,"label":"그 외 거래처","val":-244498},{"lv":1,"label":"주주/임원/직원 차입금","val":-48600000},{"lv":2,"label":"대표님 주임종단기채권","val":-48600000},{"lv":0,"label":"자산 취득 및 처분","val":-3380000},{"lv":1,"label":"유형자산","val":-3080000},{"lv":2,"label":"아이티매니저","val":-3080000},{"lv":1,"label":"금융자산","val":-300000},{"lv":2,"label":"지식재산공제","val":-300000},{"lv":0,"label":"내부 자금이동","val":-466450},{"lv":1,"label":"계좌간 이동","val":-466450}],"detail_items":[{"lv":2,"label":"자사몰 매출","parent":"매출","val":914016970},{"lv":3,"label":"케이지이니시스","parent":"매출","val":511980539},{"lv":3,"label":"네이버페이(결제형)","parent":"매출","val":234443703},{"lv":3,"label":"카카오페이","parent":"매출","val":18693193},{"lv":3,"label":"현금영수증","parent":"매출","val":97250571},{"lv":3,"label":"네이버페이(주문형)","parent":"매출","val":50980465},{"lv":3,"label":"현금매출(택배비)","parent":"매출","val":668499},{"lv":2,"label":"한남 오프라인 스토어","parent":"매출","val":118151261},{"lv":3,"label":"지점카드매출","parent":"매출","val":104191319},{"lv":3,"label":"지점 현금영수증","parent":"매출","val":13959942},{"lv":2,"label":"현대백화점","parent":"매출","val":84795665},{"lv":3,"label":"압구정지점","parent":"매출","val":59626305},{"lv":3,"label":"무역센터점","parent":"매출","val":25169360},{"lv":2,"label":"마켓플레이스 매출","parent":"매출","val":482955608},{"lv":3,"label":"SSF","parent":"매출","val":99198399},{"lv":3,"label":"스마트스토어","parent":"매출","val":383757209},{"lv":2,"label":"해외매출","parent":"매출","val":52360795},{"lv":2,"label":"제조매입","parent":"매출원가","val":-1258720486},{"lv":3,"label":"원재료 등","parent":"매출원가","val":-852013102},{"lv":3,"label":"제품","parent":"매출원가","val":-284573304},{"lv":3,"label":"오리지널 샘플","parent":"매출원가","val":-108381222},{"lv":3,"label":"통관/검사/기타비용","parent":"매출원가","val":-13752858},{"lv":2,"label":"상품매입","parent":"매출원가","val":-195174210},{"lv":3,"label":"주얼리","parent":"매출원가","val":-195174210},{"lv":2,"label":"직원급여","parent":"급여","val":-11734760},{"lv":2,"label":"사업소득","parent":"급여","val":-16442872},{"lv":3,"label":"모델","parent":"급여","val":-6257372},{"lv":3,"label":"라이브 지원","parent":"급여","val":-1643900},{"lv":3,"label":"기타 사업소득","parent":"급여","val":-8541600},{"lv":2,"label":"그 외 거래처","parent":"퇴직급여","val":-21356356},{"lv":2,"label":"식대 및 간식대","parent":"복리후생비","val":-257380},{"lv":2,"label":"화재보험","parent":"보험료","val":-2700000},{"lv":2,"label":"해외 세일즈 용역","parent":"지급수수료","val":-28700760},{"lv":3,"label":"빅터코퍼레이션","parent":"지급수수료","val":-28700760},{"lv":2,"label":"시설관리용역","parent":"지급수수료","val":-4151800},{"lv":3,"label":"케어존","parent":"지급수수료","val":-1210000},{"lv":3,"label":"A.M크린","parent":"지급수수료","val":-495000},{"lv":3,"label":"크린몬","parent":"지급수수료","val":-770000},{"lv":3,"label":"에스케이쉴더스 논현지점","parent":"지급수수료","val":-77000},{"lv":3,"label":"에스케이쉴더스 용산지점","parent":"지급수수료","val":-371800},{"lv":3,"label":"에스케이쉴더스 동부지점","parent":"지급수수료","val":-1023000},{"lv":3,"label":"세스코","parent":"지급수수료","val":-205000},{"lv":2,"label":"컨설팅용역","parent":"지급수수료","val":-115658795},{"lv":3,"label":"플라이스(PLYS)","parent":"지급수수료","val":-6600000},{"lv":3,"label":"스튜디오노트(studio knot)","parent":"지급수수료","val":-99000000},{"lv":3,"label":"더봄 노무법인","parent":"지급수수료","val":-220000},{"lv":3,"label":"시연디자인","parent":"지급수수료","val":-2970000},{"lv":3,"label":"블리츠씰(Blitz SEAL)","parent":"지급수수료","val":-5280000},{"lv":3,"label":"휘도 세무회계","parent":"지급수수료","val":-660000},{"lv":3,"label":"특허법인 다래","parent":"지급수수료","val":-928795},{"lv":2,"label":"서비스구독","parent":"지급수수료","val":-2773302},{"lv":3,"label":"엘지전자","parent":"지급수수료","val":-70700},{"lv":3,"label":"채널코퍼레이션","parent":"지급수수료","val":-113625},{"lv":3,"label":"셀메이트","parent":"지급수수료","val":-569250},{"lv":3,"label":"플렉스","parent":"지급수수료","val":-495000},{"lv":3,"label":"그 외 거래처","parent":"지급수수료","val":-1524727},{"lv":2,"label":"금융수수료","parent":"지급수수료","val":362108},{"lv":3,"label":"한국정보인증","parent":"지급수수료","val":-110000},{"lv":3,"label":"그 외 거래처","parent":"지급수수료","val":472108},{"lv":2,"label":"인력채용서비스","parent":"지급수수료","val":-13000},{"lv":3,"label":"그 외 거래처","parent":"지급수수료","val":-13000},{"lv":2,"label":"기타 수수료","parent":"지급수수료","val":-11029569},{"lv":3,"label":"세이브카","parent":"지급수수료","val":-1550000},{"lv":3,"label":"글로벌텍스프리","parent":"지급수수료","val":-4005209},{"lv":3,"label":"서울벤처스","parent":"지급수수료","val":-1496000},{"lv":3,"label":"그 외 거래처","parent":"지급수수료","val":-3978360},{"lv":2,"label":"촬영","parent":"광고선전비","val":-41340290},{"lv":3,"label":"키본컬렉티브","parent":"광고선전비","val":-1136500},{"lv":3,"label":"에이인원 (Ain1 Inc.)","parent":"광고선전비","val":-6600000},{"lv":3,"label":"문성민","parent":"광고선전비","val":-3905000},{"lv":3,"label":"노네임","parent":"광고선전비","val":-500500},{"lv":3,"label":"더프레이즈스튜디오","parent":"광고선전비","val":-16878290},{"lv":3,"label":"제이에스뷰티랩","parent":"광고선전비","val":-1980000},{"lv":3,"label":"모델디렉터스","parent":"광고선전비","val":-1870000},{"lv":3,"label":"더플랫","parent":"광고선전비","val":-3300000},{"lv":3,"label":"에이셋(A.SSET Co.,Ltd.)","parent":"광고선전비","val":-3520000},{"lv":3,"label":"그마음","parent":"광고선전비","val":-1650000},{"lv":2,"label":"마케팅","parent":"광고선전비","val":-65332494},{"lv":3,"label":"온라인 광고","parent":"광고선전비","val":-32838494},{"lv":3,"label":"오프라인 광고","parent":"광고선전비","val":-6094000},{"lv":3,"label":"영상제작","parent":"광고선전비","val":-26400000},{"lv":2,"label":"주유비","parent":"차량유지비","val":-306000},{"lv":3,"label":"대표님","parent":"차량유지비","val":-306000},{"lv":2,"label":"주차비","parent":"차량유지비","val":-640000},{"lv":3,"label":"아인","parent":"차량유지비","val":-640000},{"lv":2,"label":"성원애드피아","parent":"도서인쇄비","val":-58050},{"lv":2,"label":"임차료","parent":"임차료","val":-50425385},{"lv":3,"label":"본사 임차료","parent":"임차료","val":-32900763},{"lv":3,"label":"물류실 임차료","parent":"임차료","val":-16624322},{"lv":3,"label":"기타 임차료","parent":"임차료","val":-900300},{"lv":2,"label":"비품대여","parent":"임차료","val":-805700},{"lv":3,"label":"복합기","parent":"임차료","val":-479600},{"lv":3,"label":"커피머신","parent":"임차료","val":-236800},{"lv":3,"label":"정수기","parent":"임차료","val":-89300},{"lv":2,"label":"리스료","parent":"임차료","val":-2561950},{"lv":3,"label":"롯데캐피탈","parent":"임차료","val":-523130},{"lv":3,"label":"에스케이렌터카","parent":"임차료","val":-835500},{"lv":3,"label":"그 외 거래처","parent":"임차료","val":-1203320},{"lv":2,"label":"에스케이텔레콤","parent":"통신비","val":-50000},{"lv":2,"label":"케이티","parent":"통신비","val":-635830},{"lv":2,"label":"케이티 에이치씨엔 동작방송","parent":"통신비","val":-50800},{"lv":2,"label":"국내 운반비","parent":"운반비","val":-35636697},{"lv":3,"label":"배송비","parent":"운반비","val":-27738097},{"lv":3,"label":"퀵 및 기타운반","parent":"운반비","val":-7898600},{"lv":2,"label":"해외 운반비","parent":"운반비","val":-3382658},{"lv":3,"label":"CJ GLS","parent":"운반비","val":-3382658},{"lv":2,"label":"4대보험","parent":"세금과공과","val":-48313230},{"lv":2,"label":"부가세","parent":"세금과공과","val":-25000000},{"lv":2,"label":"원천세","parent":"세금과공과","val":-41771810},{"lv":3,"label":"근로소득세","parent":"세금과공과","val":-37398310},{"lv":3,"label":"사업소득세","parent":"세금과공과","val":-576220},{"lv":3,"label":"지방소득세","parent":"세금과공과","val":-3797280},{"lv":2,"label":"주민세","parent":"세금과공과","val":-1269840},{"lv":2,"label":"과태료","parent":"세금과공과","val":-436000},{"lv":2,"label":"택배박스","parent":"소모품비","val":-21757908},{"lv":3,"label":"한길패키지","parent":"소모품비","val":-14263508},{"lv":3,"label":"탑팩(TOP PACK)","parent":"소모품비","val":-6710000},{"lv":3,"label":"그 외 거래처","parent":"소모품비","val":-784400},{"lv":2,"label":"촬영장비","parent":"소모품비","val":-1340500},{"lv":3,"label":"인터내셔널브이에이치","parent":"소모품비","val":-1264000},{"lv":3,"label":"에이치케이툴스렌탈(HK tools rental)","parent":"소모품비","val":-76500},{"lv":2,"label":"운영 소모품","parent":"소모품비","val":-3049655},{"lv":3,"label":"본사","parent":"소모품비","val":-3049655},{"lv":2,"label":"그 외 거래처","parent":"수도광열비","val":-2740},{"lv":2,"label":"교통비","parent":"여비교통비","val":-35500},{"lv":3,"label":"본사","parent":"여비교통비","val":-33000},{"lv":3,"label":"물류/CS","parent":"여비교통비","val":-2500},{"lv":2,"label":"한국전력공사","parent":"전력비","val":-489440},{"lv":2,"label":"아인","parent":"전력비","val":-12940},{"lv":2,"label":"월드물류보관서비스","parent":"보관료","val":-451000},{"lv":2,"label":"대표자 사용분","parent":"기타판매비와관리비","val":-2374000},{"lv":2,"label":"우리카드","parent":"신용카드 대금","val":-12919523},{"lv":2,"label":"하나카드(주)","parent":"신용카드 대금","val":-8328379},{"lv":2,"label":"비씨카드(주)","parent":"신용카드 대금","val":-1945420},{"lv":2,"label":"그 외 거래처","parent":"신용카드 대금","val":-2975490},{"lv":2,"label":"텍스프리 마케팅 지원","parent":"잡이익","val":503284},{"lv":2,"label":"기타(잡이익)","parent":"잡이익","val":129637},{"lv":2,"label":"그 외 거래처","parent":"이자비용","val":-4708469},{"lv":2,"label":"클로브2호","parent":"차입금","val":-86499907},{"lv":2,"label":"그 외 거래처","parent":"차입금","val":-244498},{"lv":2,"label":"대표님 주임종단기채권","parent":"주주/임원/직원 차입금","val":-48600000},{"lv":2,"label":"아이티매니저","parent":"유형자산","val":-3080000},{"lv":2,"label":"지식재산공제","parent":"금융자산","val":-300000}]};</script>
 <div class="wrap">
   <header id="hdr">
     <div>
@@ -78,22 +122,22 @@ table.cf .pos{color:var(--in)} table.cf .neg{color:var(--out)}
 
   <div class="tabs">
     <button class="tab active" onclick="switchTab(0,this)">📊 요약</button>
-    <button class="tab" onclick="switchTab(1,this)">📋 P&amp;L 상세</button>
+    <button class="tab" onclick="switchTab(1,this)">📋 현금흐름표</button>
+    <button class="tab" onclick="switchTab(2,this)">🔍 세부내역</button>
+    <button class="tab" onclick="switchTab(3,this)">📅 13주 자금예측</button>
   </div>
 
-  <!-- TAB 0: 요약 -->
+  <!-- ═══ TAB 0: 요약 ═══ -->
   <div id="tab0">
     <div class="kpis" id="kpi-row"></div>
 
-    <!-- 현금 Bridge -->
     <section>
       <h2><span class="bar"></span>현금 증감 구조</h2>
       <div class="bridge" id="bridge-row"></div>
     </section>
 
-    <!-- 활동별 차트 + CF 테이블 -->
     <section>
-      <h2><span class="bar"></span>1. 활동별 현금흐름</h2>
+      <h2><span class="bar"></span>활동별 현금흐름</h2>
       <div class="grid2">
         <div class="chartbox"><canvas id="actChart"></canvas></div>
         <table class="cf" id="act-table">
@@ -103,9 +147,8 @@ table.cf .pos{color:var(--in)} table.cf .neg{color:var(--out)}
       </div>
     </section>
 
-    <!-- 매출 채널 + 지출 항목 -->
     <section>
-      <h2><span class="bar"></span>2. 매출 유입 채널 &amp; 주요 지출</h2>
+      <h2><span class="bar"></span>매출 유입 채널 &amp; 주요 지출</h2>
       <div class="grid2">
         <div>
           <div class="h2sub" style="text-align:center">매출 유입 채널 (억원)</div>
@@ -119,18 +162,65 @@ table.cf .pos{color:var(--in)} table.cf .neg{color:var(--out)}
     </section>
   </div>
 
-  <!-- TAB 1: P&L 상세 -->
+  <!-- ═══ TAB 1: 현금흐름표 ═══ -->
   <div id="tab1" style="display:none">
     <section>
-      <h2><span class="bar"></span>손익 및 현금흐름 상세</h2>
-      <div class="h2sub" id="pl-sub">현금흐름 Excel 직접법 기준</div>
+      <h2><span class="bar"></span>현금흐름표</h2>
+      <div class="h2sub" id="cft-sub">Excel 원본 계층 구조 · 단위: 원</div>
       <div style="overflow:auto">
-        <table class="pl-table" id="pl-table">
-          <thead><tr><th>항목</th><th>금액 (원)</th><th>억원</th></tr></thead>
-          <tbody></tbody>
+        <table class="cft-table" id="cft-table">
+          <colgroup>
+            <col style="width:60%">
+            <col style="width:20%">
+            <col style="width:20%">
+          </colgroup>
+          <thead>
+            <tr style="background:#eef4f7">
+              <th style="padding:9px 12px;text-align:left;color:var(--navy);font-size:12px;border-bottom:2px solid var(--line)">항목</th>
+              <th style="padding:9px 12px;text-align:right;color:var(--navy);font-size:12px;border-bottom:2px solid var(--line)">금액 (원)</th>
+              <th style="padding:9px 12px;text-align:right;color:var(--navy);font-size:12px;border-bottom:2px solid var(--line)">억원</th>
+            </tr>
+          </thead>
+          <tbody id="cft-tbody"></tbody>
         </table>
       </div>
-      <p class="note" id="pl-note"></p>
+      <p class="note">* Excel 원본 계층 구조 그대로 표시 · lv0(섹션) → lv1(주요항목) → lv2(소분류) → lv3(상세)</p>
+    </section>
+  </div>
+
+  <!-- ═══ TAB 2: 세부내역 ═══ -->
+  <div id="tab2" style="display:none">
+    <section>
+      <h2><span class="bar"></span>항목별 세부내역</h2>
+      <div class="h2sub">lv2(소분류) · lv3(거래처 그룹) 기준 · 개별 거래내역(lv4) 제외</div>
+      <div class="filter-bar">
+        <span class="fb-label">카테고리:</span>
+        <div id="filter-chips"></div>
+      </div>
+      <div id="dt-body"></div>
+    </section>
+  </div>
+  <!-- TAB: 13주 자금예측 -->
+  <div id="tab3" style="display:none">
+    <section>
+      <h2><span class="bar"></span>13주 자금수지 예측</h2>
+      <div class="h2sub">정산주기 자동 반영(즉시회수=당주 / 익월정산=발생 4주 후 유입) · 단위: 백만원 · 파란 셀은 직접 입력(가정값)</div>
+      <div class="fc-controls">
+        <label>기초 현금잔액 <input id="fcStart" type="number" value="500"></label>
+        <label>안전 잔액선 <input id="fcSafe" type="number" value="100"></label>
+        <button onclick="fcReset()">기본값 복원</button>
+      </div>
+      <div class="fc-alert" id="fcAlert"></div>
+    </section>
+    <section>
+      <h2><span class="bar"></span>주차별 기말 현금잔액 추이</h2>
+      <div style="position:relative;height:280px"><canvas id="fcChart"></canvas></div>
+    </section>
+    <section>
+      <h2><span class="bar"></span>주차별 자금수지표</h2>
+      <div class="h2sub">매출·매입·비용 셀을 실제 계획에 맞게 수정하면 자동 재계산됩니다.</div>
+      <div class="fctw"><table class="fc-table" id="fcTable"></table></div>
+      <p class="note">※ 모든 값은 가정치이며 직접 수정 가능합니다. 익월정산 매출은 발생 4주 뒤 현금으로 자동 반영되고, 직전월 발생분은 W1~W4 '이월유입'에 입력합니다. 저장 기능은 없어 새로고침 시 기본값으로 돌아갑니다.</p>
     </section>
   </div>
 </div>
@@ -140,20 +230,70 @@ const D = window.__PD__ || null;
 Chart.defaults.font.family = "'Malgun Gothic','Apple SD Gothic Neo',sans-serif";
 Chart.defaults.font.size = 12;
 
-const KRW = v => Math.round(v||0).toLocaleString('ko-KR');
-const 억  = v => ((v||0)/1e8).toFixed(2);
+const KRW  = v => Math.round(v||0).toLocaleString('ko-KR');
 const fmt억 = v => {
   const a = (v||0)/1e8;
-  const s = a >= 0 ? '+' : '';
   return (a >= 0 ? '' : '−') + Math.abs(a).toFixed(2) + '억';
 };
 const colorCF = v => v >= 0 ? 'var(--in)' : 'var(--out)';
 
+// ── 탭 전환 ──────────────────────────────────────────────────
 function switchTab(i, el) {
-  ['tab0','tab1'].forEach((id,j)=>document.getElementById(id).style.display=j===i?'':'none');
-  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+  ['tab0','tab1','tab2','tab3'].forEach((id,j) =>
+    document.getElementById(id).style.display = j===i ? '' : 'none');
+  document.querySelectorAll('.tab').forEach((t,j) => t.classList.toggle('active', j===i));
 }
 
+// ── 세부내역 필터 (전역 노출) ────────────────────────────────
+let _detailItems = [];
+function renderDetail(filter) {
+  document.querySelectorAll('.filter-chip').forEach(c =>
+    c.classList.toggle('active', c.dataset.val === filter));
+
+  const items = filter === '전체'
+    ? _detailItems
+    : _detailItems.filter(i => i.parent === filter);
+
+  let html = '';
+  let currentLv2 = null;
+  let lv2Rows = '';
+
+  const flush = () => {
+    if (currentLv2 === null) return;
+    html += `<div class="dt-section">
+      <div class="dt-section-hdr">${currentLv2.label}
+        <span style="float:right;font-weight:400;font-size:12px">${
+          currentLv2.val !== null
+            ? (currentLv2.val<0?'−':'')+KRW(Math.abs(currentLv2.val))+'원'
+            : '-'
+        }</span>
+      </div>
+      <table class="dt-table">${lv2Rows}</table>
+    </div>`;
+    lv2Rows = '';
+    currentLv2 = null;
+  };
+
+  items.forEach(item => {
+    if (item.lv === 2) {
+      flush();
+      currentLv2 = item;
+    } else if (item.lv === 3 && currentLv2) {
+      const vc  = item.val !== null ? (item.val >= 0 ? 'pos' : 'neg') : '';
+      const neg = item.val !== null && item.val < 0;
+      lv2Rows += `<tr class="dt-lv3">
+        <td>${item.label}</td>
+        <td class="${vc}">${item.val!==null?(neg?'−':'')+KRW(Math.abs(item.val))+'원':'-'}</td>
+      </tr>`;
+    }
+  });
+  flush();
+
+  document.getElementById('dt-body').innerHTML =
+    html || '<div class="no-data">해당 항목 없음</div>';
+}
+
+// ── 메인 렌더 ────────────────────────────────────────────────
 function render() {
   if (!D) {
     document.getElementById('hdr-sub').textContent = '⚠️ 데이터 없음 — 배포.py 실행 후 갱신하세요';
@@ -163,41 +303,42 @@ function render() {
   const {
     month_ko, op_cf, non_op_cf, fx_effect, net_cf,
     begin_cash, end_cash,
-    sales, cogs, gross_profit, sga, card, op_profit, net_profit,
+    sales, cogs, sga, op_profit, net_profit,
     loan_out, asset_out, internal,
-    sales_channels, top_outflows, pl_rows,
+    sales_channels, top_outflows,
+    cf_items, detail_items,
   } = D;
 
-  // ── Header ──
+  // ── Header ──────────────────────────────────────────────
   document.title = `더라스트 ${month_ko} 현금흐름`;
   document.getElementById('hdr-title').textContent = `주식회사 더라스트 — ${month_ko} 현금흐름 분석`;
-  document.getElementById('hdr-sub').textContent = `통장 거래내역 직접법 기준 · 단위: 원`;
-  document.getElementById('hdr-lab').textContent = `${month_ko} 순현금흐름`;
+  document.getElementById('hdr-sub').textContent  = `통장 거래내역 직접법 기준 · 단위: 원`;
+  document.getElementById('hdr-lab').textContent  = `${month_ko} 순현금흐름`;
   const ncEl = document.getElementById('hdr-val');
-  ncEl.textContent = (net_cf >= 0 ? '+' : '−') + Math.abs(net_cf/1e8).toFixed(2) + '억';
+  ncEl.textContent = fmt억(net_cf);
   ncEl.style.color = net_cf >= 0 ? '#b7f7d5' : '#ffd5cf';
 
-  // ── KPI 카드 ──
+  // ── KPI 카드 ──────────────────────────────────────────
   const kpis = [
-    { t: '월초 현금 잔고',     v: begin_cash, color: 'var(--accent)' },
-    { t: '영업활동 현금흐름',   v: op_cf,      color: colorCF(op_cf) },
-    { t: '비영업활동 현금흐름', v: non_op_cf,  color: colorCF(non_op_cf) },
-    { t: '월말 현금 잔고',     v: end_cash,   color: colorCF(end_cash) },
+    { t:'월초 현금 잔고',      v: begin_cash, c:'var(--accent)' },
+    { t:'영업활동 현금흐름',    v: op_cf,      c: colorCF(op_cf) },
+    { t:'비영업활동 현금흐름',  v: non_op_cf,  c: colorCF(non_op_cf) },
+    { t:'월말 현금 잔고',      v: end_cash,   c: colorCF(end_cash) },
   ];
   document.getElementById('kpi-row').innerHTML = kpis.map(k => `
     <div class="kpi">
       <div class="t">${k.t}</div>
-      <div class="v" style="color:${k.color}">${(k.v<0?'−':'')+(Math.abs(k.v)/1e8).toFixed(2)}억</div>
+      <div class="v" style="color:${k.c}">${fmt억(k.v)}</div>
       <div class="d">${KRW(k.v)}원</div>
     </div>`).join('');
 
-  // ── Bridge ──
+  // ── Bridge ────────────────────────────────────────────
   const bridge = [
-    { l: '월초 잔고',   v: begin_cash, hl: true },
-    { l: '영업활동 CF', v: op_cf },
-    { l: '비영업 CF',   v: non_op_cf },
-    { l: '환율효과',    v: fx_effect },
-    { l: '월말 잔고',   v: end_cash, hl: true },
+    { l:'월초 잔고',   v: begin_cash, hl:true },
+    { l:'영업활동 CF', v: op_cf },
+    { l:'비영업 CF',   v: non_op_cf },
+    { l:'환율효과',    v: fx_effect },
+    { l:'월말 잔고',   v: end_cash,   hl:true },
   ];
   document.getElementById('bridge-row').innerHTML = bridge.map(b => `
     <div class="bridge-item${b.hl?' hl':''}">
@@ -206,103 +347,201 @@ function render() {
       <div style="font-size:10px;opacity:.7;margin-top:2px">${KRW(b.v)}원</div>
     </div>`).join('');
 
-  // ── 활동별 차트 ──
-  const actLabels = ['영업활동', '비영업활동(대출·자산)', '환율효과', '순현금흐름'];
-  const actVals   = [op_cf, non_op_cf, fx_effect, net_cf].map(v=>v/1e8);
+  // ── 활동별 차트 ──────────────────────────────────────
+  const actVals = [op_cf, non_op_cf, fx_effect, net_cf].map(v=>v/1e8);
   new Chart(document.getElementById('actChart'), {
     type: 'bar',
     data: {
-      labels: actLabels,
-      datasets: [{
-        data: actVals,
-        backgroundColor: actVals.map(v => v >= 0 ? '#1a9d6b' : '#c0392b'),
-      }]
+      labels: ['영업활동', '비영업활동', '환율효과', '순현금흐름'],
+      datasets: [{ data: actVals, backgroundColor: actVals.map(v=>v>=0?'#1a9d6b':'#c0392b') }]
     },
     options: {
-      plugins: { legend: { display: false }, title: { display: true, text: '활동별 순현금흐름 (억원)' },
-        tooltip: { callbacks: { label: c => KRW([op_cf,non_op_cf,fx_effect,net_cf][c.dataIndex]) + '원' } } },
-      scales: { y: { ticks: { callback: v => v + '억' } } }
+      plugins: {
+        legend: { display:false },
+        title: { display:true, text:'활동별 순현금흐름 (억원)' },
+        tooltip: { callbacks: { label: c => KRW([op_cf,non_op_cf,fx_effect,net_cf][c.dataIndex])+'원' } }
+      },
+      scales: { y: { ticks: { callback: v=>v+'억' } } }
     }
   });
 
-  // ── 활동별 테이블 ──
-  const actTbody = document.querySelector('#act-table tbody');
-  const rows = [
-    { label: '영업활동', val: op_cf, note: `매출유입 − 원가·판관비` },
-    { label: '대출 집행·상환', val: loan_out, note: '재무활동' },
-    { label: '자산 취득', val: asset_out, note: '투자활동' },
-    { label: '내부 자금이동', val: internal, note: '계좌간 이체' },
-    { label: '환율변동효과', val: fx_effect, note: '외화계좌 환산' },
+  // ── 활동별 테이블 ─────────────────────────────────────
+  const actRows = [
+    { label:'영업활동',       val: op_cf,     note:'매출 − 원가·판관비' },
+    { label:'대출 집행·상환', val: loan_out,  note:'재무활동' },
+    { label:'자산 취득',      val: asset_out, note:'투자활동' },
+    { label:'내부 자금이동',  val: internal,  note:'계좌간 이체' },
+    { label:'환율변동효과',   val: fx_effect, note:'외화계좌 환산' },
   ];
-  actTbody.innerHTML = rows.map(r => `
-    <tr class="act">
+  document.querySelector('#act-table tbody').innerHTML =
+    actRows.map(r=>`<tr class="act">
       <td>${r.label}</td>
       <td class="${r.val>=0?'pos':'neg'}">${r.val>=0?'+':'−'}${KRW(Math.abs(r.val))}</td>
       <td style="font-size:11.5px;color:var(--muted)">${r.note}</td>
-    </tr>`).join('') + `
-    <tr class="tot">
-      <td>순현금흐름</td>
-      <td>${net_cf>=0?'+':'−'}${KRW(Math.abs(net_cf))}</td>
-      <td></td>
-    </tr>`;
+    </tr>`).join('') +
+    `<tr class="tot"><td>순현금흐름</td><td>${net_cf>=0?'+':'−'}${KRW(Math.abs(net_cf))}</td><td></td></tr>`;
 
-  // ── 매출 채널 차트 ──
+  // ── 매출 채널 차트 ────────────────────────────────────
   if (sales_channels && sales_channels.length) {
     new Chart(document.getElementById('inChart'), {
-      type: 'bar',
-      data: {
-        labels: sales_channels.map(c=>c.name),
-        datasets: [{ data: sales_channels.map(c=>c.val/1e8), backgroundColor: '#1a9d6b' }]
-      },
-      options: {
-        indexAxis: 'y',
-        plugins: { legend: { display: false },
-          tooltip: { callbacks: { label: c => KRW(sales_channels[c.dataIndex].val) + '원' } } },
-        scales: { x: { ticks: { callback: v => v + '억' } } }
-      }
+      type:'bar',
+      data: { labels: sales_channels.map(c=>c.name),
+              datasets:[{data:sales_channels.map(c=>c.val/1e8), backgroundColor:'#1a9d6b'}] },
+      options: { indexAxis:'y', plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:c=>KRW(sales_channels[c.dataIndex].val)+'원'}}},
+        scales:{x:{ticks:{callback:v=>v+'억'}}} }
     });
   }
 
-  // ── 주요 지출 차트 ──
+  // ── 주요 지출 차트 ────────────────────────────────────
   if (top_outflows && top_outflows.length) {
-    const top8 = top_outflows.slice(0, 8);
+    const t8 = top_outflows.slice(0,8);
     new Chart(document.getElementById('outChart'), {
-      type: 'bar',
-      data: {
-        labels: top8.map(o=>o.name),
-        datasets: [{ data: top8.map(o=>o.val/1e8), backgroundColor: '#c0392b' }]
-      },
-      options: {
-        indexAxis: 'y',
-        plugins: { legend: { display: false },
-          tooltip: { callbacks: { label: c => KRW(top8[c.dataIndex].val) + '원' } } },
-        scales: { x: { ticks: { callback: v => v + '억' } } }
-      }
+      type:'bar',
+      data: { labels:t8.map(o=>o.name),
+              datasets:[{data:t8.map(o=>o.val/1e8), backgroundColor:'#c0392b'}] },
+      options: { indexAxis:'y', plugins:{ legend:{display:false},
+        tooltip:{callbacks:{label:c=>KRW(t8[c.dataIndex].val)+'원'}}},
+        scales:{x:{ticks:{callback:v=>v+'억'}}} }
     });
   }
 
-  // ── P&L 테이블 ──
-  document.getElementById('pl-sub').textContent = `${month_ko} 현금흐름 Excel 직접법 기준 · 단위: 원`;
-  const plTbody = document.querySelector('#pl-table tbody');
-  if (pl_rows) {
-    plTbody.innerHTML = pl_rows.map(r => {
-      if (r.val === null) {
-        return `<tr class="sep"><td colspan="3">${r.label}</td></tr>`;
-      }
-      const vc = r.val >= 0 ? 'pos' : 'neg';
-      const sign = r.val >= 0 ? '' : '−';
-      return `<tr${r.bold?' class="bold"':''}>
-        <td style="padding-left:${r.lv*18+12}px">${r.label}</td>
-        <td class="${vc}">${sign}${KRW(Math.abs(r.val))}</td>
-        <td class="${vc}">${sign}${Math.abs(r.val/1e8).toFixed(2)}억</td>
+  // ══════════════════════════════════════════════════════
+  // TAB 1: 현금흐름표
+  // ══════════════════════════════════════════════════════
+  document.getElementById('cft-sub').textContent =
+    `${month_ko} Excel 원본 계층 구조 · 단위: 원`;
+
+  if (cf_items && cf_items.length) {
+    document.getElementById('cft-tbody').innerHTML = cf_items.map(item => {
+      const lv   = item.lv;
+      const val  = item.val;
+      const hasV = val !== null && val !== undefined;
+      const sign = hasV && val < 0;
+      const cls  = `cft-lv${lv}`;
+      const valCls = hasV ? (val >= 0 ? 'pos' : 'neg') : 'cft-null';
+
+      let indentStyle = '';
+      if      (lv === 2) indentStyle = 'padding-left:28px';
+      else if (lv === 3) indentStyle = 'padding-left:52px';
+
+      const valStr = hasV
+        ? `<span class="${valCls}">${sign?'−':''}${KRW(Math.abs(val))}</span>`
+        : `<span class="cft-null">-</span>`;
+      const 억Str = hasV
+        ? `<span class="${valCls}">${(sign?'−':'')}${Math.abs(val/1e8).toFixed(2)}억</span>`
+        : '';
+
+      return `<tr class="${cls}">
+        <td style="${indentStyle}">${item.label}</td>
+        <td>${valStr}</td>
+        <td>${억Str}</td>
       </tr>`;
     }).join('');
+  } else {
+    document.getElementById('cft-tbody').innerHTML =
+      '<tr><td colspan="3" class="no-data">데이터 없음</td></tr>';
   }
-  document.getElementById('pl-note').textContent =
-    `* 외화계좌 KRW 환산 포함. 법인카드는 카드 결제일 기준 현금 유출로 반영됩니다.`;
+
+  // ══════════════════════════════════════════════════════
+  // TAB 2: 세부내역
+  // ══════════════════════════════════════════════════════
+  if (!detail_items || !detail_items.length) {
+    document.getElementById('dt-body').innerHTML = '<div class="no-data">데이터 없음</div>';
+    return;
+  }
+
+  // 전역 변수에 저장 (renderDetail에서 접근)
+  _detailItems = detail_items;
+
+  // 부모 카테고리 목록 추출 (순서 유지)
+  const parents = [];
+  detail_items.forEach(item => {
+    if (item.parent && !parents.includes(item.parent)) parents.push(item.parent);
+  });
+
+  // 필터 칩 생성 — 이벤트 리스너 방식 (특수문자 안전)
+  const chipsEl = document.getElementById('filter-chips');
+  chipsEl.innerHTML = ['전체', ...parents].map(p =>
+    `<button class="filter-chip${p==='전체'?' active':''}" data-val="${p.replace(/"/g,'&quot;')}">${p}</button>`
+  ).join('');
+  chipsEl.querySelectorAll('.filter-chip').forEach(btn =>
+    btn.addEventListener('click', () => renderDetail(btn.dataset.val))
+  );
+
+  renderDetail('전체');
 }
 
 render();
+</script>
+
+<script>
+/* ===== 13주 자금예측 ===== */
+const FC_WEEKS=13;
+function lump(weeks,amt){const a=Array(FC_WEEKS).fill(0);weeks.forEach(w=>a[w-1]=amt);return a;}
+function fcDefaults(){return {start:500,safe:100,rows:[
+ {k:'imm',label:'즉시회수 매출 (자사몰·PG·카드)',cls:'in',v:Array(FC_WEEKS).fill(300)},
+ {k:'defS',label:'익월정산 매출 발생 (SSF·백화점)',cls:'in',v:Array(FC_WEEKS).fill(30)},
+ {k:'carry',label:'익월 이월유입 (전월 발생분)',cls:'in',v:[30,30,30,30,0,0,0,0,0,0,0,0,0]},
+ {k:'etcI',label:'기타 유입 (대여금 회수 등)',cls:'in',v:Array(FC_WEEKS).fill(0)},
+ {k:'defIn',label:'▷ 익월정산 유입 (반영)',cls:'calc'},
+ {k:'inSum',label:'▶ 현금유입 합계',cls:'sumin'},
+ {k:'buy',label:'매입·생산',cls:'out',v:Array(FC_WEEKS).fill(180)},
+ {k:'pay',label:'인건비 (급여·4대보험)',cls:'out',v:lump([3,7,11],380)},
+ {k:'rent',label:'임차료',cls:'out',v:lump([1,5,9,13],50)},
+ {k:'tax',label:'세금 (부가세·원천세)',cls:'out',v:lump([2,6,10],20)},
+ {k:'loan',label:'차입금 상환',cls:'out',v:lump([2,6,10],87)},
+ {k:'etcO',label:'기타 운영비',cls:'out',v:Array(FC_WEEKS).fill(60)},
+ {k:'outSum',label:'▶ 현금유출 합계',cls:'sumout'},
+ {k:'net',label:'주간 순증감',cls:'net'},
+ {k:'bal',label:'기말 현금잔액',cls:'bal'}
+]};}
+let FC=fcDefaults();
+function fcDates(){const d=new Date();const day=d.getDay();const diff=(8-day)%7||7;const mon=new Date(d);mon.setDate(d.getDate()+diff);
+ const o=[];for(let i=0;i<FC_WEEKS;i++){const w=new Date(mon);w.setDate(mon.getDate()+i*7);o.push((w.getMonth()+1)+'/'+w.getDate());}return o;}
+const FCD=fcDates();
+const fcf=v=>Math.round(v).toLocaleString('ko-KR');
+function frow(k){return FC.rows.find(r=>r.k===k);}
+function fcCompute(){const imm=frow('imm').v,defS=frow('defS').v,carry=frow('carry').v,etcI=frow('etcI').v,
+ buy=frow('buy').v,pay=frow('pay').v,rent=frow('rent').v,tax=frow('tax').v,loan=frow('loan').v,etcO=frow('etcO').v;
+ const defIn=[],inSum=[],outSum=[],net=[],bal=[];
+ for(let i=0;i<FC_WEEKS;i++){const di=carry[i]+(i>=4?defS[i-4]:0);defIn[i]=di;
+  inSum[i]=imm[i]+etcI[i]+di;outSum[i]=buy[i]+pay[i]+rent[i]+tax[i]+loan[i]+etcO[i];
+  net[i]=inSum[i]-outSum[i];bal[i]=(i===0?FC.start:bal[i-1])+net[i];}
+ return {defIn,inSum,outSum,net,bal};}
+function fcTable(){const t=document.getElementById('fcTable');
+ let head='<thead><tr><th>구분 (백만원)</th>';
+ for(let i=0;i<FC_WEEKS;i++)head+=`<th>W${i+1}<br><span style="font-weight:400;color:#94a3b8">${FCD[i]}</span></th>`;
+ head+='</tr></thead><tbody>';let body='';
+ FC.rows.forEach(r=>{body+=`<tr class="${r.cls}"><td>${r.label}</td>`;
+  for(let i=0;i<FC_WEEKS;i++){body+=r.v?`<td><input type="number" data-k="${r.k}" data-i="${i}" value="${r.v[i]}"></td>`:`<td id="fc_${r.k}_${i}">-</td>`;}
+  body+='</tr>';});
+ t.innerHTML=head+body+'</tbody>';
+ t.querySelectorAll('input[data-k]').forEach(inp=>inp.addEventListener('input',e=>{
+  frow(e.target.dataset.k).v[+e.target.dataset.i]=parseFloat(e.target.value)||0;fcRefresh();}));}
+let fcChart=null;
+function fcRefresh(){const c=fcCompute();
+ ['defIn','inSum','outSum','net'].forEach(k=>{for(let i=0;i<FC_WEEKS;i++){const el=document.getElementById('fc_'+k+'_'+i);if(el)el.textContent=fcf(c[k][i]);}});
+ for(let i=0;i<FC_WEEKS;i++){const el=document.getElementById('fc_bal_'+i);if(!el)continue;el.textContent=fcf(c.bal[i]);
+  el.className=c.bal[i]<0?'bneg':(c.bal[i]<FC.safe?'bwarn':'');}
+ const neg=[],low=[];c.bal.forEach((b,i)=>{if(b<0)neg.push(i+1);else if(b<FC.safe)low.push(i+1);});
+ const a=document.getElementById('fcAlert');
+ if(neg.length){a.className='fc-alert bad';a.textContent='⚠️ 현금 부족(마이너스) 예상: W'+neg.join(', W')+' — 해당 시점 전 브릿지 자금·정산 조기화 필요';}
+ else if(low.length){a.className='fc-alert warn';a.textContent='🟡 안전선('+FC.safe+'백만) 미만 주차: W'+low.join(', W')+' — 자금 여유 주의';}
+ else{a.className='fc-alert ok';a.textContent='✅ 전 기간 안전 잔액선('+FC.safe+'백만) 이상 유지 — 현 가정 기준 부족 없음';}
+ const labels=FCD.map((d,i)=>'W'+(i+1));
+ const ds=[{label:'기말 현금잔액',data:c.bal,borderColor:'#0e3a53',backgroundColor:'rgba(14,58,83,.08)',fill:true,tension:.25,pointRadius:3},
+  {label:'안전선',data:Array(FC_WEEKS).fill(FC.safe),borderColor:'#c77d12',borderDash:[6,4],pointRadius:0,fill:false},
+  {label:'0',data:Array(FC_WEEKS).fill(0),borderColor:'#c0392b',borderDash:[3,3],pointRadius:0,fill:false}];
+ if(fcChart){fcChart.data.labels=labels;fcChart.data.datasets=ds;fcChart.update();}
+ else{fcChart=new Chart(document.getElementById('fcChart'),{type:'line',data:{labels,datasets:ds},
+  options:{plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:x=>x.dataset.label+' '+fcf(x.parsed.y)+'백만'}}},scales:{y:{ticks:{callback:v=>v+'백만'}}}}});}}
+function fcReset(){FC=fcDefaults();document.getElementById('fcStart').value=FC.start;document.getElementById('fcSafe').value=FC.safe;fcTable();fcRefresh();}
+function fcInit(){if(!document.getElementById('fcTable'))return;
+ document.getElementById('fcStart').addEventListener('input',e=>{FC.start=parseFloat(e.target.value)||0;fcRefresh();});
+ document.getElementById('fcSafe').addEventListener('input',e=>{FC.safe=parseFloat(e.target.value)||0;fcRefresh();});
+ fcTable();fcRefresh();}
+fcInit();
 </script>
 </body>
 </html>
