@@ -130,7 +130,6 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   <button class="tab active" onclick="switchTab(0)">대표자 보고용</button>
   <button class="tab" onclick="switchTab(1)">세부항목 비교</button>
   <button class="tab" onclick="switchTab(2)">손익계산서</button>
-  <button class="tab" onclick="switchTab(3)">관리 및 개선방향</button>
 </div>
 
 <div id="empty-state">
@@ -179,28 +178,6 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   </div>
 </div>
 
-<!-- ══ Panel 3: 관리 및 개선방향 ══ -->
-<div class="panel" id="panel-2">
-  <div class="g4" id="kpi-mgmt"></div>
-  <div class="save-bar">
-    <span class="save-notice" id="save-notice"></span>
-    <button class="btn-save" onclick="saveComments()">💾 코멘트 저장</button>
-  </div>
-  <div class="g2">
-    <div class="card">
-      <div style="font-size:12px;font-weight:600;margin-bottom:.5rem">📝 해당월 손익 코멘트</div>
-      <textarea class="comment-area" id="txt-current" placeholder="이번달 주요 손익 내용을 입력하세요..."></textarea>
-    </div>
-    <div class="card">
-      <div style="font-size:12px;font-weight:600;margin-bottom:.5rem">📊 전월 비교 특이사항 · 개선사항</div>
-      <textarea class="comment-area" id="txt-compare" placeholder="전월과 비교하여 특이사항이나 개선사항을 입력하세요..."></textarea>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">월별 주요 지표 비교</div>
-    <table class="tbl" id="t-mgmt"></table>
-  </div>
-</div>
 
 </div><!-- main-wrap -->
 
@@ -308,7 +285,6 @@ function loadFile(evt) {
       document.getElementById('main-wrap').style.display = 'block';
       document.getElementById('period-badge').textContent = `${G.months.join(' / ')} 기준`;
       document.getElementById('sub-txt').textContent = `주식회사 더라스트 · ${file.name} · ${new Date().toLocaleDateString('ko-KR')} 업데이트`;
-      restoreComments();
     } catch(err) { alert('파싱 오류: '+err.message); }
   };
   reader.readAsArrayBuffer(file);
@@ -464,7 +440,6 @@ function renderAll() {
   renderMatChart();
   renderPnlDetailCharts();
   renderSgaCharts();
-  renderMgmtTable();
   updateNavVals();
   // 모든 섹션 상세 테이블 렌더링
   SECTIONS.forEach(s => {
@@ -487,7 +462,7 @@ function diff(arr)   { return latest(arr)-prev(arr); }
 function pctDiff(arr){ const p=prev(arr); return p?(diff(arr)/Math.abs(p)*100).toFixed(1):null; }
 
 function renderKPIs() {
-  const p = ['kpi-main','kpi-mgmt'].map(id=>document.getElementById(id));
+  const p = [document.getElementById('kpi-main')];
   const l_rev=latest(G.pl.매출액), d_rev=diff(G.pl.매출액), pd_rev=pctDiff(G.pl.매출액);
   const l_op=latest(G.pl.영업이익), p_op=prev(G.pl.영업이익);
   const l_cost=latest(G.pl.매출원가), l_rate=latest(G.pl.매출원가율);
@@ -606,30 +581,6 @@ function renderSgaCharts() {
   mkSimple('c-rent',  G.pl.지급임차료,LC[0]);
 }
 
-function renderMgmtTable() {
-  const N=G.months.length;
-  const ROWS=[
-    {label:'매출액',     key:'매출액',      hi:true},
-    {label:'매출원가',   key:'매출원가'},
-    {label:'  원가율',   key:'매출원가율',  pct:true},
-    {label:'매출총이익', key:'매출총이익',  hi:true},
-    {label:'판관비',     key:'판관비'},
-    {label:'영업이익',   key:'영업이익',    hi:true},
-  ];
-  let html=`<thead><tr><th>항목</th>${G.months.map(m=>`<th>${m}</th>`).join('')}<th>MoM 증감</th></tr></thead><tbody>`;
-  ROWS.forEach(r=>{
-    const arr = G.pl[r.key]||[];
-    const rowCls = r.hi?' class="tr-hi"':r.pct?' class="tr-sub"':'';
-    if(r.pct) {
-      html+=`<tr${rowCls}><td>${r.label}</td>${arr.map(v=>`<td>${v!==null?(v*100).toFixed(1)+'%':'-'}</td>`).join('')}<td>-</td></tr>`;
-    } else {
-      const d=arr.length>=2?arr[arr.length-1]-arr[arr.length-2]:null;
-      html+=`<tr${rowCls}><td>${r.label}</td>${arr.map(v=>`<td>${K(v)}</td>`).join('')}<td>${d!==null?`<span class="${d>=0?'up':'dn'}">${d>=0?'+':''}${K(d)}</span>`:'-'}</td></tr>`;
-    }
-  });
-  html+='</tbody>';
-  document.getElementById('t-mgmt').innerHTML=html;
-}
 
 // ─── Panel 1 네비 전환 ────────────────────────────────────
 function selectDetail(id) {
@@ -835,39 +786,10 @@ function switchTab(i){
   tabs.forEach((t,j)=>t.classList.toggle('active',j===i));
 }
 
-// ─── 코멘트 저장 ──────────────────────────────────────────
-function restoreComments(){
-  const c=document.getElementById('txt-current');
-  const p=document.getElementById('txt-compare');
-  if(c){
-    c.value=SAVED.current||localStorage.getItem('pnl_comment_cur')||'';
-    c.addEventListener('input',()=>localStorage.setItem('pnl_comment_cur',c.value));
-  }
-  if(p){
-    p.value=SAVED.compare||localStorage.getItem('pnl_comment_cmp')||'';
-    p.addEventListener('input',()=>localStorage.setItem('pnl_comment_cmp',p.value));
-  }
-}
-
-function saveComments(){
-  const cur=document.getElementById('txt-current').value;
-  const cmp=document.getElementById('txt-compare').value;
-  const html=document.documentElement.outerHTML;
-  const updated=html.replace(/const SAVED=\{current:.*?,compare:.*?\};/,
-    `const SAVED={current:${JSON.stringify(cur)},compare:${JSON.stringify(cmp)}};`);
-  const blob=new Blob([updated],{type:'text/html;charset=utf-8'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download='손익보고_동적.html';document.body.appendChild(a);a.click();
-  document.body.removeChild(a);URL.revokeObjectURL(a.href);
-  const n=document.getElementById('save-notice');
-  if(n){n.textContent='✓ 저장 완료 — 다운로드된 파일로 교체하세요';n.style.color='#059669';setTimeout(()=>n.textContent='',4000);}
-}
-
 // ─── 자동 렌더 (배포 환경) ──────────────────────────
 if (window.__PD__) {
   Object.assign(G, window.__PD__);
   renderAll();
-  restoreComments();
   document.getElementById('empty-state').style.display = 'none';
   document.getElementById('main-wrap').style.display = 'block';
   document.getElementById('period-badge').textContent = G.months.join(' / ') + ' 기준';
