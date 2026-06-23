@@ -325,6 +325,16 @@
       <span class="icon">🪑</span>
       <span>자리배치도</span>
     </div>
+
+    <div class="nav-label" style="margin-top:18px;">경영 보고</div>
+    <div class="nav-item" id="nav-order" onclick="loadDash('order')">
+      <span class="icon">📋</span>
+      <span>발주–자금 관리체계</span>
+    </div>
+    <div class="nav-item" id="nav-md" onclick="loadDash('md')">
+      <span class="icon">📊</span>
+      <span>발주관리 도구 (MD)</span>
+    </div>
   </div>
 
   <div class="sidebar-footer">
@@ -492,6 +502,44 @@
           </div>
         </div>
 
+        <!-- 발주자금 관리체계 카드 -->
+        <div class="dash-card" style="border-top:3px solid #f59e0b" onclick="loadDash('order')">
+          <span class="dash-card-icon">📋</span>
+          <div class="dash-card-title">발주–자금 관리체계</div>
+          <div class="dash-card-desc">
+            발주 기준선 설정·과발주 통제·선발주 분리,<br>
+            지급예정 캘린더로 자금계획 자동 연계
+          </div>
+          <div class="dash-card-tags">
+            <span class="dash-tag" style="background:rgba(245,158,11,.08);color:#b45309;border-color:rgba(245,158,11,.2)">발주통제</span>
+            <span class="dash-tag" style="background:rgba(245,158,11,.08);color:#b45309;border-color:rgba(245,158,11,.2)">자금계획</span>
+            <span class="dash-tag" style="background:rgba(245,158,11,.08);color:#b45309;border-color:rgba(245,158,11,.2)">경영보고</span>
+          </div>
+          <div class="dash-card-footer">
+            <span class="dash-launch" style="color:#b45309">열기 →</span>
+            <span class="dash-updated">2026.06</span>
+          </div>
+        </div>
+
+        <!-- MD 발주관리 도구 카드 -->
+        <div class="dash-card" style="border-top:3px solid #0ea5e9" onclick="loadDash('md')">
+          <span class="dash-card-icon">📊</span>
+          <div class="dash-card-title">발주관리 도구 (MD)</div>
+          <div class="dash-card-desc">
+            매출예측→원가역산→발주기준선 자동계산,<br>
+            과발주 체크·지급예정 캘린더 연동
+          </div>
+          <div class="dash-card-tags">
+            <span class="dash-tag" style="background:rgba(14,165,233,.08);color:#0369a1;border-color:rgba(14,165,233,.2)">매출예측</span>
+            <span class="dash-tag" style="background:rgba(14,165,233,.08);color:#0369a1;border-color:rgba(14,165,233,.2)">원가역산</span>
+            <span class="dash-tag" style="background:rgba(14,165,233,.08);color:#0369a1;border-color:rgba(14,165,233,.2)">발주관리</span>
+          </div>
+          <div class="dash-card-footer">
+            <span class="dash-launch" style="color:#0369a1">열기 →</span>
+            <span class="dash-updated">2026.06</span>
+          </div>
+        </div>
+
         <!-- 자리배치도 카드 -->
         <div class="dash-card" style="border-top:3px solid #a78bfa" onclick="loadDash('seat')">
           <span class="dash-card-icon">🪑</span>
@@ -526,7 +574,7 @@
           <div class="quick-icon">🗂️</div>
           <div>
             <div class="quick-label">대시보드</div>
-            <div class="quick-value">8개 통합</div>
+            <div class="quick-value">9개 통합</div>
           </div>
         </div>
         <div class="quick-card">
@@ -589,6 +637,14 @@
     <span class="bn-icon">🪑</span>
     <span class="bn-label">자리배치</span>
   </div>
+  <div class="bn-item" id="bn-order" onclick="loadDash('order')">
+    <span class="bn-icon">📋</span>
+    <span class="bn-label">발주자금</span>
+  </div>
+  <div class="bn-item" id="bn-md" onclick="loadDash('md')">
+    <span class="bn-icon">📊</span>
+    <span class="bn-label">발주MD</span>
+  </div>
 </div>
 
 <script>
@@ -648,6 +704,20 @@
       nav: 'nav-seat',
       bn: 'bn-seat',
       label: '🪑 자리배치도'
+    },
+    order: {
+      file: '발주자금_동적.html',
+      title: '발주–자금 관리체계',
+      nav: 'nav-order',
+      bn: 'bn-order',
+      label: '📋 발주–자금 관리체계'
+    },
+    md: {
+      file: '발주관리_동적.html',
+      title: '발주관리 도구 (MD)',
+      nav: 'nav-md',
+      bn: 'bn-md',
+      label: '📊 발주관리 도구 (MD)'
     }
   };
 
