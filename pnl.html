@@ -304,10 +304,11 @@ function parseWorkbook(wb) {
   const hdr = raw[0];
   G.months = [];
   G.monthCols = [];
-  for(let c=4; c<(hdr?.length||0); c+=2) {
+  // 헤더 행 전체 스캔 — 실제 월 컬럼 위치(홀수 인덱스)를 정확히 탐지
+  for(let c=0; c<(hdr?.length||0); c++) {
     const v = hdr[c];
     if(typeof v==='string' && v.includes('년') && v.includes('월')) {
-      const m = v.replace('2026년','').replace('년','').replace(/^0/,'');
+      const m = v.replace(/\d{4}년/,'').replace(/^0+/,'');
       G.months.push(m);
       G.monthCols.push(c);
     }
@@ -323,40 +324,29 @@ function parseWorkbook(wb) {
     if(!r) return G.monthCols.map(()=>null);
     return G.monthCols.map(c => typeof r[c+1]==='number' ? r[c+1] : null);
   };
+  const addItems = (a, b) => a.map((v,i) => v + b[i]);
 
+  // 행 인덱스 (★월별 손익보고.xlsx 전체 시트 기준)
+  // row[1]=매출액 row[3]=매출원가 row[8]=기말재고 row[9]=매출총이익
+  // row[13]=판매수수료계 row[18]=변동비계 row[19]=공헌이익
+  // row[21]=임원급여 ~ row[45]=판매촉진비 row[46]=고정비계
+  // row[47]=영업이익 row[59]=당기순이익
   G.pl = {
-    매출액: getItem(1),
-    매출원가: getItem(3),
-    매출원가율: getItemRatio(3),
-    기말재고: getItem(7),
-    매출총이익: getItem(8),
-    판관비: getItem(9),
-    임원급여: getItem(10),
-    직원급여: getItem(11),
-    상여금: getItem(12),
-    잡급: getItem(13),
-    퇴직급여: getItem(14),
-    복리후생비: getItem(15),
-    여비교통비: getItem(16),
-    접대비: getItem(17),
-    통신비: getItem(18),
-    수도광열비: getItem(19),
-    전력비: getItem(20),
-    세금과공과: getItem(21),
-    지급임차료: getItem(22),
-    보험료: getItem(23),
-    차량유지비: getItem(24),
-    운반비: getItem(25),
-    소모품비: getItem(26),
-    지급수수료: getItem(27),
-    광고선전비: getItem(28),
-    판매수수료: getItem(29),
-    리스료: getItem(30),
-    인적용역비: getItem(31),
-    견본비: getItem(32),
-    판매촉진비: getItem(33),
-    영업이익: getItem(34),
-    당기순이익: getItem(44),
+    매출액:    getItem(1),
+    매출원가:  getItem(3),  매출원가율: getItemRatio(3),
+    기말재고:  getItem(8),  매출총이익: getItem(9),
+    판관비:    addItems(getItem(18), getItem(46)),  // 변동비+고정비
+    판매수수료: getItem(13), 변동비:    getItem(18),
+    임원급여:  getItem(21), 직원급여:  getItem(22), 상여금:    getItem(23),
+    잡급:      getItem(24), 퇴직급여:  getItem(25), 복리후생비: getItem(26),
+    여비교통비: getItem(27), 접대비:   getItem(28), 통신비:    getItem(29),
+    수도광열비: getItem(30), 전력비:   getItem(31), 세금과공과: getItem(32),
+    지급임차료: getItem(33), 수선비:   getItem(34), 보험료:    getItem(35),
+    차량유지비: getItem(36), 운반비:   getItem(37), 교육훈련비: getItem(38),
+    소모품비:  getItem(39), 지급수수료: getItem(40), 광고선전비: getItem(41),
+    리스료:    getItem(42), 인적용역비: getItem(43), 견본비:    getItem(44),
+    판매촉진비: getItem(45), 고정비:   getItem(46),
+    영업이익:  getItem(47), 당기순이익: getItem(59),
   };
 
   // 손익계산서 형식 (전체 월 + 누계)
@@ -370,14 +360,16 @@ function parseWorkbook(wb) {
     const indent = name.length - name.trimStart().length;
     const vals   = G.monthCols.map(c => typeof r[c] === 'number' ? r[c] : 0);
     const ratios = G.monthCols.map(c => typeof r[c+1] === 'number' ? Math.round(r[c+1]*1000)/10 : null);
-    const cum    = typeof r[1] === 'number' ? r[1] : 0;
-    const cumR   = typeof r[2] === 'number' ? Math.round(r[2]*1000)/10 : null;
+    const cum    = typeof r[2] === 'number' ? r[2] : 0;    // C열(index 2) = 합계
+    const cumR   = typeof r[3] === 'number' ? Math.round(r[3]*1000)/10 : null;  // D열(index 3) = 비율
     stmtRows.push({ name: name.trim(), sec: isSec, lv: Math.min(Math.floor(indent/4), 1),
                     v: vals, r: ratios, cum, cumR });
   }
   G.statement = { months: G.months, rows: stmtRows };
 
-  const startInv = raw[5] ? (typeof raw[5][4]==='number' ? raw[5][4] : null) : null;
+  // 기초재고: row[5]의 첫 번째 월 컬럼값 (1월 기초재고)
+  const _sc = G.monthCols[0] ?? 4;
+  const startInv = raw[5] ? (typeof raw[5][_sc]==='number' ? raw[5][_sc] : null) : null;
   G.inv = startInv ? [startInv, ...G.pl.기말재고] : G.pl.기말재고;
 
   // ── 2. '항목별 세부금액' 시트 파싱 ──
@@ -710,6 +702,17 @@ function renderStatement() {
     return { bg:'#f8fafc', border:'#94a3b8', text:'#334155' };
   };
 
+  // ── 소계 행 강조 테마 (매출액/매출원가/매출총이익/변동비 계/공헌이익/고정비 계) ──
+  const SUBTOTAL_THEME = {
+    '매출액':    { bg:'#dbeafe', border:'#3b82f6', text:'#1e3a8a', label:'매출액' },
+    '매출원가':  { bg:'#ffedd5', border:'#f97316', text:'#9a3412', label:'매출원가' },
+    '매출총이익':{ bg:'#dcfce7', border:'#16a34a', text:'#14532d', label:'매출총이익' },
+    '변동비 계': { bg:'#f3e8ff', border:'#9333ea', text:'#581c87', label:'변동비 계' },
+    '공헌이익':  { bg:'#d1fae5', border:'#059669', text:'#064e3b', label:'공헌이익' },
+    '고정비 계': { bg:'#fee2e2', border:'#dc2626', text:'#7f1d1d', label:'고정비 계' },
+  };
+  const getSubtotalTheme = name => SUBTOTAL_THEME[name.trim()] ?? null;
+
   const stickyTh = `position:sticky;top:0;z-index:3;`;
   const stickyThL = `position:sticky;top:0;left:0;z-index:4;`;  // 좌상단 교차점
 
@@ -739,19 +742,20 @@ function renderStatement() {
 
   for (const row of stmt.rows) {
     const isSec = row.sec;
+    const stTheme = getSubtotalTheme(row.name);
     const theme = getTheme(row.name);
 
     const topBorder = `border-top:3px solid ${theme.border}`;
     const colCount = ms.length * 2 + 1;
 
     // 데이터도 역순 (당월이 첫 번째)
-    // 당월→1월 역순, 누계는 row.cum / row.cumR
     const vals = [...row.v].reverse();
     const rats = [...row.r].reverse();
     const cumV = row.cum  ?? 0;
     const cumR = row.cumR ?? null;
 
     if (isSec) {
+      // ── 로마 숫자 섹션 헤더 ──
       html += `<tr>
         <td style="position:sticky;left:0;z-index:1;padding:11px 14px 11px 12px;font-weight:700;font-size:13px;color:${theme.text};background:${theme.bg};${topBorder};border-left:5px solid ${theme.border};box-shadow:2px 0 4px rgba(0,0,0,0.06)">${row.name}</td>
         <td style="text-align:right;padding:11px 10px;font-size:13px;font-weight:800;color:${CUM_CLR};background:${CUM_BG};${topBorder}${COL_DIV}">${fw(cumV)}</td>
@@ -761,7 +765,19 @@ function renderStatement() {
           <td style="text-align:right;padding:11px 6px;background:${theme.bg};${topBorder}">${fr(rats[i])}</td>`
         ).join('')}
       </tr>`;
+    } else if (stTheme) {
+      // ── 소계/합계 강조 행 (매출액·매출원가·매출총이익·변동비 계·공헌이익·고정비 계) ──
+      html += `<tr>
+        <td style="position:sticky;left:0;z-index:1;padding:9px 14px 9px 14px;font-weight:700;font-size:12.5px;color:${stTheme.text};background:${stTheme.bg};border-top:2px solid ${stTheme.border};border-left:4px solid ${stTheme.border};box-shadow:2px 0 4px rgba(0,0,0,0.05)">${row.name}</td>
+        <td style="text-align:right;padding:9px 10px;font-size:12.5px;font-weight:700;color:${CUM_CLR};background:${CUM_BG};border-top:2px solid ${stTheme.border};${COL_DIV}">${fw(cumV)}</td>
+        <td style="text-align:right;padding:9px 6px;background:${CUM_BG};border-top:2px solid ${stTheme.border}">${fr(cumR)}</td>
+        ${vals.map((v, i) => `
+          <td style="text-align:right;padding:9px 10px;font-size:12.5px;font-weight:700;color:${stTheme.text};background:${stTheme.bg};border-top:2px solid ${stTheme.border};${COL_DIV}">${fw(v)}</td>
+          <td style="text-align:right;padding:9px 6px;background:${stTheme.bg};border-top:2px solid ${stTheme.border}">${fr(rats[i])}</td>`
+        ).join('')}
+      </tr>`;
     } else {
+      // ── 일반 세부 항목 ──
       html += `<tr style="border-bottom:1px solid #f1f5f9" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
         <td style="position:sticky;left:0;z-index:1;padding:6px 14px 6px ${12 + row.lv*16}px;color:#4b5563;font-size:11.5px;border-left:5px solid transparent;background:#fff;box-shadow:2px 0 6px rgba(0,0,0,0.08)">${row.name}</td>
         <td style="text-align:right;padding:6px 10px;font-size:11.5px;background:rgba(219,234,254,0.3);${COL_DIV}">${fw(cumV)}</td>
