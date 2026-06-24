@@ -88,16 +88,19 @@ tr:hover td { background:#f8fafc; }
 
 /* 피벗 테이블 */
 .pivot-wrap { overflow:auto; max-height:68vh; border-radius:8px; border:1px solid #e2e8f0; }
-#t-pivot { border-collapse:collapse; font-size:12px; min-width:100%; }
+#t-pivot { border-collapse:collapse; font-size:12px; min-width:100%; table-layout:fixed; }
 #t-pivot th, #t-pivot td { border:1px solid #e8edf3; padding:6px 9px; white-space:nowrap; }
 #t-pivot thead th { position:sticky; background:#f1f5f9; z-index:2; font-size:10px; font-weight:700; color:#475569; }
 #t-pivot thead tr:first-child th { top:0; }
 #t-pivot thead tr:nth-child(2) th { top:30px; }
-#t-pivot .s0 { position:sticky; left:0; z-index:1; background:#fff; min-width:36px; text-align:center; }
-#t-pivot .s1 { position:sticky; left:36px; z-index:1; background:#fff; min-width:190px; max-width:190px; overflow:hidden; text-overflow:ellipsis; }
-#t-pivot .s2 { position:sticky; left:226px; z-index:1; background:#fff; min-width:110px; max-width:110px; overflow:hidden; text-overflow:ellipsis; }
+#t-pivot .s0 { position:sticky; left:0; z-index:1; background:inherit; width:36px; text-align:center; }
+#t-pivot .s1 { position:sticky; left:36px; z-index:1; background:inherit; width:190px; overflow:hidden; text-overflow:ellipsis; }
+#t-pivot .s2 { position:sticky; left:226px; z-index:1; background:inherit; width:110px; overflow:hidden; text-overflow:ellipsis; }
 #t-pivot thead .s0,#t-pivot thead .s1,#t-pivot thead .s2 { z-index:5; background:#f1f5f9; }
-#t-pivot tbody tr:hover td { background:#f0fdf4!important; }
+#t-pivot tbody tr:hover { background:#f0fdf4!important; }
+#t-pivot tbody tr:hover .s0,
+#t-pivot tbody tr:hover .s1,
+#t-pivot tbody tr:hover .s2 { background:#f0fdf4!important; }
 #t-pivot .sum-row td { background:#e8fdf4!important; font-weight:700; border-top:2px solid #6ee7b7; border-bottom:2px solid #6ee7b7; }
 #t-pivot .sum-row .s0,#t-pivot .sum-row .s1,#t-pivot .sum-row .s2 { background:#e8fdf4!important; }
 .date-hd { text-align:center!important; background:#eff6ff!important; color:#1d4ed8!important; border-left:2px solid #93c5fd!important; }
@@ -672,50 +675,53 @@ function toggleOpts(pidx, btn) {
   const tr = btn.closest('tr');
   const next = tr.nextElementSibling;
 
-  // 이미 펼쳐진 경우 → 옵션 행 제거
+  // 이미 펼쳐진 경우 → 옵션 행 일괄 제거
   if (next && next.dataset.optpidx === String(pidx)) {
-    let cur = next;
-    while (cur && cur.dataset.optpidx === String(pidx)) {
-      const n = cur.nextElementSibling;
-      cur.remove();
-      cur = n;
-    }
+    const toRemove = tr.parentElement.querySelectorAll(`tr[data-optpidx="${pidx}"]`);
+    toRemove.forEach(r => r.remove());
     btn.textContent = '▶';
     return;
   }
 
-  // 접힌 경우 → 옵션 행 동적 생성 후 삽입
+  // 접힌 경우 → 다음 프레임에 삽입 (메인 스레드 블로킹 방지)
+  btn.textContent = '…';
+  btn.style.pointerEvents = 'none';
+
   const p = (window._pivotProds || [])[pidx];
   const dates = window._pivotDates || [];
   if (!p || !p.opts) return;
 
   const fmt = v => v ? v.toLocaleString('ko-KR') : '-';
-  const colCount = dates.length * 2 + 4; // #, 상품명, 공급처, 전월재고, 일별×2, 합계×2, 재고
 
+  // HTML 문자열 먼저 조립
   let html = '';
   p.opts.forEach(o => {
     const optLabel = (o.opt || '기본').replace(/</g,'&lt;');
     html += `<tr data-optpidx="${pidx}" style="background:#f0f4ff;border-bottom:1px solid #e0e7ff">
-      <td class="s0" style="color:#c7d2fe;font-size:10px"></td>
-      <td class="s1" style="padding-left:36px;white-space:nowrap;vertical-align:middle">
+      <td class="s0" style="color:#c7d2fe;font-size:10px;background:#f0f4ff"></td>
+      <td class="s1" style="padding-left:36px;background:#f0f4ff">
         <span style="font-size:11px;color:#4f46e5;background:#e0e7ff;padding:1px 7px;border-radius:10px;display:inline-block">${optLabel}</span>
       </td>
-      <td class="s2"></td>
-      <td class="col-prev" style="color:#a5b4fc;font-size:11px">-</td>`;
+      <td class="s2" style="background:#f0f4ff"></td>
+      <td style="text-align:right;color:#a5b4fc;font-size:11px;min-width:65px">-</td>`;
     for (const dt of dates) {
       const di  = o.d?.[dt]?.i || 0;
       const doo = o.d?.[dt]?.o || 0;
-      html += `<td class="col-in" style="font-size:11px;color:#4f46e5;opacity:${di?1:0.15}">${fmt(di)}</td>
-        <td class="col-out" style="font-size:11px;color:#dc2626;opacity:${doo?1:0.15}">${fmt(doo)}</td>`;
+      html += `<td style="text-align:right;font-size:11px;color:${di?'#4f46e5':'#c7d2fe'};min-width:56px;border-left:2px solid #93c5fd">${di?fmt(di):'-'}</td>
+        <td style="text-align:right;font-size:11px;color:${doo?'#dc2626':'#fca5a5'};min-width:56px">${doo?fmt(doo):'-'}</td>`;
     }
-    html += `<td class="col-in col-tot" style="font-size:11px;color:#4f46e5;font-weight:${o.in?700:400}">${fmt(o.in)}</td>
-      <td class="col-out col-tot" style="font-size:11px;color:#dc2626;font-weight:${o.out?700:400}">${fmt(o.out)}</td>
-      <td class="col-stk" style="color:${o.stk?'#059669':'#94a3b8'};font-weight:${o.stk?600:400};font-size:11px;border-left:2px solid #a7f3d0!important">${fmt(o.stk)}</td>
+    html += `<td style="text-align:right;font-size:11px;color:#4f46e5;font-weight:${o.in?700:400};border-left:2px solid #6ee7b7;min-width:65px">${fmt(o.in)}</td>
+      <td style="text-align:right;font-size:11px;color:#dc2626;font-weight:${o.out?700:400};min-width:65px">${fmt(o.out)}</td>
+      <td style="text-align:right;color:${o.stk?'#059669':'#94a3b8'};font-weight:${o.stk?600:400};font-size:11px;border-left:2px solid #a7f3d0;min-width:65px">${fmt(o.stk)}</td>
     </tr>`;
   });
 
-  tr.insertAdjacentHTML('afterend', html);
-  btn.textContent = '▼';
+  // rAF로 다음 프레임에 DOM 삽입 → UI 블로킹 최소화
+  requestAnimationFrame(() => {
+    tr.insertAdjacentHTML('afterend', html);
+    btn.textContent = '▼';
+    btn.style.pointerEvents = '';
+  });
 }
 
 function showTab(i, el) {
