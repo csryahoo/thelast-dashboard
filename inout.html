@@ -88,26 +88,34 @@ tr:hover td { background:#f8fafc; }
 
 /* 피벗 테이블 */
 .pivot-wrap { overflow:auto; max-height:68vh; border-radius:8px; border:1px solid #e2e8f0; }
-#t-pivot { border-collapse:collapse; font-size:12px; min-width:100%; table-layout:fixed; }
-#t-pivot th, #t-pivot td { border:1px solid #e8edf3; padding:6px 9px; white-space:nowrap; }
+#t-pivot { border-collapse:collapse; font-size:12px; min-width:100%; }
+#t-pivot th, #t-pivot td { border:1px solid #e8edf3; padding:6px 9px; white-space:nowrap; box-sizing:content-box; }
 #t-pivot thead th { position:sticky; background:#f1f5f9; z-index:2; font-size:10px; font-weight:700; color:#475569; }
 #t-pivot thead tr:first-child th { top:0; }
 #t-pivot thead tr:nth-child(2) th { top:30px; }
-#t-pivot .s0 { position:sticky; left:0; z-index:1; background:inherit; width:36px; text-align:center; }
-#t-pivot .s1 { position:sticky; left:36px; z-index:1; background:inherit; width:190px; overflow:hidden; text-overflow:ellipsis; }
-#t-pivot .s2 { position:sticky; left:226px; z-index:1; background:inherit; width:110px; overflow:hidden; text-overflow:ellipsis; }
+#t-pivot .s0 { position:sticky; left:0; z-index:1; background:#fff; min-width:36px; max-width:36px; text-align:center; }
+#t-pivot .s1 { position:sticky; left:36px; z-index:1; background:#fff; min-width:190px; max-width:190px; overflow:hidden; text-overflow:ellipsis; }
+#t-pivot .s2 { position:sticky; left:226px; z-index:1; background:#fff; min-width:110px; max-width:110px; overflow:hidden; text-overflow:ellipsis; }
 #t-pivot thead .s0,#t-pivot thead .s1,#t-pivot thead .s2 { z-index:5; background:#f1f5f9; }
+#t-pivot .col-in  { color:#1d4ed8; min-width:56px; max-width:56px; text-align:right!important; border-left:2px solid #93c5fd!important; overflow:hidden; }
+#t-pivot .col-out { color:#b91c1c; min-width:56px; max-width:56px; text-align:right!important; overflow:hidden; }
+#t-pivot .col-prev, #t-pivot .col-stk { min-width:65px; max-width:72px; text-align:right!important; overflow:hidden; }
+#t-pivot .col-tot { min-width:65px; max-width:72px; text-align:right!important; border-left:2px solid #6ee7b7!important; overflow:hidden; }
+#t-pivot .col-tot.col-in { border-left:2px solid #6ee7b7!important; color:#1d4ed8; }
+#t-pivot .col-tot.col-out { border-left:none!important; color:#b91c1c; }
 #t-pivot tbody tr:hover { background:#f0fdf4!important; }
 #t-pivot tbody tr:hover .s0,
 #t-pivot tbody tr:hover .s1,
 #t-pivot tbody tr:hover .s2 { background:#f0fdf4!important; }
+/* 렌더링 격리 — 행 추가 시 외부 reflow 차단 */
+.pivot-wrap { contain: layout style; }
 #t-pivot .sum-row td { background:#e8fdf4!important; font-weight:700; border-top:2px solid #6ee7b7; border-bottom:2px solid #6ee7b7; }
 #t-pivot .sum-row .s0,#t-pivot .sum-row .s1,#t-pivot .sum-row .s2 { background:#e8fdf4!important; }
 .date-hd { text-align:center!important; background:#eff6ff!important; color:#1d4ed8!important; border-left:2px solid #93c5fd!important; }
-.col-in  { color:#1d4ed8; min-width:56px; text-align:right!important; border-left:2px solid #93c5fd!important; }
-.col-out { color:#b91c1c; min-width:56px; text-align:right!important; border-right:1px solid #e8edf3; }
-.col-prev,.col-stk { min-width:65px; text-align:right!important; }
-.col-tot { min-width:65px; text-align:right!important; border-left:2px solid #6ee7b7!important; }
+.col-in  { color:#1d4ed8; width:56px; min-width:56px; max-width:56px; text-align:right!important; border-left:2px solid #93c5fd!important; overflow:hidden; }
+.col-out { color:#b91c1c; width:56px; min-width:56px; max-width:56px; text-align:right!important; overflow:hidden; }
+.col-prev,.col-stk { width:65px; min-width:65px; max-width:72px; text-align:right!important; overflow:hidden; }
+.col-tot { width:65px; min-width:65px; max-width:72px; text-align:right!important; border-left:2px solid #6ee7b7!important; overflow:hidden; }
 .col-tot.col-in { border-left:2px solid #6ee7b7!important; color:#1d4ed8; }
 .col-tot.col-out { border-left:none!important; color:#b91c1c; }
 
@@ -716,9 +724,13 @@ function toggleOpts(pidx, btn) {
     </tr>`;
   });
 
-  // rAF로 다음 프레임에 DOM 삽입 → UI 블로킹 최소화
+  // DocumentFragment로 파싱 후 한 번에 삽입 → reflow 최소화
   requestAnimationFrame(() => {
-    tr.insertAdjacentHTML('afterend', html);
+    const tmp = document.createElement('table');
+    tmp.innerHTML = `<tbody>${html}</tbody>`;
+    const frag = document.createDocumentFragment();
+    [...tmp.querySelector('tbody').rows].forEach(r => frag.appendChild(r));
+    tr.after(frag);
     btn.textContent = '▼';
     btn.style.pointerEvents = '';
   });
