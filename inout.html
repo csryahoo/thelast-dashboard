@@ -526,15 +526,9 @@ function renderRank() {
       const bg = i%2===0?'#fff':'#f8fafc';
       const nm = hl(p.name);
       const sp = hl(p.supplier||'-');
-      const showOpts = p.opts && p.opts.length > 0 && !(p.opts.length === 1 && !p.opts[0].opt);
-      const optsHtml = showOpts
-        ? `<div style="font-size:10px;color:#94a3b8;margin-top:3px;line-height:1.6;white-space:normal">` +
-          p.opts.map(o => `<span style="display:inline-block;margin-right:6px;margin-bottom:1px;background:#f1f5f9;padding:0 4px;border-radius:3px">${hl(o.opt||'기본')} <span style="color:#059669;font-weight:600">${(o.stk||0).toLocaleString()}</span></span>`).join('') +
-          `</div>`
-        : '';
       html += `<tr style="border-bottom:1px solid #f1f5f9;background:${bg}">
         <td style="color:#94a3b8;font-size:11px;vertical-align:top">${i+1}</td>
-        <td style="font-size:12px;max-width:220px;white-space:normal;vertical-align:top" title="${p.name}">${nm}${optsHtml}</td>
+        <td style="font-size:12px;max-width:220px;white-space:normal;vertical-align:top" title="${p.name}">${nm}</td>
         <td style="font-size:11px;color:#64748b;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:top">${sp}</td>
         <td style="font-size:12px;color:${p.prev?'#6d28d9':'#94a3b8'}">${p.prev?p.prev.toLocaleString():'-'}</td>
         <td style="font-size:12px;color:${p.in?'#1d4ed8':'#94a3b8'};font-weight:${p.in?'600':'400'}">${p.in?p.in.toLocaleString():'-'}</td>
@@ -630,30 +624,28 @@ function renderPivot() {
   // ── 데이터행 ──
   const hlP = t => search ? t.replace(new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'gi'), m=>`<mark style="background:#fef08a;border-radius:2px">${m}</mark>`) : t;
 
-  // 옵션 행 펼치기/접기 상태
-  if (!window._optExpanded) window._optExpanded = {};
+  // 전역에 피벗 데이터 저장 (toggleOpts에서 참조)
+  window._pivotProds = prods;
+  window._pivotDates = dates;
 
   let rows = '';
   prods.forEach((p, i) => {
     const nm = hlP(p.name);
     const sp = hlP(p.supplier||'-');
     const bg = i % 2 === 0 ? '' : 'background:#fafafa';
-    const pid = `opt_${i}`;
     const showOpts = p.opts && p.opts.length > 1;
-    const expanded = !!window._optExpanded[pid];
 
-    // ── 상품 행 ──
     const toggleBtn = showOpts
-      ? `<span onclick="toggleOpts('${pid}',this)" style="cursor:pointer;display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:3px;background:#e0e7ff;color:#3730a3;font-size:10px;margin-right:5px;flex-shrink:0" title="옵션 펼치기">${expanded ? '▼' : '▶'}</span>`
+      ? `<span onclick="toggleOpts(${i},this)" style="cursor:pointer;display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:3px;background:#e0e7ff;color:#3730a3;font-size:10px;margin-right:5px;flex-shrink:0;user-select:none" title="옵션 펼치기">▶</span>`
       : `<span style="display:inline-block;width:16px;margin-right:5px"></span>`;
 
-    rows += `<tr style="${bg}" data-pid="${pid}">
+    rows += `<tr style="${bg}" data-pidx="${i}">
       <td class="s0" style="color:#94a3b8;font-size:11px;${bg}">${i+1}</td>
       <td class="s1" title="${p.name}" style="${bg};white-space:normal;vertical-align:middle">
-        <div style="display:flex;align-items:flex-start;gap:0">
+        <div style="display:flex;align-items:flex-start">
           ${toggleBtn}
           <div><span style="font-size:12px">${nm}</span>
-          ${showOpts ? `<span style="font-size:10px;color:#94a3b8;margin-left:6px">(${p.opts.length}개 옵션)</span>` : ''}
+          ${showOpts ? `<span style="font-size:10px;color:#94a3b8;margin-left:6px">(${p.opts.length}개)</span>` : ''}
           </div>
         </div>
       </td>
@@ -669,47 +661,61 @@ function renderPivot() {
       <td class="col-out col-tot" style="font-weight:${p.out?700:400}">${fmt(p.out)}</td>
       <td class="col-stk" style="color:${p.stock?'#059669':'#94a3b8'};font-weight:${p.stock?700:400};border-left:2px solid #a7f3d0!important">${fmt(p.stock)}</td>
     </tr>`;
-
-    // ── 옵션 행 (펼쳐진 경우만) ──
-    if (showOpts) {
-      p.opts.forEach(o => {
-        const optLabel = o.opt || '기본';
-        const hasIO = o.in > 0 || o.out > 0;
-        rows += `<tr class="opt-row-${pid}" style="display:${expanded?'table-row':'none'};background:#f0f4ff;border-bottom:1px solid #e0e7ff">
-          <td class="s0" style="color:#c7d2fe;font-size:10px"></td>
-          <td class="s1" style="padding-left:36px;white-space:nowrap;vertical-align:middle">
-            <span style="font-size:11px;color:#4f46e5;background:#e0e7ff;padding:1px 7px;border-radius:10px;display:inline-block">${optLabel}</span>
-          </td>
-          <td class="s2" style="color:#94a3b8;font-size:10px"></td>
-          <td class="col-prev" style="color:#a5b4fc;font-size:11px">-</td>`;
-        for (const dt of dates) {
-          const di  = o.d?.[dt]?.i || 0;
-          const doo = o.d?.[dt]?.o || 0;
-          rows += `<td class="col-in" style="font-size:11px;color:#4f46e5;opacity:${di?1:0.2}">${fmt(di)}</td>
-            <td class="col-out" style="font-size:11px;color:#dc2626;opacity:${doo?1:0.2}">${fmt(doo)}</td>`;
-        }
-        rows += `<td class="col-in col-tot" style="font-size:11px;color:#4f46e5;font-weight:${o.in?700:400}">${fmt(o.in)}</td>
-          <td class="col-out col-tot" style="font-size:11px;color:#dc2626;font-weight:${o.out?700:400}">${fmt(o.out)}</td>
-          <td class="col-stk" style="color:${o.stk?'#059669':'#94a3b8'};font-weight:${o.stk?600:400};font-size:11px;border-left:2px solid #a7f3d0!important">${fmt(o.stk)}</td>
-        </tr>`;
-      });
-    }
+    // ※ 옵션 행은 미리 생성하지 않음 — toggleOpts에서 동적 삽입
   });
 
   document.getElementById('t-pivot').innerHTML =
     `<thead>${h1}${h2}</thead><tbody>${sumRow}${rows}</tbody>`;
 }
 
-function toggleOpts(pid, btn) {
-  window._optExpanded = window._optExpanded || {};
-  const isOpen = !!window._optExpanded[pid];
-  window._optExpanded[pid] = !isOpen;
-  // 옵션 행 show/hide
-  document.querySelectorAll(`.opt-row-${pid}`).forEach(tr => {
-    tr.style.display = isOpen ? 'none' : 'table-row';
+function toggleOpts(pidx, btn) {
+  const tr = btn.closest('tr');
+  const next = tr.nextElementSibling;
+
+  // 이미 펼쳐진 경우 → 옵션 행 제거
+  if (next && next.dataset.optpidx === String(pidx)) {
+    let cur = next;
+    while (cur && cur.dataset.optpidx === String(pidx)) {
+      const n = cur.nextElementSibling;
+      cur.remove();
+      cur = n;
+    }
+    btn.textContent = '▶';
+    return;
+  }
+
+  // 접힌 경우 → 옵션 행 동적 생성 후 삽입
+  const p = (window._pivotProds || [])[pidx];
+  const dates = window._pivotDates || [];
+  if (!p || !p.opts) return;
+
+  const fmt = v => v ? v.toLocaleString('ko-KR') : '-';
+  const colCount = dates.length * 2 + 4; // #, 상품명, 공급처, 전월재고, 일별×2, 합계×2, 재고
+
+  let html = '';
+  p.opts.forEach(o => {
+    const optLabel = (o.opt || '기본').replace(/</g,'&lt;');
+    html += `<tr data-optpidx="${pidx}" style="background:#f0f4ff;border-bottom:1px solid #e0e7ff">
+      <td class="s0" style="color:#c7d2fe;font-size:10px"></td>
+      <td class="s1" style="padding-left:36px;white-space:nowrap;vertical-align:middle">
+        <span style="font-size:11px;color:#4f46e5;background:#e0e7ff;padding:1px 7px;border-radius:10px;display:inline-block">${optLabel}</span>
+      </td>
+      <td class="s2"></td>
+      <td class="col-prev" style="color:#a5b4fc;font-size:11px">-</td>`;
+    for (const dt of dates) {
+      const di  = o.d?.[dt]?.i || 0;
+      const doo = o.d?.[dt]?.o || 0;
+      html += `<td class="col-in" style="font-size:11px;color:#4f46e5;opacity:${di?1:0.15}">${fmt(di)}</td>
+        <td class="col-out" style="font-size:11px;color:#dc2626;opacity:${doo?1:0.15}">${fmt(doo)}</td>`;
+    }
+    html += `<td class="col-in col-tot" style="font-size:11px;color:#4f46e5;font-weight:${o.in?700:400}">${fmt(o.in)}</td>
+      <td class="col-out col-tot" style="font-size:11px;color:#dc2626;font-weight:${o.out?700:400}">${fmt(o.out)}</td>
+      <td class="col-stk" style="color:${o.stk?'#059669':'#94a3b8'};font-weight:${o.stk?600:400};font-size:11px;border-left:2px solid #a7f3d0!important">${fmt(o.stk)}</td>
+    </tr>`;
   });
-  // 토글 버튼 화살표 변경
-  if (btn) btn.textContent = isOpen ? '▶' : '▼';
+
+  tr.insertAdjacentHTML('afterend', html);
+  btn.textContent = '▼';
 }
 
 function showTab(i, el) {
