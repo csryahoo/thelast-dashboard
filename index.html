@@ -695,6 +695,15 @@
 
   init();
 
+  // ── URL 딥링크: ?dash=pnl 형태로 접속하면 홈 화면 없이 해당 대시보드 바로 열기 ──
+  (function () {
+    const params = new URLSearchParams(window.location.search);
+    const dash = params.get('dash');
+    if (dash && DASH_MAP[dash]) {
+      loadDash(dash);
+    }
+  })();
+
   // Service Worker 등록 (PWA)
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
