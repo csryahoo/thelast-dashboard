@@ -233,9 +233,11 @@
       border-top: 1px solid var(--border);
       z-index: 200;
       box-shadow: 0 -2px 12px rgba(0,0,0,0.06);
+      overflow-x: auto; scrollbar-width: none;
     }
+    .bottom-nav::-webkit-scrollbar { display: none; }
     .bn-item {
-      flex: 1; display: flex; flex-direction: column;
+      flex: 1 0 50px; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 3px;
       cursor: pointer; color: var(--muted);
       transition: color 0.15s; user-select: none;
@@ -300,6 +302,10 @@
       <span class="icon">📦</span>
       <span>재고 추이</span>
     </div>
+    <div class="nav-item" id="nav-inout" onclick="loadDash('inout')">
+      <span class="icon">🔄</span>
+      <span>입출고 추이</span>
+    </div>
     <div class="nav-item" id="nav-loan" onclick="loadDash('loan')">
       <span class="icon">🏦</span>
       <span>대출 현황</span>
@@ -313,10 +319,6 @@
       <span class="icon">💵</span>
       <span>현금흐름</span>
       <span class="badge">26.05</span>
-    </div>
-    <div class="nav-item" id="nav-seat" onclick="loadDash('seat')">
-      <span class="icon">🪑</span>
-      <span>자리배치도</span>
     </div>
 
   </div>
@@ -410,6 +412,25 @@
           </div>
         </div>
 
+        <!-- 입출고 카드 -->
+        <div class="dash-card" style="border-top:3px solid #f59e0b" onclick="loadDash('inout')">
+          <span class="dash-card-icon">🔄</span>
+          <div class="dash-card-title">입출고 추이</div>
+          <div class="dash-card-desc">
+            월별·일별 입출고 수량/금액,<br>
+            상품별 재고 추이 및 옵션별 내역
+          </div>
+          <div class="dash-card-tags">
+            <span class="dash-tag" style="background:rgba(245,158,11,.08);color:#d97706;border-color:rgba(245,158,11,.2)">입고·출고</span>
+            <span class="dash-tag" style="background:rgba(245,158,11,.08);color:#d97706;border-color:rgba(245,158,11,.2)">상품별</span>
+            <span class="dash-tag" style="background:rgba(245,158,11,.08);color:#d97706;border-color:rgba(245,158,11,.2)">옵션 드릴다운</span>
+          </div>
+          <div class="dash-card-footer">
+            <span class="dash-launch" style="color:#d97706">열기 →</span>
+            <span class="dash-updated">셀메이트 원장 기준</span>
+          </div>
+        </div>
+
         <!-- 대출현황 카드 -->
         <div class="dash-card" style="border-top:3px solid #6366f1" onclick="loadDash('loan')">
           <span class="dash-card-icon">🏦</span>
@@ -467,24 +488,6 @@
           </div>
         </div>
 
-<!-- 자리배치도 카드 -->
-        <div class="dash-card" style="border-top:3px solid #a78bfa" onclick="loadDash('seat')">
-          <span class="dash-card-icon">🪑</span>
-          <div class="dash-card-title">자리배치도</div>
-          <div class="dash-card-desc">
-            본사 좌석 배치 현황, 팀별 구역 구분,<br>
-            이름·직책·부서명·색상 직접 편집
-          </div>
-          <div class="dash-card-tags">
-            <span class="dash-tag" style="background:rgba(167,139,250,.08);color:#7c3aed;border-color:rgba(167,139,250,.2)">팀별 구역</span>
-            <span class="dash-tag" style="background:rgba(167,139,250,.08);color:#7c3aed;border-color:rgba(167,139,250,.2)">직접 편집</span>
-            <span class="dash-tag" style="background:rgba(167,139,250,.08);color:#7c3aed;border-color:rgba(167,139,250,.2)">자동저장</span>
-          </div>
-          <div class="dash-card-footer">
-            <span class="dash-launch" style="color:#7c3aed">열기 →</span>
-            <span class="dash-updated">본사 기준</span>
-          </div>
-        </div>
 
       </div>
 
@@ -501,7 +504,7 @@
           <div class="quick-icon">🗂️</div>
           <div>
             <div class="quick-label">대시보드</div>
-            <div class="quick-value">9개 통합</div>
+            <div class="quick-value">7개 통합</div>
           </div>
         </div>
         <div class="quick-card">
@@ -544,6 +547,10 @@
     <span class="bn-icon">📦</span>
     <span class="bn-label">재고</span>
   </div>
+  <div class="bn-item" id="bn-inout" onclick="loadDash('inout')">
+    <span class="bn-icon">🔄</span>
+    <span class="bn-label">입출고</span>
+  </div>
   <div class="bn-item" id="bn-loan" onclick="loadDash('loan')">
     <span class="bn-icon">🏦</span>
     <span class="bn-label">대출</span>
@@ -555,10 +562,6 @@
   <div class="bn-item" id="bn-cash" onclick="loadDash('cash')">
     <span class="bn-icon">💵</span>
     <span class="bn-label">현금흐름</span>
-  </div>
-  <div class="bn-item" id="bn-seat" onclick="loadDash('seat')">
-    <span class="bn-icon">🪑</span>
-    <span class="bn-label">자리배치</span>
   </div>
 </div>
 
@@ -585,6 +588,13 @@
       bn: 'bn-stock',
       label: '📦 재고 추이'
     },
+    inout: {
+      file: 'inout.html',
+      title: '입출고 추이',
+      nav: 'nav-inout',
+      bn: 'bn-inout',
+      label: '🔄 입출고 추이'
+    },
     loan: {
       file: 'loan.html',
       title: '대출 현황',
@@ -605,13 +615,6 @@
       nav: 'nav-cash',
       bn: 'bn-cash',
       label: '💵 현금흐름 (2026.05)'
-    },
-    seat: {
-      file: 'seat.html',
-      title: '자리배치도',
-      nav: 'nav-seat',
-      bn: 'bn-seat',
-      label: '🪑 자리배치도'
     },
   };
 
