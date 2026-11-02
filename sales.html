@@ -56,6 +56,13 @@ tr:last-child td { border-bottom: none; }
 tr:hover td { background: #f8fafc; }
 tr.total-row td { color: #1a202c; font-weight: 700; background: #eef2ff; border-top: 2px solid #c7d2fe; }
 tr.sub-row td { color: #64748b; font-size: 11px; }
+/* 일별 상세: 채널별 일매출 강조 (5천만↑ 빨강 / 500만↓ 파랑) */
+#t-daily td.d-hi { color: #dc2626; font-weight: 700; background: #fef2f2; }
+#t-daily td.d-lo { color: #2563eb; background: #eff6ff; }
+#t-daily tr:hover td.d-hi { background: #fee2e2; }
+#t-daily tr:hover td.d-lo { background: #dbeafe; }
+.d-legend { display:flex; gap:12px; font-size:11px; color:#64748b; margin:-4px 0 10px; }
+.d-legend i { display:inline-block; width:10px; height:10px; border-radius:2px; margin-right:4px; vertical-align:-1px; }
 tr.sub-row td:first-child { padding-left: 20px; }
 
 /* Month buttons */
@@ -508,12 +515,23 @@ function renderDailyTable() {
   let html = `<thead><tr><th>일</th>${DCOLS.map(c=>`<th>${c==='전년'?'전채널(전년)':c}</th>`).join('')}${hasPrevYear?'<th>YoY 증감</th>':''}</tr></thead><tbody>`;
   let totals = {};
   DCOLS.forEach(c => { totals[c]=0; });
+  // 채널 일매출 강조 기준 (원, VAT 기준은 원본 데이터와 동일)
+  const HI = 50000000, LO = 5000000;
+  const cellCls = (c, v) => {
+    if (c === '전년' || !v || v <= 0) return '';          // 전년 비교열·매출없음(0)·환불(-) 제외
+    return v >= HI ? ' class="d-hi"' : v <= LO ? ' class="d-lo"' : '';
+  };
   m.daily.forEach(d => {
-    html += `<tr><td>${d.day}일</td>${DCOLS.map(c=>{totals[c]+=(d[c]||0);return`<td>${K(d[c])}</td>`;}).join('')}${hasPrevYear?`<td>${d.전년?chgHtml(d.전채널-d.전년):'-'}</td>`:''}</tr>`;
+    html += `<tr><td>${d.day}일</td>${DCOLS.map(c=>{totals[c]+=(d[c]||0);return`<td${cellCls(c,d[c])}>${K(d[c])}</td>`;}).join('')}${hasPrevYear?`<td>${d.전년?chgHtml(d.전채널-d.전년):'-'}</td>`:''}</tr>`;
   });
   html += `<tr class="total-row"><td>합계</td>${DCOLS.map(c=>`<td>${K(totals[c])}</td>`).join('')}${hasPrevYear?`<td>${chgHtml(totals['전채널']-totals['전년'])}</td>`:''}</tr>`;
   html += '</tbody>';
   document.getElementById('t-daily').innerHTML = html;
+  const tbl = document.getElementById('t-daily');
+  if (!document.getElementById('d-legend')) {
+    tbl.parentElement.insertAdjacentHTML('beforebegin',
+      '<div class="d-legend" id="d-legend"><span><i style="background:#fecaca"></i>5천만원 이상</span><span><i style="background:#bfdbfe"></i>500만원 이하</span><span style="color:#94a3b8">· 0원·환불(-)·합계 행 제외</span></div>');
+  }
 }
 
 function renderRankMonthBtns() {
