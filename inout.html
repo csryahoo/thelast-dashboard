@@ -89,8 +89,9 @@ input.srch{padding:5px 10px;border-radius:6px;border:1px solid #dde1f0;backgroun
 .dd-bar .detail-label{margin:0}
 .dd-bar select{padding:3px 8px;border:1px solid #dde1f0;border-radius:5px;font-size:11px;font-family:inherit;background:#fff;color:#374151;max-width:260px}
 .dd-scroll{max-height:360px;overflow:auto;border:1px solid #e2e8f0;border-radius:8px;background:#fff}
-.dd-scroll .opt-tbl{border:none;border-radius:0}
-.dd-scroll .opt-tbl th{position:sticky;top:0;z-index:1}
+.dd-scroll .opt-tbl{border:none;border-radius:0;overflow:visible}
+.dd-scroll .opt-tbl th{position:sticky;top:0;z-index:1;box-shadow:0 1px 0 #e2e8f0}
+.opt-scroll{max-height:320px}
 .dd-tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;background:#f1f5f9;color:#475569}
 .dd-tag.in{background:#dbeafe;color:#1d4ed8}.dd-tag.out{background:#fee2e2;color:#b91c1c}.dd-tag.rt{background:#fef3c7;color:#b45309}
 .opt-tbl tr.opt-pick{cursor:pointer}.opt-tbl tr.opt-pick:hover td{background:#f8fafc}
@@ -531,10 +532,10 @@ function renderItemDetail(key){
     <div class="detail-label">📈 월별 입출고 추이 (수량)</div>
     <div class="detail-chart"><canvas id="dchart-${cssKey(key)}"></canvas></div>
     <div class="detail-label">${optLabel}</div>
-    <table class="opt-tbl">
+    <div class="dd-scroll opt-scroll"><table class="opt-tbl">
       <thead><tr><th>옵션</th>${optHead}</tr></thead>
       <tbody>${optRows}</tbody>
-    </table>
+    </table></div>
     <div id="dd-${cssKey(key)}"><div class="foot-note">📅 일자별 내역 불러오는 중...</div></div>`;
   if (!(key in ddScope)) ddScope[key] = ym ? 'month' : 'all';
   showDaily(key);
