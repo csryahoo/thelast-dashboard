@@ -92,6 +92,9 @@ input.srch{padding:5px 10px;border-radius:6px;border:1px solid #dde1f0;backgroun
 .dd-scroll .opt-tbl{border:none;border-radius:0;overflow:visible}
 .dd-scroll .opt-tbl th{position:sticky;top:0;z-index:1;box-shadow:0 1px 0 #e2e8f0}
 .opt-scroll{max-height:320px}
+.rs-grip{height:12px;margin:2px 0 4px;cursor:ns-resize;display:flex;align-items:center;justify-content:center;border-radius:6px;user-select:none;touch-action:none}
+.rs-grip::before{content:'';width:44px;height:4px;border-radius:2px;background:#cbd5e1}
+.rs-grip:hover{background:#eef2ff}.rs-grip:hover::before,.rs-grip.on::before{background:#6366f1}
 .dd-tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;background:#f1f5f9;color:#475569}
 .dd-tag.in{background:#dbeafe;color:#1d4ed8}.dd-tag.out{background:#fee2e2;color:#b91c1c}.dd-tag.rt{background:#fef3c7;color:#b45309}
 .opt-tbl tr.opt-pick{cursor:pointer}.opt-tbl tr.opt-pick:hover td{background:#f8fafc}
@@ -445,6 +448,32 @@ function renderItems(){
   });
 }
 
+// ─── 표 높이 드래그 조절 ───
+const RS_KEY = 'inout_rs_h';
+const RS_DEF = { opt:320, dd:360 };
+const rsLoad = () => { try { return JSON.parse(localStorage.getItem(RS_KEY)||'{}'); } catch(e){ return {}; } };
+const rsSave = o => { try { localStorage.setItem(RS_KEY, JSON.stringify(o)); } catch(e){} };
+const RS_GRIP = t => `<div class="rs-grip" data-grip="${t}" title="드래그해서 높이 조절 · 더블클릭하면 원래대로"></div>`;
+function initResize(root){
+  const saved = rsLoad();
+  root.querySelectorAll('.rs-grip').forEach(g=>{
+    const t = g.dataset.grip;
+    const box = g.previousElementSibling; if (!box || box.dataset.rs!==t) return;
+    if (saved[t]) box.style.maxHeight = saved[t]+'px';
+    g.onpointerdown = ev => {
+      ev.preventDefault(); g.setPointerCapture(ev.pointerId); g.classList.add('on');
+      const y0 = ev.clientY, h0 = box.getBoundingClientRect().height;
+      g.onpointermove = e => { const h = Math.max(120, Math.round(h0 + e.clientY - y0)); box.style.maxHeight = h+'px'; box.style.height = h+'px'; };
+      g.onpointerup = () => {
+        g.onpointermove = g.onpointerup = null; g.classList.remove('on');
+        const h = parseInt(box.style.maxHeight); box.style.height = '';   // 내용이 짧으면 자동으로 줄어듦
+        const o = rsLoad(); o[t] = h; rsSave(o);
+      };
+    };
+    g.ondblclick = () => { box.style.maxHeight = RS_DEF[t]+'px'; const o = rsLoad(); delete o[t]; rsSave(o); };
+  });
+}
+
 // ─── 옵션 일자별 내역 (월별 파일 지연 로딩) ───
 const DAILY_CACHE = {};
 const ddSel = {};   // 상품key → 선택 옵션
@@ -488,10 +517,11 @@ function renderDaily(key, djs, scope, ym){
   box.innerHTML = `
     <div class="dd-bar"><div class="detail-label">📅 ${label} 일자별 입출고 (${rows.length}건)</div>${scopeBtns}
       <select onchange="ddPick('${key.replace(/'/g,"\\'")}', this.value)"><option value="">전체 옵션</option>${optList.map(o=>`<option value="${encodeURIComponent(o)}"${o===sel?' selected':''}>${o}</option>`).join('')}</select></div>
-    <div class="dd-scroll"><table class="opt-tbl">
+    <div class="dd-scroll" data-rs="dd"><table class="opt-tbl">
       <thead><tr><th>일자</th>${sel?'':'<th>옵션</th>'}<th>구분</th><th>창고</th><th class="r">입고</th><th class="r">출고</th></tr></thead>
       <tbody>${body}<tr class="dd-sum"><td colspan="${sel?3:4}">합계</td><td class="r">${N(ti)}</td><td class="r">${N(to)}</td></tr></tbody>
-    </table></div>`;
+    </table></div>${RS_GRIP('dd')}`;
+  initResize(box);
   // 옵션표 행 클릭 → 해당 옵션 필터 / 선택 표시
   const det = document.getElementById('detail-'+cssKey(key));
   det.querySelectorAll('tr.opt-pick').forEach(tr=>{
@@ -532,11 +562,12 @@ function renderItemDetail(key){
     <div class="detail-label">📈 월별 입출고 추이 (수량)</div>
     <div class="detail-chart"><canvas id="dchart-${cssKey(key)}"></canvas></div>
     <div class="detail-label">${optLabel}</div>
-    <div class="dd-scroll opt-scroll"><table class="opt-tbl">
+    <div class="dd-scroll opt-scroll" data-rs="opt"><table class="opt-tbl">
       <thead><tr><th>옵션</th>${optHead}</tr></thead>
       <tbody>${optRows}</tbody>
-    </table></div>
+    </table></div>${RS_GRIP('opt')}
     <div id="dd-${cssKey(key)}"><div class="foot-note">📅 일자별 내역 불러오는 중...</div></div>`;
+  initResize(el);
   if (!(key in ddScope)) ddScope[key] = ym ? 'month' : 'all';
   showDaily(key);
 
