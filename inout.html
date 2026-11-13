@@ -448,6 +448,18 @@ function renderItems(){
   });
 }
 
+// ─── 막대 위 수량 표시 (작은 값도 보이도록) ───
+const BAR_LABELS = { id:'barLabels', afterDatasetsDraw(chart){
+  const {ctx} = chart; ctx.save(); ctx.font = '600 9px Pretendard, sans-serif'; ctx.textAlign = 'center';
+  chart.data.datasets.forEach((ds, di) => {
+    const meta = chart.getDatasetMeta(di); if (meta.hidden) return;
+    meta.data.forEach((bar, i) => { const v = ds.data[i]; if (!v) return;
+      ctx.fillStyle = di === 0 ? '#2563eb' : '#dc2626';
+      ctx.fillText(Number(v).toLocaleString(), bar.x, bar.y - 3); });
+  });
+  ctx.restore();
+}};
+
 // ─── 표 높이 드래그 조절 ───
 const RS_KEY = 'inout_rs_h';
 const RS_DEF = { opt:320, dd:360 };
@@ -559,7 +571,7 @@ function renderItemDetail(key){
                      : '<th class="r">입고수량</th><th class="r">출고수량</th><th class="r">현재재고</th>'+dh;
 
   el.innerHTML = `
-    <div class="detail-label">📈 월별 입출고 추이 (수량)</div>
+    <div class="detail-label">📈 월별 입출고 추이 (수량)${ym ? ` · <span style="color:#2563eb">${ym} 입고 ${N(d.inArr[G.itemsMonth]||0)} / 출고 ${N(d.outArr[G.itemsMonth]||0)}</span>` : ''}</div>
     <div class="detail-chart"><canvas id="dchart-${cssKey(key)}"></canvas></div>
     <div class="detail-label">${optLabel}</div>
     <div class="dd-scroll opt-scroll" data-rs="opt"><table class="opt-tbl">
@@ -576,14 +588,15 @@ function renderItemDetail(key){
   detailCharts[key] = new Chart(ctx, {
     data: { labels: G.detailMonths,
       datasets: [
-        { type:'bar', label:'입고', data:d.inArr, backgroundColor:G.detailMonths.map(m=>ym&&m!==ym?'#3b82f633':'#3b82f6aa'), borderColor:'#3b82f6', borderWidth:1 },
-        { type:'bar', label:'출고', data:d.outArr, backgroundColor:G.detailMonths.map(m=>ym&&m!==ym?'#dc262633':'#dc2626aa'), borderColor:'#dc2626', borderWidth:1 },
+        { type:'bar', label:'입고', data:d.inArr.map(v=>v||null), backgroundColor:G.detailMonths.map(m=>ym&&m!==ym?'#3b82f633':'#3b82f6aa'), borderColor:'#3b82f6', borderWidth:1, minBarLength:3 },
+        { type:'bar', label:'출고', data:d.outArr.map(v=>v||null), backgroundColor:G.detailMonths.map(m=>ym&&m!==ym?'#dc262633':'#dc2626aa'), borderColor:'#dc2626', borderWidth:1, minBarLength:3 },
       ]},
+    plugins:[BAR_LABELS],
     options:{ maintainAspectRatio:false,
       plugins:{ legend:{labels:{color:'#475569',boxWidth:10,font:{size:10}}},
         tooltip:{callbacks:{label:c=>` ${c.dataset.label}: ${N(c.raw)}`}} },
       scales:{ x:{grid:{display:false},ticks:{color:'#94a3b8',font:{size:9},maxRotation:60}},
-        y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{color:'#94a3b8',font:{size:9}}} }
+        y:{grid:{color:'rgba(0,0,0,0.06)'},ticks:{color:'#94a3b8',font:{size:9}},grace:'12%'} }
     }
   });
 }
