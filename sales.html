@@ -518,8 +518,8 @@ function renderDailyTable() {
   // 채널 일매출 강조 기준 (원, VAT 기준은 원본 데이터와 동일)
   const HI = 50000000, LO = 5000000;
   const cellCls = (c, v) => {
-    if (c === '전년' || !v || v <= 0) return '';          // 전년 비교열·매출없음(0)·환불(-) 제외
-    return v >= HI ? ' class="d-hi"' : v <= LO ? ' class="d-lo"' : '';
+    if (c !== '자사몰' || v === null || v === undefined || v === 0) return '';   // 자사몰만 · 0원(매출없음) 제외
+    return v >= HI ? ' class="d-hi"' : v <= LO ? ' class="d-lo"' : '';      // 마이너스(환불 초과)도 500만원 이하로 표시
   };
   m.daily.forEach(d => {
     html += `<tr><td>${d.day}일</td>${DCOLS.map(c=>{totals[c]+=(d[c]||0);return`<td${cellCls(c,d[c])}>${K(d[c])}</td>`;}).join('')}${hasPrevYear?`<td>${d.전년?chgHtml(d.전채널-d.전년):'-'}</td>`:''}</tr>`;
@@ -530,7 +530,7 @@ function renderDailyTable() {
   const tbl = document.getElementById('t-daily');
   if (!document.getElementById('d-legend')) {
     tbl.parentElement.insertAdjacentHTML('beforebegin',
-      '<div class="d-legend" id="d-legend"><span><i style="background:#fecaca"></i>5천만원 이상</span><span><i style="background:#bfdbfe"></i>500만원 이하</span><span style="color:#94a3b8">· 0원·환불(-)·합계 행 제외</span></div>');
+      '<div class="d-legend" id="d-legend"><span style="font-weight:700;color:#475569">자사몰</span><span><i style="background:#fecaca"></i>5천만원 이상</span><span><i style="background:#bfdbfe"></i>500만원 이하 (마이너스 포함)</span></div>');
   }
 }
 
