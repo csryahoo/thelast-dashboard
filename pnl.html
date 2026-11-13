@@ -434,18 +434,25 @@ function renderAll() {
   renderSgaCharts();
   updateNavVals();
   // 모든 섹션 상세 테이블 렌더링
-  SECTIONS.forEach(s => {
-    const arr = G[s.dataKey] || [];
-    // 차트 상위 5개: 최근 데이터 월 기준 내림차순
-    const latestIdx = lastNonZeroIdx(arr);
-    const sortedByLatest = [...arr].sort((a, b) => {
-      const av = latestIdx >= 0 ? (a.vals?.[latestIdx] ?? 0) : 0;
-      const bv = latestIdx >= 0 ? (b.vals?.[latestIdx] ?? 0) : 0;
-      return bv - av;
-    });
-    mkDetailMultiLine(s.chartId, sortedByLatest.slice(0, 5));
-    renderDetailTable(s.tableId, arr);
-  });
+  SECTIONS.forEach(s => renderSection(s));
+}
+
+// ─── 세부항목: 선택 월(기본 = 데이터 있는 최근월) 내림차순 → 차트 top5 + 표 ───
+const DT_SORT = {};   // tableId → 월 index | 'total'
+function sortDetail(arr, key){
+  const v = d => key === 'total' ? (d.total || 0) : (d.vals?.[key] || 0);
+  return [...arr].sort((a, b) => (v(b) - v(a)) || ((b.total || 0) - (a.total || 0)));
+}
+function renderSection(s){
+  const arr = G[s.dataKey] || [];
+  if (!(s.tableId in DT_SORT)) DT_SORT[s.tableId] = lastNonZeroIdx(arr) >= 0 ? lastNonZeroIdx(arr) : 'total';
+  const sorted = sortDetail(arr, DT_SORT[s.tableId]);
+  mkDetailMultiLine(s.chartId, sorted.slice(0, 5));
+  renderDetailTable(s.tableId, sorted, DT_SORT[s.tableId]);
+}
+function dtSort(tableId, key){
+  DT_SORT[tableId] = key;
+  const s = SECTIONS.find(x => x.tableId === tableId); if (s) renderSection(s);
 }
 
 function latest(arr) { return arr?.[arr.length-1] ?? 0; }
@@ -606,13 +613,15 @@ function updateNavVals() {
 }
 
 // 상세 테이블 렌더 (전체 거래처 × 월별 금액 / 헤더 고정)
-function renderDetailTable(tableId, detailArr) {
+function renderDetailTable(tableId, detailArr, sortKey) {
   const el = document.getElementById(tableId);
   if(!el || !detailArr?.length) return;
 
   // vals 길이 기준으로 1월~N월 레이블 생성 (G.months 4개 ≠ detail 12개 불일치 방지)
   const nVals = detailArr[0].vals.length;
-  const mLabels = Array.from({length: nVals}, (_, i) => `${i+1}월`);
+  // 열 순서: 최근월 → 1월 (데이터 없는 이후 월은 생략)
+  const lastIdx = lastNonZeroIdx(detailArr);
+  const order = Array.from({length: (lastIdx >= 0 ? lastIdx : nVals - 1) + 1}, (_, i) => i).reverse();
 
   const thStyle = `style="min-width:62px;position:sticky;top:0;background:#f8fafc;z-index:2"`;
   const thName  = `style="min-width:200px;position:sticky;top:0;left:0;background:#f8fafc;z-index:3;text-align:left"`;
@@ -622,8 +631,8 @@ function renderDetailTable(tableId, detailArr) {
   <table class="detail-tbl" style="min-width:max-content;width:100%">
     <thead><tr>
       <th ${thName}>업체명</th>
-      ${mLabels.map(m=>`<th ${thStyle}>${m}</th>`).join('')}
-      <th ${thTotal}>합계</th>
+      ${order.map(mi=>{ const m=`${mi+1}월`; return `<th ${thStyle.replace('style="','style="cursor:pointer;'+(sortKey===mi?'color:#4f46e5;background:#eef2ff;':''))} onclick="dtSort('${tableId}',${mi})" title="${m} 기준 내림차순">${m}${sortKey===mi?' ▼':''}</th>`; }).join('')}
+      <th ${thTotal.replace('style="','style="cursor:pointer;'+(sortKey==='total'?'color:#4f46e5;background:#eef2ff;':''))} onclick="dtSort('${tableId}','total')" title="합계 기준 내림차순">합계${sortKey==='total'?' ▼':''}</th>
     </tr></thead>
     <tbody>`;
 
@@ -637,7 +646,7 @@ function renderDetailTable(tableId, detailArr) {
     const tdTotal = `style="font-weight:700;position:sticky;right:0;background:${inChart?'#fdfdff':'#fff'}"`;
     html += `<tr>`;
     html += `<td ${tdName}>${dot}${d.name}</td>`;
-    d.vals.forEach(v => { html += `<td>${v ? K(v) : '-'}</td>`; });
+    order.forEach(vi => { const v = d.vals[vi]; html += `<td${vi===sortKey?' style="background:#f5f7ff;font-weight:600"':''}>${v ? K(v) : '-'}</td>`; });
     html += `<td ${tdTotal}>${K(d.total)}</td>`;
     html += `</tr>`;
   });
