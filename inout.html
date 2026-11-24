@@ -57,10 +57,14 @@ input.srch{padding:5px 10px;border-radius:6px;border:1px solid #dde1f0;backgroun
 .opt-tbl td{padding:5px 8px;border-top:1px solid #f1f5f9;}
 .detail-label{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px;}
 /* 상품별 상세: 스크롤 + 스티키 컬럼 */
-.pv-scroll{overflow-x:auto;max-height:640px;position:relative;}
-.pv-name{position:sticky;left:0;z-index:3;background:#fff;min-width:260px;max-width:260px;}
+.pv-scroll{overflow-x:auto;max-height:640px;position:relative;--pvn:260px;}
+.pv-name{position:sticky;left:0;z-index:3;background:#fff;width:var(--pvn);min-width:var(--pvn);max-width:var(--pvn);}
+.col-grip{position:absolute;top:0;right:-3px;width:9px;height:100%;cursor:col-resize;touch-action:none;z-index:6;}
+.col-grip::after{content:'';position:absolute;left:4px;top:25%;height:50%;width:2px;border-radius:2px;background:#cbd5e1;}
+.col-grip:hover::after,.col-grip.drag::after{background:#2563eb;}
+.item-row .pv-name{user-select:text;-webkit-user-select:text;cursor:text;}
 .rt th.pv-name{background:#f8fafc;z-index:4;}
-.pv-sup{position:sticky;left:260px;z-index:3;background:#fff;min-width:90px;max-width:90px;}
+.pv-sup{position:sticky;left:var(--pvn);z-index:3;background:#fff;min-width:90px;max-width:90px;}
 .rt th.pv-sup{background:#f8fafc;z-index:4;}
 .rt tr.item-row:hover .pv-name,.rt tr.item-row:hover .pv-sup{background:#f8fafc;}
 .rt tr.item-row.open .pv-name,.rt tr.item-row.open .pv-sup{background:#eff6ff;}
@@ -76,7 +80,7 @@ input.srch{padding:5px 10px;border-radius:6px;border:1px solid #dde1f0;backgroun
   .topbar{padding:12px 16px}.tab-panel{padding:12px 16px}
   .kpi-row{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}
   .tnav-btn{padding:10px 12px;font-size:12px}
-  .pv-name{min-width:170px;max-width:170px}.pv-sup{left:170px;min-width:70px;max-width:70px}
+  .pv-scroll{--pvn:170px}.pv-sup{min-width:70px;max-width:70px}
   input.srch{width:100%}
   #items-month-btns{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
   #items-month-btns .mbtn{flex:0 0 auto}
@@ -321,7 +325,7 @@ function renderItemsHead(){
     document.getElementById('items-thead').innerHTML =
       `<tr class="items-total-row"><th class="pv-name">합계 (${N(list.length)}개 상품)</th><th class="pv-sup"></th>`+
       `<th class="r mcol">${N(si)}</th><th class="r mcol">${N(so)}</th><th class="r mcol">${(si-so)>=0?'+':''}${N(si-so)}</th><th class="r mcol">${N(ss)}</th><th class="r mcol">${K(sa)}</th></tr>`+
-      `<tr class="items-header-row"><th class="pv-name">상품명</th><th class="pv-sup">공급처</th>`+
+      `<tr class="items-header-row"><th class="pv-name">상품명<span class="col-grip" title="드래그해서 상품명 칸 너비 조절 · 더블클릭하면 원래대로"></span></th><th class="pv-sup">공급처</th>`+
       `<th class="r mcol" onclick="itemsSort('inQty')" style="cursor:pointer">입고수량${arrow('inQty')}</th>`+
       `<th class="r mcol" onclick="itemsSort('outQty')" style="cursor:pointer">출고수량${arrow('outQty')}</th>`+
       `<th class="r mcol" onclick="itemsSort('net')" style="cursor:pointer">순증감${arrow('net')}</th>`+
@@ -332,7 +336,7 @@ function renderItemsHead(){
   tEl.textContent = '📦 상품별 월별 재고수량';
   const totalRow = '<tr class="items-total-row"><th class="pv-name">합계(전체 상품)</th><th class="pv-sup"></th>' +
     G.months.map(m=>`<th class="r mcell">${N(m.stockQty)}</th>`).join('') + '</tr>';
-  const headerRow = '<tr class="items-header-row"><th class="pv-name">상품명</th><th class="pv-sup">공급처</th>' +
+  const headerRow = '<tr class="items-header-row"><th class="pv-name">상품명<span class="col-grip" title="드래그해서 상품명 칸 너비 조절 · 더블클릭하면 원래대로"></span></th><th class="pv-sup">공급처</th>' +
     months.map((m,i)=>{
       const on = G.itemsSortMonthIdx===i;
       const arrow = on ? `<span class="sort-arrow">${G.itemsSortDir===-1?'▼':'▲'}</span>` : '';
@@ -405,6 +409,42 @@ function getFilteredItems(){
 }
 
 function itemKey(it){ return it.name+'||'+it.supplier; }
+const escAttr = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+
+// 행 클릭 = 펼치기/접기. 단, 드래그(텍스트 선택)·더블클릭은 펼치지 않음 → 상품명 복사 가능
+(function(){
+  let down=null, timer=null;
+  const tb=document.getElementById('items-tb');
+  tb.addEventListener('mousedown',e=>{ down={x:e.clientX,y:e.clientY}; });
+  tb.addEventListener('click',e=>{
+    const tr=e.target.closest('tr.item-row'); if(!tr) return;
+    clearTimeout(timer);
+    if (e.detail>1) return;                                              // 더블/트리플클릭(단어·줄 선택)
+    if (down && (Math.abs(e.clientX-down.x)>4 || Math.abs(e.clientY-down.y)>4)) return;   // 드래그
+    if (String(window.getSelection()).trim()) return;                    // 선택된 텍스트가 있으면 유지
+    const key=tr.dataset.key;
+    timer=setTimeout(()=>{ if (!String(window.getSelection()).trim()) toggleItem(key); }, 230);
+  });
+  tb.addEventListener('dblclick',()=>clearTimeout(timer));
+})();
+
+// 상품명 칸 너비 드래그 조절 (--pvn, 브라우저에 기억)
+(function(){
+  const KEY='inout_pvn', DEF=window.innerWidth<=700?170:260;
+  const apply=w=>document.querySelectorAll('.pv-scroll').forEach(el=>el.style.setProperty('--pvn',w+'px'));
+  try{ const w=+localStorage.getItem(KEY); if(w>=120&&w<=720) apply(w); }catch(e){}
+  document.addEventListener('pointerdown',e=>{
+    const g=e.target.closest('.col-grip'); if(!g) return;
+    e.preventDefault(); e.stopPropagation();
+    const th=g.parentElement, x0=e.clientX, w0=th.getBoundingClientRect().width;
+    g.classList.add('drag'); g.setPointerCapture(e.pointerId);
+    const mv=ev=>apply(Math.max(140,Math.min(720,Math.round(w0+ev.clientX-x0))));
+    const up=ev=>{ g.classList.remove('drag'); g.removeEventListener('pointermove',mv); g.removeEventListener('pointerup',up);
+      try{ localStorage.setItem(KEY,String(Math.round(th.getBoundingClientRect().width))); }catch(_){} };
+    g.addEventListener('pointermove',mv); g.addEventListener('pointerup',up);
+  });
+  document.addEventListener('dblclick',e=>{ if(!e.target.closest('.col-grip')) return; apply(DEF); try{localStorage.removeItem(KEY);}catch(_){} });
+})();
 function toggleItem(key){
   if (G.expanded.has(key)) G.expanded.delete(key); else G.expanded.add(key);
   renderItems();
@@ -431,8 +471,8 @@ function renderItems(){
       const arr = it.stockQtyArr || [];
       cells = arr.map(v=>`<td class="r mcell">${v===null||v===undefined?'<span style="color:#cbd5e1">-</span>':N(v)}</td>`).join('');
     }
-    html += `<tr class="item-row${open?' open':''}" onclick="toggleItem('${key.replace(/'/g,"\\'")}')">`+
-            `<td class="pv-name"><span class="chevron${open?' open':''}">▶</span>${start+i+1}. ${it.name}</td>`+
+    html += `<tr class="item-row${open?' open':''}" data-key="${escAttr(key)}">`+
+            `<td class="pv-name" title="${escAttr(it.name)}"><span class="chevron${open?' open':''}">▶</span>${start+i+1}. ${it.name}</td>`+
             `<td class="pv-sup">${it.supplier}</td>${cells}</tr>`;
     if (open) {
       html += `<tr><td colspan="${G.itemsMonth!==null?7:nMonths+2}" style="padding:0;border:none"><div class="detail-wrap" id="detail-${cssKey(key)}"></div></td></tr>`;
