@@ -94,6 +94,12 @@
   .topbar-title { font-size: 13px; font-weight: 600; color: #94a3b8; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .topbar-title span { color: #1e293b; font-weight: 700; }
   .topbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .topbar.has-extra .topbar-title { flex: 0 1 auto; }
+  #topbar-extra { display: none; flex: 1; align-items: center; gap: 6px; margin-left: 18px; min-width: 0; overflow-x: auto; }
+  .topbar.has-extra #topbar-extra { display: flex; }
+  #topbar-extra button { padding: 5px 14px; border-radius: 6px; border: 1px solid #dde1f0; background: #fff; color: #64748b; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; white-space: nowrap; }
+  #topbar-extra button.on { background: #2563eb; color: #fff; border-color: #2563eb; }
+  #topbar-extra button:disabled { opacity: .45; cursor: not-allowed; }
 
   .open-btn {
     display: inline-flex; align-items: center; gap: 6px;
@@ -337,6 +343,7 @@
     <div class="topbar-title" id="topbar-label">
       <span>대시보드 홈</span>
     </div>
+    <div id="topbar-extra"></div>
     <div class="topbar-right">
       <button id="back-btn" onclick="loadPage('home')">← 홈으로</button>
       <button class="open-btn" id="open-btn" style="display:none" onclick="openNewTab()">↗ 새 탭으로 열기</button>
@@ -635,7 +642,22 @@
     }
   }
 
+  // 대시보드 iframe이 보내는 연도 선택 막대(재고추이 등)를 상단바에 표시
+  function clearTopbarExtra() {
+    document.getElementById('topbar-extra').innerHTML = '';
+    document.querySelector('.topbar').classList.remove('has-extra');
+  }
+  window.addEventListener('message', e => {
+    const fr = document.getElementById('dash-frame');
+    if (!fr || e.source !== fr.contentWindow || !e.data || e.data.type !== 'yearbar') return;
+    const box = document.getElementById('topbar-extra');
+    box.innerHTML = e.data.years.map(o =>
+      `<button class="${o.y === e.data.active ? 'on' : ''}" ${o.ok ? '' : 'disabled title="자료 없음"'} onclick="document.getElementById('dash-frame').contentWindow.postMessage({type:'setYear',y:'${o.y}'},'*')">${o.y}년</button>`).join('');
+    document.querySelector('.topbar').classList.add('has-extra');
+  });
+
   function loadPage(key) {
+    clearTopbarExtra();
     currentDash = null;
     setNavActive('home');
     document.getElementById('topbar-label').innerHTML = '<span>대시보드 홈</span>';
@@ -649,6 +671,7 @@
   function loadDash(key) {
     const cfg = DASH_MAP[key];
     if (!cfg) return;
+    clearTopbarExtra();
     currentDash = key;
     setNavActive(key);
 
